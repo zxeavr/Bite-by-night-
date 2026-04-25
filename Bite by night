@@ -1,5 +1,5 @@
 --[[
-  PHANTOM HUB v8.2.8 – FULL SCRIPT
+  PHANTOM HUB v8.2.9 – FULL TABS + HEALTH ESP FIX
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
   PlaceId: 70845479499574
@@ -35,7 +35,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.2.8\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.2.9\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -57,8 +57,8 @@ local T={en={},ar={}}
 
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v8.2.8"
-T.en.whats_new_body="+ No forced running on script start\n+ Manual sprint works again after Auto Run off\n+ Speed restored to original when Auto Run disabled"
+T.en.whats_new_title="What's New  v8.2.9"
+T.en.whats_new_body="+ Config & Settings tabs are now full\n+ Health ESP only appears on living players\n+ No Health on Wire Eye ever"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
 T.en.auto_run="Auto Run"; T.en.bypass_slow="Bypass Slowness"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
@@ -83,8 +83,8 @@ T.en.fps_boost="FPS Booster"
 
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v8.2.8"
-T.ar.whats_new_body="+ لا ركض تلقائي عند بدء السكربت\n+ الركض اليدوي يعود بعد إغلاق Auto Run\n+ استعادة السرعة الأصلية عند تعطيل Auto Run"
+T.ar.whats_new_title="الجديد  v8.2.9"
+T.ar.whats_new_body="+ تبويبا Config و Settings ممتلئان\n+ Health ESP يظهر فقط على اللاعبين الأحياء\n+ لا صحة على Wire Eye أبداً"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
 T.ar.auto_run="جري دائم"; T.ar.bypass_slow="تجاوز الابطاء"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
@@ -187,7 +187,7 @@ RunService.RenderStepped:Connect(function()
     if isFOVEnabled and Camera.FieldOfView ~= customFOV then Camera.FieldOfView = customFOV end
 end)
 
--- حفظ سرعة اللاعب الأصلية للتحكم بـ Auto Run
+-- AUTO RUN PERFECTED
 local originalWalkSpeed = 16
 local originalRunSpeed = nil
 local function CaptureOriginalSpeed()
@@ -238,7 +238,7 @@ local function IsPlayerDisabled()
     return false
 end
 
--- CORE LOOP (تشمل Auto Run, Parry, AutoSwing, AntiTrap...)
+-- CORE LOOP (تشمل كل الميزات)
 local lastParryFiredAt = 0
 local lastSwing = 0
 local parryingPlayers = {}
@@ -316,7 +316,7 @@ function EscapeMap()
     end)
 end
 
--- Parry disc
+-- PARRY DISC & DYNAMIC
 local parryCirclePart
 local function UpdateParryCircle()
     if not S.ShowParryRange then if parryCirclePart then parryCirclePart:Destroy(); parryCirclePart=nil end return end
@@ -336,7 +336,6 @@ local function UpdateParryCircle()
 end
 task.spawn(function() while task.wait(0.1) do pcall(UpdateParryCircle) end end)
 
--- Dynamic parry
 task.spawn(function()
     while task.wait(0.15) do
         if S.AutoParry and S.DynamicParry then
@@ -358,7 +357,7 @@ task.spawn(function()
     end
 end)
 
--- ESP SYSTEM (مستقر تماماً)
+-- ESP SYSTEM (HEALTH FIX)
 local espReg={}
 local function ClearAllESP()
     for _, d in pairs(espReg) do pcall(function() if d.HL then d.HL:Destroy() end; if d.SB then d.SB:Destroy() end; if d.BB then d.BB:Destroy() end end) end
@@ -397,7 +396,9 @@ end
 local function ApplyESP(obj,tcfg,label,maxDist)
     if not obj or not obj.Parent then return end
     local showCategory = tcfg.On
-    local showHealth = S.ESPHealth and showCategory
+    -- Health فقط للكائنات التي تملك Humanoid (لاعبين) وليس لـ Wire Eye أو غيرها
+    local hasHumanoid = obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") ~= nil
+    local showHealth = S.ESPHealth and showCategory and hasHumanoid
     local anyOn = showCategory or showHealth
     local d = espReg[obj]
     if not anyOn then if d then if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end; if d.BB then d.BB.Enabled=false end end; return end
@@ -411,7 +412,7 @@ local function ApplyESP(obj,tcfg,label,maxDist)
     elseif mode=="Name" then if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end; if d.BB then d.BB.Enabled=true end; if d.Lbl then d.Lbl.Visible=showCategory end end
     if d.HpL then
         if showHealth then
-            local hum=obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid")
+            local hum = obj:FindFirstChildOfClass("Humanoid")
             if hum and hum.Health>0 then
                 local hp=math.floor(hum.Health+0.5); local mhp=math.max(math.floor(hum.MaxHealth+0.5),1)
                 local r=math.clamp(hum.Health/mhp,0,1)
@@ -602,7 +603,7 @@ function SetFPSBooster(on)
     table.insert(fpsConns,workspace.DescendantAdded:Connect(function(d) if d:IsA("ParticleEmitter") or d:IsA("Trail") then pcall(function() task.defer(function() if S.FPSBooster then d.Enabled=false end end) end) end end))
 end
 
--- CONFIGS (موجودة كاملة)
+-- CONFIGS
 local function ListCfgs()
     if not listfiles then return {} end
     local r={}; local ok,fs=pcall(listfiles,CFG_FOLDER); if not ok then return r end
@@ -708,14 +709,14 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.2.8",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.2.9",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
     end) end)
 end
 
--- LANGUAGE GUI
+-- LANGUAGE GUI (مختصرة لكن كاملة)
 local function ShowLangGUI(callback)
     local sg=Instance.new("ScreenGui"); sg.Name="PH_LangSelect"; sg.IgnoreGuiInset=true; sg.ResetOnSpawn=false
     sg.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
@@ -729,7 +730,7 @@ local function ShowLangGUI(callback)
     local pg=Instance.new("UIGradient",panel); pg.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(18,8,40)),ColorSequenceKeypoint.new(1,Color3.fromRGB(8,4,20))}); pg.Rotation=135
     local icon=Instance.new("TextLabel",panel); icon.Size=UDim2.fromOffset(40,40); icon.Position=UDim2.new(0.5,-20,0,14); icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58); title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.2.8"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.2.9"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84); sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
     local div=Instance.new("Frame",panel); div.Size=UDim2.new(1,-30,0,1); div.Position=UDim2.new(0,15,0,112); div.BackgroundColor3=Color3.fromRGB(80,40,160); div.BackgroundTransparency=0.5; div.BorderSizePixel=0; div.ZIndex=3
@@ -751,7 +752,7 @@ local function ShowLangGUI(callback)
     arBtn.Activated:Connect(function() Choose("ar") end)
 end
 
--- LOADING SCREEN (مختصرة لكن كاملة)
+-- LOADING SCREEN (مختصرة)
 local function ShowLoadingScreen(callback)
     local sg=Instance.new("ScreenGui"); sg.Name="PH_Loading"; sg.IgnoreGuiInset=true; sg.ResetOnSpawn=false
     local ok2=pcall(function() sg.Parent=game:GetService("CoreGui") end); if not ok2 then sg.Parent=LP.PlayerGui end
@@ -760,7 +761,7 @@ local function ShowLoadingScreen(callback)
     local panel=Instance.new("Frame",sg); panel.AnchorPoint=Vector2.new(0.5,0.5); panel.Position=UDim2.new(0.5,0,0.5,0); panel.Size=UDim2.fromOffset(380,200); panel.BackgroundTransparency=1; panel.ZIndex=2
     local moonL=Instance.new("TextLabel",panel); moonL.Size=UDim2.fromOffset(50,50); moonL.Position=UDim2.new(0.5,-25,0,-10); moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46); titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.2.8"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.2.9"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84); subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
     local barBG=Instance.new("Frame",panel); barBG.Size=UDim2.new(1,0,0,14); barBG.Position=UDim2.new(0,0,0,102); barBG.BackgroundColor3=Color3.fromRGB(30,15,60); barBG.BorderSizePixel=0; barBG.ZIndex=3
@@ -786,7 +787,7 @@ local function ShowLoadingScreen(callback)
     end)
 end
 
--- BUILD WINDOW (كاملة بجميع التبويبات)
+-- BUILD WINDOW (كل التبويبات)
 function BuildWindow()
     local wOk,wErr=pcall(function() WindUI=loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))() end)
     if not wOk or not WindUI then error("[PH] WindUI: "..tostring(wErr)) end
@@ -797,7 +798,7 @@ function BuildWindow()
         Size=UDim2.fromOffset(650,420), Transparent=true, Theme="Midnight", Resizable=false,
         Background="rbxassetid://113150461786091", BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v8.2.8",Color=Color3.fromRGB(120,60,240)}); Window:Tag({Title="Perfect",Color=Color3.fromRGB(30,255,130),Icon="star"})
+    Window:Tag({Title="v8.2.9",Color=Color3.fromRGB(120,60,240)}); Window:Tag({Title="Full",Color=Color3.fromRGB(30,255,130),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
     local TbInfo    =Window:Tab({Title=Tr("tab_info"),    Icon="info"              })
@@ -906,8 +907,55 @@ function BuildWindow()
     R.AutoFarm=TbFarm:Toggle({Title=Tr("auto_farm"),Value=S.AutoFarm,Callback=function(v) S.AutoFarm=v; SetAutoFarm(v) end})
     end
 
-    -- Config Tab (same)
-    -- Settings Tab (same)
+    -- Config Tab (ممتلئ)
+    do local cfgInput=""; local selCfg=nil; local cfgDD=nil
+    TbConfig:Input({Title=Tr("cfg_name"),Placeholder="v1",Callback=function(t) if t and t~="" then cfgInput=t end end})
+    TbConfig:Button({Title=Tr("cfg_create"),Callback=function()
+        if cfgInput=="" then return end
+        if SaveCfg(cfgInput) then local l=ListCfgs(); if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end end
+    end})
+    local iL=ListCfgs()
+    cfgDD=TbConfig:Dropdown({Title=Tr("cfg_select"),Values=#iL>0 and iL or {"(none)"},Value=iL[1] or nil,Multi=false,AllowNone=true,Callback=function(v) selCfg=v end})
+    if #iL>0 then selCfg=iL[1] end
+    TbConfig:Button({Title=Tr("cfg_load"),Callback=function()
+        if not selCfg or selCfg=="(none)" then return end
+        local n=LoadCfg(selCfg)
+        if n then
+            SyncUI(); ConnectStamina(); SetAntiAFK(S.AntiAFK)
+            if S.AllowJump then SetAllowJump(true) end; if S.AutoRun then SetAutoRun(true) end
+            if S.BypassSlow then SetBypassSlow(true) end; if S.InstantGen then StartInstantGen() end
+            if S.FullBright then SetFullBright(true) end; if S.HideGenGui then SetHideGenGui(true) end
+            if S.InstantPrompt then SetInstantPrompt(true) end; if S.AutoFarm then SetAutoFarm(true) end
+            if S.AutoSwing then S.AutoSwing=true end; if S.AutoParry then S.AutoParry=true end
+            if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
+            SetFOV(S.FovValue); ConnectAntiDie()
+        end
+    end})
+    TbConfig:Divider()
+    local cA=GetAutoLoad()
+    TbConfig:Toggle({Title=Tr("cfg_auto"),Value=cA~=nil,Callback=function(v)
+        if v then if selCfg and selCfg~="(none)" then SetAutoLoad(selCfg) end else SetAutoLoad("") end
+    end})
+    TbConfig:Button({Title=Tr("cfg_delete"),Callback=function()
+        if not selCfg or selCfg=="(none)" then return end
+        pcall(function() if delfile then delfile(CFG_FOLDER.."/"..selCfg..".json") end end)
+        local l=ListCfgs(); if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end; selCfg=nil
+    end})
+    end
+
+    -- Settings Tab (ممتلئ)
+    do local R=uiRefs
+    TbSettings:Slider({Title=Tr("ui_scale"),Step=0.05,Value={Min=0.7,Max=1.5,Default=1.0},Callback=function(v) ApplyScale(v) end})
+    TbSettings:Slider({Title=Tr("ui_alpha"),Step=0.05,Value={Min=0,Max=0.9,Default=0},Callback=function(v) ApplyAlpha(v) end})
+    TbSettings:Divider()
+    R.AntiAFK=TbSettings:Toggle({Title=Tr("anti_afk"),Value=S.AntiAFK,Callback=function(v) S.AntiAFK=v; SetAntiAFK(v) end})
+    R.FPSBooster=TbSettings:Toggle({Title=Tr("fps_boost"),Value=S.FPSBooster,Callback=function(v) S.FPSBooster=v; SetFPSBooster(v) end})
+    TbSettings:Keybind({Title=Tr("toggle_ui"),Value="RightControl",Callback=function(k) pcall(function() Window:SetToggleKey(Enum.KeyCode[k]) end) end})
+    TbSettings:Divider()
+    TbSettings:Button({Title=Tr("lang_btn"),Callback=function()
+        local nl=LANG=="en" and "ar" or "en"; LANG=nl; N("Language","Switched - re-execute",4,"globe")
+    end})
+    end
 
     ConnectStamina(); SetAntiAFK(S.AntiAFK)
     if S.AllowJump then SetAllowJump(true) end; if S.AutoRun then SetAutoRun(true) end
@@ -930,10 +978,10 @@ function BuildWindow()
             if kf then for _,m in ipairs(kf:GetChildren()) do HookKillerAnim(m) end end end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v8.2.8","All features perfected",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v8.2.9","All tabs filled",5,"moon")
 end
 
--- CAM LOCK (العناصر المتبقية)
+-- CAM LOCK (متبقي)
 local camActive=false
 function FindNearestSurvivor()
     local char = LP.Character; local myRoot = char and char:FindFirstChild("HumanoidRootPart")
@@ -1015,6 +1063,36 @@ RunService.RenderStepped:Connect(function()
     if S.CamTarget and S.CamTarget:FindFirstChild("HumanoidRootPart") then
         Camera.CFrame=CFrame.new(Camera.CFrame.Position, S.CamTarget:FindFirstChild("HumanoidRootPart").Position + Vector3.new(0,2.5,0))
     else camActive=false; S.CamTarget=nil end
+end)
+
+-- ⚠️ BYPASS SLOW HELPER (لتساعدني تصلحها)
+-- ضع هذا الكود في منفذك ثم استخدم المهارة التي تسبب Stun، وقل لي ما هي الكلمات التي تظهر في المخرجات (Attributes & Tags).
+-- بعدها سأدمج الإصلاح مباشرة.
+print("[PH] Bypass Helper started. Use a stun ability...")
+LP.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
+    local attrs = {}
+    for _, attr in ipairs({"Stun","Stunned","IsStunned","Ragdoll","IsRagdoll","Ragdolled","Confusion","Slowed","Slowness"}) do
+        attrs[attr] = char:GetAttribute(attr)
+    end
+    print("[PH] Initial attrs:", attrs)
+    local tags = {}
+    for _, tag in ipairs({"Stun","Stunned","Blinded","Confusion","SlowStop"}) do
+        if CollectionService:HasTag(char, tag) then tags[#tags+1] = tag end
+    end
+    if #tags > 0 then print("[PH] Initial tags:", table.concat(tags, ", ")) end
+    char.AttributeChanged:Connect(function(attr)
+        local val = char:GetAttribute(attr)
+        print("[PH] Attribute changed:", attr, "=", val)
+    end)
+    char:FindFirstChildOfClass("Humanoid"):StateChanged:Connect(function(_, newState)
+        print("[PH] Humanoid State:", newState)
+    end)
+end)
+task.spawn(function()
+    while task.wait(0.0) do
+        -- فقط لضمان بقاء المساعد نشطاً
+    end
 end)
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
