@@ -1,5 +1,5 @@
 --[[
-  PHANTOM HUB v8.3 – STABLE & COMPLETE
+  PHANTOM HUB v8.4 – HEALTH ESP FIXED + STUN HELPER
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
   PlaceId: 70845479499574
@@ -35,7 +35,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.3\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.4\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -57,8 +57,8 @@ local T={en={},ar={}}
 
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v8.3"
-T.en.whats_new_body="+ No errors on startup\n+ All tabs filled\n+ Health ESP players only"
+T.en.whats_new_title="What's New  v8.4"
+T.en.whats_new_body="+ Health ESP now visible in all modes\n+ Bypass Slow helper added (check console)"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
 T.en.auto_run="Auto Run"; T.en.bypass_slow="Bypass Slowness"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
@@ -83,8 +83,8 @@ T.en.fps_boost="FPS Booster"
 
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v8.3"
-T.ar.whats_new_body="+ لا أخطاء عند التشغيل\n+ كل التبويبات ممتلئة\n+ صحة ESP للاعبين فقط"
+T.ar.whats_new_title="الجديد  v8.4"
+T.ar.whats_new_body="+ صحة ESP تعمل الآن في جميع الأوضاع\n+ مساعد تجاوز البطء (انظر وحدة التحكم)"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
 T.ar.auto_run="جري دائم"; T.ar.bypass_slow="تجاوز الابطاء"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
@@ -348,7 +348,7 @@ task.spawn(function()
     end
 end)
 
--- ESP SYSTEM (Health only players)
+-- ESP SYSTEM
 local espReg={}
 local function ClearAllESP()
     for _, d in pairs(espReg) do pcall(function() if d.HL then d.HL:Destroy() end; if d.SB then d.SB:Destroy() end; if d.BB then d.BB:Destroy() end end) end
@@ -397,9 +397,12 @@ local function ApplyESP(obj,tcfg,label,maxDist)
     if d.SB then d.SB.Color3=tcfg.Color; d.SB.SurfaceColor3=tcfg.Color end
     if d.Lbl then d.Lbl.TextColor3=tcfg.Color; d.Lbl.Text=label end
     local mode = S.ESPMode
-    if mode=="Highlight" then if d.HL then d.HL.Enabled=showCategory end; if d.SB then d.SB.Visible=false end; if d.BB then d.BB.Enabled=false end
-    elseif mode=="Chams" then if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=showCategory end; if d.BB then d.BB.Enabled=false end
-    elseif mode=="Name" then if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end; if d.BB then d.BB.Enabled=true end; if d.Lbl then d.Lbl.Visible=showCategory end end
+    if mode=="Highlight" then if d.HL then d.HL.Enabled=showCategory end; if d.SB then d.SB.Visible=false end
+    elseif mode=="Chams" then if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=showCategory end
+    elseif mode=="Name" then if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end end
+    local needBB = (mode=="Name" and showCategory) or showHealth
+    if d.BB then d.BB.Enabled = needBB end
+    if d.Lbl then d.Lbl.Visible = (mode=="Name" and showCategory) end
     if d.HpL then
         if showHealth then
             local hum = obj:FindFirstChildOfClass("Humanoid")
@@ -486,19 +489,22 @@ local function ConnectStamina()
     end)
 end
 
--- NOCLIP / JUMP / ANTI DIE (إعدادات سريعة)
+-- NOCLIP
 local noClipConn=nil
 function SetNoClip(enabled)
     if noClipConn then noClipConn:Disconnect(); noClipConn=nil end; S.NoClip=enabled
     if not enabled then pcall(function() local c=LP.Character; if not c then return end for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=true end end end); return end
     noClipConn=RunService.Stepped:Connect(function() pcall(function() local c=LP.Character; if not c then return end for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end end) end)
 end
+-- JUMP
 local jumpConn=nil
 function SetAllowJump(enabled)
     if jumpConn then jumpConn:Disconnect(); jumpConn=nil end
     if not enabled then pcall(function() local c=LP.Character; if not c then return end local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=0 end end); return end
     jumpConn=RunService.Heartbeat:Connect(function() pcall(function() local c=LP.Character; if not c then return end local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=5 end end) end)
 end
+
+-- ANTI DIE
 local antiDieActive=false
 function ConnectAntiDie()
     if not LPHum then return end
@@ -696,7 +702,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.3",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.4",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
@@ -717,7 +723,7 @@ local function ShowLangGUI(callback)
     local pg=Instance.new("UIGradient",panel); pg.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(18,8,40)),ColorSequenceKeypoint.new(1,Color3.fromRGB(8,4,20))}); pg.Rotation=135
     local icon=Instance.new("TextLabel",panel); icon.Size=UDim2.fromOffset(40,40); icon.Position=UDim2.new(0.5,-20,0,14); icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58); title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.3"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.4"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84); sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
     local div=Instance.new("Frame",panel); div.Size=UDim2.new(1,-30,0,1); div.Position=UDim2.new(0,15,0,112); div.BackgroundColor3=Color3.fromRGB(80,40,160); div.BackgroundTransparency=0.5; div.BorderSizePixel=0; div.ZIndex=3
@@ -739,24 +745,20 @@ local function ShowLangGUI(callback)
     arBtn.Activated:Connect(function() Choose("ar") end)
 end
 
--- LOADING SCREEN (صحيحة بالكامل)
+-- LOADING SCREEN
 local function ShowLoadingScreen(callback)
     local sg=Instance.new("ScreenGui"); sg.Name="PH_Loading"; sg.IgnoreGuiInset=true; sg.ResetOnSpawn=false
     local ok2=pcall(function() sg.Parent=game:GetService("CoreGui") end); if not ok2 then sg.Parent=LP.PlayerGui end
     local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(5,2,15); bg.ZIndex=1
-
     local bgg = Instance.new("UIGradient",bg)
     bgg.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(15,5,35)),ColorSequenceKeypoint.new(1,Color3.fromRGB(5,2,15))})
     bgg.Rotation=135
-
     local panel=Instance.new("Frame",sg); panel.AnchorPoint=Vector2.new(0.5,0.5); panel.Position=UDim2.new(0.5,0,0.5,0); panel.Size=UDim2.fromOffset(380,200); panel.BackgroundTransparency=1; panel.ZIndex=2
-
     local moonL=Instance.new("TextLabel",panel); moonL.Size=UDim2.fromOffset(50,50); moonL.Position=UDim2.new(0.5,-25,0,-10); moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46); titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.3"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.4"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84); subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
-
     local barBG=Instance.new("Frame",panel); barBG.Size=UDim2.new(1,0,0,14); barBG.Position=UDim2.new(0,0,0,102); barBG.BackgroundColor3=Color3.fromRGB(30,15,60); barBG.BorderSizePixel=0; barBG.ZIndex=3
     Instance.new("UICorner",barBG).CornerRadius=UDim.new(1,0)
     local barFill=Instance.new("Frame",barBG); barFill.Size=UDim2.new(0,0,1,0); barFill.BackgroundColor3=Color3.fromRGB(140,60,255); barFill.BorderSizePixel=0; barFill.ZIndex=4
@@ -765,7 +767,6 @@ local function ShowLoadingScreen(callback)
     bfg.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(160,80,255)),ColorSequenceKeypoint.new(1,Color3.fromRGB(80,30,200))})
     local pctL=Instance.new("TextLabel",panel); pctL.Size=UDim2.new(1,0,0,20); pctL.Position=UDim2.new(0,0,0,122); pctL.BackgroundTransparency=1; pctL.Font=Enum.Font.Gotham; pctL.TextSize=13
     pctL.TextColor3=Color3.fromRGB(140,110,200); pctL.Text="0%"; pctL.ZIndex=3
-
     local function TweenBar(f,t,dur)
         local info=TweenInfo.new(dur,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
         local tw=TweenService:Create(barFill,info,{Size=UDim2.new(t/100,0,1,0)}); tw:Play()
@@ -782,7 +783,7 @@ local function ShowLoadingScreen(callback)
     end)
 end
 
--- BUILD WINDOW (اكتمال كل التبويبات)
+-- BUILD WINDOW (كل التبويبات)
 function BuildWindow()
     local wOk,wErr=pcall(function() WindUI=loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))() end)
     if not wOk or not WindUI then error("[PH] WindUI: "..tostring(wErr)) end
@@ -793,7 +794,7 @@ function BuildWindow()
         Size=UDim2.fromOffset(650,420), Transparent=true, Theme="Midnight", Resizable=false,
         Background="rbxassetid://113150461786091", BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v8.3",Color=Color3.fromRGB(120,60,240)}); Window:Tag({Title="Stable",Color=Color3.fromRGB(30,255,130),Icon="star"})
+    Window:Tag({Title="v8.4",Color=Color3.fromRGB(120,60,240)}); Window:Tag({Title="ESP Fix",Color=Color3.fromRGB(30,255,130),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
     local TbInfo    =Window:Tab({Title=Tr("tab_info"),    Icon="info"              })
@@ -974,7 +975,7 @@ function BuildWindow()
             if kf then for _,m in ipairs(kf:GetChildren()) do HookKillerAnim(m) end end end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v8.3","Stable & Complete",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v8.4","Health ESP Fixed",5,"moon")
 end
 
 -- CAM LOCK (متبقي)
@@ -1059,6 +1060,33 @@ RunService.RenderStepped:Connect(function()
     if S.CamTarget and S.CamTarget:FindFirstChild("HumanoidRootPart") then
         Camera.CFrame=CFrame.new(Camera.CFrame.Position, S.CamTarget:FindFirstChild("HumanoidRootPart").Position + Vector3.new(0,2.5,0))
     else camActive=false; S.CamTarget=nil end
+end)
+
+-- BYPASS SLOW HELPER (مُعاد إدراجه)
+print("[PH] Bypass Helper started. Use a stun ability...")
+LP.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
+    task.delay(0.3, function()
+        local attrs = {}
+        for _, attr in ipairs({"Stun","Stunned","IsStunned","Ragdoll","IsRagdoll","Ragdolled","Confusion","Slowed","Slowness"}) do
+            attrs[attr] = char:GetAttribute(attr)
+        end
+        print("[PH] Initial attrs:", HttpService:JSONEncode(attrs))
+    end)
+    char.AttributeChanged:Connect(function(attr)
+        local val = char:GetAttribute(attr)
+        if attr == "Stun" or attr == "Stunned" or attr == "IsStunned" or attr == "Ragdoll" or attr == "Confusion" or attr == "Slowed" or attr == "Slowness" then
+            print("[PH] Attribute changed:", attr, "=", val)
+        end
+    end)
+    for _, tag in ipairs({"Stun","Stunned","Blinded","Confusion","SlowStop"}) do
+        CollectionService:GetInstanceAddedSignal(tag):Connect(function(obj)
+            if obj == char then print("[PH] Tag added:", tag) end
+        end)
+        CollectionService:GetInstanceRemovedSignal(tag):Connect(function(obj)
+            if obj == char then print("[PH] Tag removed:", tag) end
+        end)
+    end
 end)
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
