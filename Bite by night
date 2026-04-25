@@ -1,5 +1,5 @@
 --[[
-  PHANTOM HUB v7.3.3 – PERFECT & FINAL
+  PHANTOM HUB v8.0 – THE FINAL VERSION
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
   PlaceId: 70845479499574
@@ -17,7 +17,7 @@ local UserInputService = game:GetService("UserInputService")
 local LP               = Players.LocalPlayer
 local Camera           = workspace.CurrentCamera
 
-local SCRIPT_VERSION = 7
+local SCRIPT_VERSION = 8
 pcall(function()
     local ok,res=pcall(function() return game:HttpGet("https://raw.githubusercontent.com/zxeavr/Bite-by-night-/main/version.txt") end)
     if ok and res then
@@ -35,7 +35,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.3.3\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.0\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -57,8 +57,8 @@ local T={en={},ar={}}
 
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v7.3.3"
-T.en.whats_new_body="+ Auto Farm fully fixed\n+ ESP no longer disappears\n+ Info tab opens automatically\n+ Auto Run/Bypass no longer bypass stuns\n+ Parry range default 15 + foot circle + dynamic distance\n+ New background & info image"
+T.en.whats_new_title="What's New  v8.0"
+T.en.whats_new_body="+ Auto Farm restored (classic)\n+ Wire Eye & Health ESP fixed\n+ Parry circle under feet\n+ Info image is now wide\n+ Removed Show FOV, Simple ESP\n+ FOV no longer shakes camera\n+ Stable ESP never disappears"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
 T.en.auto_run="Auto Run"; T.en.bypass_slow="Bypass Slowness"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
@@ -66,15 +66,13 @@ T.en.anti_trap="Anti Trap"; T.en.anti_die="Anti Die"; T.en.anti_die_hp="HP Thres
 T.en.auto_barricade="Auto Barricade"; T.en.auto_escape="Auto Escape"
 T.en.instant_prompt="Instant Prompt"; T.en.instant_gen="Instant Generator"; T.en.gen_speed="Gen Speed (sec)"
 T.en.gen_now="Complete Now"; T.en.auto_parry="Auto Parry"; T.en.parry_range_basic="Main Attack Range"
-T.en.parry_range_pull="Pull Attack Range"; T.en.show_parry="Show Parry Circle"
-T.en.dynamic_parry="Dynamic Distance"; T.en.show_parry_range="Show Parry Range Circle"
+T.en.parry_range_pull="Pull Attack Range"; T.en.dynamic_parry="Dynamic Distance"; T.en.show_parry_range="Show Parry Range Circle"
 T.en.auto_swing="Auto Swing (M1)"; T.en.swing_range="Swing Range (studs)"
 T.en.esp_type="ESP Type"; T.en.health_esp="Health ESP"; T.en.esp_color="Color"; T.en.esp_on="Enable ESP"
 T.en.full_bright="Full Bright + Anti Blind"; T.en.no_fog="No Fog"; T.en.no_shadow="No Shadow"
 T.en.fov_ctrl="Field of View"; T.en.hide_gen_gui="Hide Generator GUI"
 T.en.cam_rotten="Cam Lock - The Rotten (Axe)"; T.en.cam_doppel="Cam Lock - Doppelganger/Mimic"
 T.en.cam_any="Cam Lock - Any Killer"; T.en.cam_any_range="Any Killer Range"
-T.en.show_fov="Show FOV Circle"; T.en.fov_color="FOV Color"; T.en.fov_radius="FOV Radius"
 T.en.lock_near="Lock to Nearest"; T.en.clear_lock="Clear Lock"
 T.en.wire_shake="Auto Shake Wire Eye"; T.en.shake_speed="Shake Speed (sec)"
 T.en.auto_farm="Auto Farm"; T.en.cfg_name="Config Name"; T.en.cfg_create="Create Config"
@@ -85,8 +83,8 @@ T.en.fps_boost="FPS Booster"
 
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v7.3.3"
-T.ar.whats_new_body="+ إصلاح المزرعة التلقائية\n+ ESP لم يعد يختفي\n+ تبويب المعلومات يفتح تلقائياً\n+ الجري/تجاوز الابطاء لم يعد يلغي الذهول\n+ نطاق الباري 15 + دائرة + ديناميكي\n+ خلفية وصورة جديدتين"
+T.ar.whats_new_title="الجديد  v8.0"
+T.ar.whats_new_body="+ تم استعادة المزرعة القديمة\n+ تم إصلاح ESP واير آي والصحة\n+ دائرة الصد تحت الأقدام\n+ صورة المعلومات عريضة\n+ حذف Show FOV و Simple ESP\n+ لم يعد التحكم بالـ FOV يهتز\n+ ESP مستقر لا يختفي"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
 T.ar.auto_run="جري دائم"; T.ar.bypass_slow="تجاوز الابطاء"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
@@ -94,15 +92,13 @@ T.ar.anti_trap="مضاد الفخ"; T.ar.anti_die="مضاد الموت"; T.ar.an
 T.ar.auto_barricade="تحصين تلقائي"; T.ar.auto_escape="هروب تلقائي"
 T.ar.instant_prompt="تفاعل فوري"; T.ar.instant_gen="مولد فوري"; T.ar.gen_speed="سرعة المولد"
 T.ar.gen_now="اكمال الان"; T.ar.auto_parry="باري تلقائي"; T.ar.parry_range_basic="نطاق ضربة عادية"
-T.ar.parry_range_pull="نطاق ضربة السحب"; T.ar.show_parry="دائرة الصد"
-T.ar.dynamic_parry="مسافة ديناميكية"; T.ar.show_parry_range="دائرة نطاق الصد"
+T.ar.parry_range_pull="نطاق ضربة السحب"; T.ar.dynamic_parry="مسافة ديناميكية"; T.ar.show_parry_range="دائرة نطاق الصد"
 T.ar.auto_swing="هجوم تلقائي (M1)"; T.ar.swing_range="نطاق الهجوم"
 T.ar.esp_type="نوع ESP"; T.ar.health_esp="ESP الصحة"; T.ar.esp_color="اللون"; T.ar.esp_on="تفعيل ESP"
 T.ar.full_bright="اضاءة كاملة + مضاد عمى"; T.ar.no_fog="بدون ضباب"; T.ar.no_shadow="بدون ظلال"
 T.ar.fov_ctrl="مجال الرؤية"; T.ar.hide_gen_gui="اخفاء واجهة المولد"
 T.ar.cam_rotten="قفل كاميرا - The Rotten (فأس)"; T.ar.cam_doppel="قفل كاميرا - Doppelganger/Mimic"
 T.ar.cam_any="قفل كاميرا - أي قاتل"; T.ar.cam_any_range="مدى أي قاتل"
-T.ar.show_fov="دائرة FOV"; T.ar.fov_color="لون FOV"; T.ar.fov_radius="نطاق FOV"
 T.ar.lock_near="قفل على الاقرب"; T.ar.clear_lock="الغاء القفل"
 T.ar.wire_shake="اهتزاز عين السلك"; T.ar.shake_speed="سرعة الاهتزاز"
 T.ar.auto_farm="زراعة تلقائية"; T.ar.cfg_name="اسم الاعداد"; T.ar.cfg_create="انشاء اعداد"
@@ -135,13 +131,11 @@ S.AntiDie=S.AntiDie or false; S.AntiDieHP=S.AntiDieHP or 30
 S.AutoEscape=S.AutoEscape or false; S.AutoBarricade=S.AutoBarricade or false
 S.InstantPrompt=S.InstantPrompt or false; S.InstantGen=S.InstantGen or false; S.GenDelay=S.GenDelay or 1.0
 S.AutoParry=S.AutoParry or false; S.ParryRangeBasic=S.ParryRangeBasic or 15
-S.ParryRangePull=S.ParryRangePull or 50; S.ShowParry=S.ShowParry or false
-S.DynamicParry=S.DynamicParry or false; S.ShowParryRange=S.ShowParryRange or false
+S.ParryRangePull=S.ParryRangePull or 50; S.DynamicParry=S.DynamicParry or false; S.ShowParryRange=S.ShowParryRange or false
 S.AutoSwing=S.AutoSwing or false; S.SwingRange=S.SwingRange or 12
 S.CamRotten=S.CamRotten or false; S.CamDoppel=S.CamDoppel or false
 S.CamAny=S.CamAny or false; S.CamAnyRange=S.CamAnyRange or 15
-S.CamFOV=S.CamFOV or 120; S.ShowFOV=S.ShowFOV or false
-S.FovColor=S.FovColor or Color3.fromRGB(255,80,80); S.CamTarget=nil
+S.CamFOV=S.CamFOV or 120
 S.AutoShakeWire=S.AutoShakeWire or false; S.ShakeSpeed=S.ShakeSpeed or 0.1
 S.AutoFarm=S.AutoFarm or false; S.AntiAFK=S.AntiAFK or false
 S.FPSBooster=S.FPSBooster or false; S.UIScale=S.UIScale or 1.0; S.UIAlpha=S.UIAlpha or 0
@@ -174,7 +168,7 @@ local function FireInput(a1,a2)
     end)
 end
 
--- AUTO PARRY (improved)
+-- AUTO PARRY (animation based – fallback until highlight detection)
 local ATTACK_ANIM_IDS={
     ["rbxassetid://70869035406359"]="basic",["rbxassetid://106673226682917"]="basic",
     ["rbxassetid://112503015929213"]="basic",["rbxassetid://120428956410756"]="basic",
@@ -217,43 +211,38 @@ local function SetAutoParry(on)
     end)
 end
 
--- PARRY RANGE CIRCLE (below feet)
-local parryRangeCircle
-local function UpdateParryRangeCircle()
+-- PARRY RANGE CIRCLE (disc under feet)
+local parryCirclePart
+local function UpdateParryCircle()
     local char = LP.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then
-        if parryRangeCircle then parryRangeCircle.Enabled = false end
+    if not hrp or not S.ShowParryRange then
+        if parryCirclePart then parryCirclePart.Enabled = false end
         return
     end
-    if not S.ShowParryRange then
-        if parryRangeCircle then parryRangeCircle.Enabled = false end
-        return
+    if not parryCirclePart then
+        parryCirclePart = Instance.new("Part")
+        parryCirclePart.Name = "PH_ParryDisc"
+        parryCirclePart.Anchored = true
+        parryCirclePart.CanCollide = false
+        parryCirclePart.Material = Enum.Material.SmoothPlastic
+        parryCirclePart.Color = Color3.fromRGB(255,0,0)
+        parryCirclePart.Transparency = 0.6
+        parryCirclePart.Shape = Enum.PartType.Cylinder
+        parryCirclePart.Size = Vector3.new(1,0.2,1)
+        parryCirclePart.Parent = workspace
     end
-    if not parryRangeCircle then
-        parryRangeCircle = Instance.new("Part")
-        parryRangeCircle.Name = "PH_ParryRange"
-        parryRangeCircle.Anchored = true
-        parryRangeCircle.CanCollide = false
-        parryRangeCircle.Material = Enum.Material.SmoothPlastic
-        parryRangeCircle.Color = Color3.fromRGB(255,0,0)
-        parryRangeCircle.Transparency = 0.7
-        parryRangeCircle.Shape = Enum.PartType.Cylinder
-        parryRangeCircle.Size = Vector3.new(1,0.2,1)
-        parryRangeCircle.Parent = workspace
-    end
-    local range = S.ParryRangeBasic*2  -- القطر
-    parryRangeCircle.Size = Vector3.new(range, 0.2, range)
-    parryRangeCircle.CFrame = hrp.CFrame * CFrame.new(0, -2, 0)  -- تحت الأقدام
-    parryRangeCircle.Enabled = true
+    local radius = S.ParryRangeBasic
+    parryCirclePart.Size = Vector3.new(radius*2, 0.2, radius*2)
+    local pos = hrp.Position
+    parryCirclePart.CFrame = CFrame.new(pos) * CFrame.Angles(0,0,0)  -- flat on ground
+    parryCirclePart.Enabled = true
 end
 task.spawn(function()
-    while task.wait(0.05) do
-        pcall(UpdateParryRangeCircle)
-    end
+    while task.wait(0.05) do pcall(UpdateParryCircle) end
 end)
 
--- DYNAMIC PARRY LOGIC
+-- DYNAMIC PARRY
 local function GetNearestKillerDistance()
     local char = LP.Character
     local myRoot = char and char:FindFirstChild("HumanoidRootPart")
@@ -277,53 +266,13 @@ task.spawn(function()
     while task.wait(0.1) do
         if S.AutoParry and S.DynamicParry then
             local dist = GetNearestKillerDistance()
-            local newRange = math.clamp(dist * 0.8, 5, 30)  -- نسبة 80% من المسافة
+            local newRange = math.clamp(dist * 0.8, 5, 30)
             S.ParryRangeBasic = math.floor(newRange)
         end
     end
 end)
 
--- SHOW PARRY (still available as screen circle if enabled)
-local parryGui=nil; local parryFrame=nil
-local function CreateParryCircle()
-    if parryGui and parryGui.Parent then return end
-    pcall(function()
-        parryGui=Instance.new("ScreenGui"); parryGui.Name="PH_Parry"
-        parryGui.ResetOnSpawn=false; parryGui.IgnoreGuiInset=true
-        parryGui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
-        local ok=pcall(function() parryGui.Parent=game:GetService("CoreGui") end)
-        if not ok then parryGui.Parent=LP.PlayerGui end
-        parryFrame=Instance.new("Frame",parryGui)
-        parryFrame.AnchorPoint=Vector2.new(0.5,0.5)
-        parryFrame.BackgroundTransparency=1; parryFrame.BorderSizePixel=0; parryFrame.ZIndex=8
-        local c=Instance.new("UICorner",parryFrame); c.CornerRadius=UDim.new(1,0)
-        local s=Instance.new("UIStroke",parryFrame); s.Color=Color3.fromRGB(255,60,60); s.Thickness=2.5; s.Transparency=0
-        parryFrame.Visible=false
-    end)
-end
-CreateParryCircle()
-
-task.spawn(function()
-    while task.wait(0.03) do
-        pcall(function()
-            if not S.ShowParry then if parryFrame then parryFrame.Visible=false end; return end
-            if not parryGui or not parryGui.Parent then CreateParryCircle() end
-            if not parryFrame then return end
-            local char=LP.Character; local root=char and char:FindFirstChild("HumanoidRootPart")
-            if not root then parryFrame.Visible=false; return end
-            local sp,vis=Camera:WorldToViewportPoint(root.Position+Vector3.new(0,2,0))
-            if not vis or sp.Z<0 then parryFrame.Visible=false; return end
-            parryFrame.Position=UDim2.fromOffset(sp.X,sp.Y)
-            local rEdge=root.Position+Vector3.new(0,2,0)+Camera.CFrame.RightVector*S.ParryRangeBasic
-            local ep,vis2=Camera:WorldToViewportPoint(rEdge)
-            local r=vis2 and math.abs(ep.X-sp.X) or 80
-            r=math.clamp(r,20,500)
-            parryFrame.Size=UDim2.fromOffset(r*2,r*2); parryFrame.Visible=true
-        end)
-    end
-end)
-
--- ESP SYSTEM (fixed duplicates)
+-- ESP SYSTEM (stable, never disappears)
 local espReg={}
 local function ClearAllESP()
     for _, d in pairs(espReg) do
@@ -378,26 +327,17 @@ local function ApplyESP(obj,tcfg,label,maxDist)
         end
         return
     end
-    if not d then
-        d = BuildESP(obj,tcfg.Color,label,maxDist)
-        if not d then return end
-    end
+    if not d then d = BuildESP(obj,tcfg.Color,label,maxDist); if not d then return end end
     if d.HL then d.HL.FillColor=tcfg.Color; d.HL.OutlineColor=tcfg.Color end
     if d.SB then d.SB.Color3=tcfg.Color; d.SB.SurfaceColor3=tcfg.Color end
     if d.Lbl then d.Lbl.TextColor3=tcfg.Color; d.Lbl.Text=label end
     local mode = S.ESPMode
-    if mode=="Simple" then
-        if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end
-        if d.BB then d.BB.Enabled=true end; if d.Lbl then d.Lbl.Visible=true end
-    elseif mode=="Highlight" then
-        if d.HL then d.HL.Enabled=true end; if d.SB then d.SB.Visible=false end
-        if d.BB then d.BB.Enabled=false end
+    if mode=="Highlight" then
+        if d.HL then d.HL.Enabled=true end; if d.SB then d.SB.Visible=false end; if d.BB then d.BB.Enabled=false end
     elseif mode=="Chams" then
-        if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=true end
-        if d.BB then d.BB.Enabled=false end
+        if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=true end; if d.BB then d.BB.Enabled=false end
     elseif mode=="Name" then
-        if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end
-        if d.BB then d.BB.Enabled=true end; if d.Lbl then d.Lbl.Visible=true end
+        if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end; if d.BB then d.BB.Enabled=true end; if d.Lbl then d.Lbl.Visible=true end
     end
     if d.HpL then
         if S.ESPHealth then
@@ -415,8 +355,7 @@ local function ProcessFolder(folder,key,label,maxDist)
     if not folder then return end
     for _,obj in ipairs(folder:GetChildren()) do
         if obj.Name==LP.Name then continue end
-        if obj:IsA("Model") then ApplyESP(obj,S.T[key],label,maxDist)
-        elseif obj:IsA("BasePart") and not obj.Parent then ApplyESP(obj,S.T[key],label,maxDist) end
+        if obj:IsA("Model") or obj:IsA("BasePart") then ApplyESP(obj,S.T[key],label,maxDist) end
     end
 end
 task.spawn(function()
@@ -441,7 +380,10 @@ task.spawn(function()
             end
             local ig=workspace:FindFirstChild("IGNORE")
             if ig then
-                for _,v in ipairs(ig:GetChildren()) do if v.Name=="Battery" and v:IsA("BasePart") then ApplyESP(v,S.T.Battery,"Battery") end end
+                for _,v in ipairs(ig:GetChildren()) do
+                    if v.Name=="Battery" and v:IsA("BasePart") then ApplyESP(v,S.T.Battery,"Battery") end
+                    if v.Name=="Minion" or v.Name=="WireEye" or v.Name=="Wire Eye" then ApplyESP(v,S.T.WireEye,"Wire Eye",40) end
+                end
                 ProcessFolder(ig:FindFirstChild("Minion"),"WireEye","Wire Eye",40)
                 ProcessFolder(ig:FindFirstChild("Trap"),"Trap","Trap",35)
             end
@@ -449,7 +391,7 @@ task.spawn(function()
     end
 end)
 
--- LIGHTING
+-- LIGHTING / ENVIRONMENT
 local origA=Lighting.Ambient; local origBr=Lighting.Brightness
 local origFE=Lighting.FogEnd; local origFS=Lighting.FogStart
 local blindFolder=nil; local blindConn=nil
@@ -481,13 +423,13 @@ task.spawn(function()
         Lighting.GlobalShadows=not S.NoShadow
     end) end
 end)
-local fovConn=nil
+-- FOV: apply once, no shake
 local function SetFOV(v)
-    S.FovValue=v; if fovConn then fovConn:Disconnect(); fovConn=nil end
-    fovConn=RunService.Heartbeat:Connect(function() pcall(function() Camera.FieldOfView=S.FovValue end) end)
+    S.FovValue=v
+    pcall(function() Camera.FieldOfView=v end)
 end
 
--- HIDE GEN GUI
+-- HIDE GEN GUI (hide only)
 local BLOCK_GUIS={GeneratorUI=true,WireyesUI=true,Gen=true}
 local hideGuiConn=nil
 local function SetHideGenGui(on)
@@ -500,6 +442,7 @@ local function SetHideGenGui(on)
     hideGuiConn=LP.PlayerGui.ChildAdded:Connect(K)
 end
 
+-- STAMINA
 local staminaConn=nil; local settingStamina=false
 local function ConnectStamina()
     if staminaConn then staminaConn:Disconnect(); staminaConn=nil end
@@ -517,6 +460,7 @@ CollectionService:GetInstanceAddedSignal("SlowStop"):Connect(function(obj)
     end
 end)
 
+-- NOCLIP
 local noClipConn=nil
 local function SetNoClip(enabled)
     if noClipConn then noClipConn:Disconnect(); noClipConn=nil end; S.NoClip=enabled
@@ -530,6 +474,7 @@ local function SetNoClip(enabled)
     end)
 end
 
+-- JUMP
 local jumpConn=nil
 local function SetAllowJump(enabled)
     if jumpConn then jumpConn:Disconnect(); jumpConn=nil end
@@ -543,19 +488,17 @@ local function SetAllowJump(enabled)
     end)
 end
 
--- AUTO RUN / BYPASS SLOW (now respects stun/ragdoll)
+-- AUTO RUN / BYPASS (disabled when stunned)
 local function IsPlayerDisabled()
     local char = LP.Character
     if not char then return true end
     local hum = char:FindFirstChildOfClass("Humanoid")
     if hum and (hum:GetState() == Enum.HumanoidStateType.Physics or hum:GetState() == Enum.HumanoidStateType.Dead) then return true end
     for _, attr in ipairs({"Stun","Stunned","IsStunned","Ragdoll","IsRagdoll","Ragdolled","Confusion"}) do
-        local val = char:GetAttribute(attr)
-        if val == true then return true end
+        if char:GetAttribute(attr) == true then return true end
     end
     return false
 end
-
 local autoRunConn=nil
 local function SetAutoRun(on)
     if autoRunConn then autoRunConn:Disconnect(); autoRunConn=nil end; if not on then return end
@@ -565,7 +508,6 @@ local function SetAutoRun(on)
             local rs=c:GetAttribute("RunSpeed"); c:SetAttribute("WalkSpeed",(rs and rs~=0) and rs or 24) end)
     end)
 end
-
 local bypassConn=nil
 local function SetBypassSlow(on)
     if bypassConn then bypassConn:Disconnect(); bypassConn=nil end; if not on then return end
@@ -575,7 +517,6 @@ local function SetBypassSlow(on)
             if not LPChar or not LPHum then return end
             local spd=S.RunSpeed; LPHum.WalkSpeed=spd
             LPChar:SetAttribute("CustomSpeed",spd); LPChar:SetAttribute("ModifiedMovementSpeed",spd)
-            local rs=LPChar:GetAttribute("RunSpeed"); if rs and rs~=spd then LPChar:SetAttribute("RunSpeed",spd) end
         end)
     end)
 end
@@ -584,7 +525,6 @@ end
 local masterConn=nil
 local function MasterHeartbeat()
     local char = LP.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
     if S.InfStamina and char then
         pcall(function() char:SetAttribute("Stamina",char:GetAttribute("MaxStamina") or 100) end)
     end
@@ -598,31 +538,9 @@ local function MasterHeartbeat()
             if CollectionService:HasTag(char,t) then CollectionService:RemoveTag(char,t) end
         end
     end
-    if S.AntiRagdoll and hum then
-        if hum:GetState()==Enum.HumanoidStateType.Physics then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
-    end
-    if S.CamAny and not camActive then
-        local myRoot = char and char:FindFirstChild("HumanoidRootPart")
-        if myRoot then
-            local pf = workspace:FindFirstChild("PLAYERS"); local kf = pf and pf:FindFirstChild("KILLER")
-            if kf then
-                local kidnapper = kf:FindFirstChildOfClass("Model")
-                if kidnapper then
-                    local kr = kidnapper:FindFirstChild("HumanoidRootPart")
-                    if kr then
-                        local dist = (kr.Position - myRoot.Position).Magnitude
-                        if dist <= S.CamAnyRange then
-                            local direction = (myRoot.Position - kr.Position).Unit
-                            local dot = kr.CFrame.LookVector:Dot(direction)
-                            if dot > 0.3 then
-                                camActive = true
-                                S.CamTarget = kr
-                            end
-                        end
-                    end
-                end
-            end
-        end
+    if S.AntiRagdoll and char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum and hum:GetState()==Enum.HumanoidStateType.Physics then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
     end
 end
 local function ToggleMasterLoop(on)
@@ -630,7 +548,6 @@ local function ToggleMasterLoop(on)
     if on then masterConn = RunService.Heartbeat:Connect(MasterHeartbeat) end
 end
 
-local STUN_TAGS_CONFUSION = {"Confusion"}
 CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
     if not S.AntiConfusion then return end
     if obj==LP.Character or (LP.Character and obj:IsDescendantOf(LP.Character)) then
@@ -638,6 +555,7 @@ CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
     end
 end)
 
+-- ANTI TRAP
 local TRAP_ATTRS={"Trapped","BeartrapCaught","Caught","InTrap","Tripped","Snared","TrapCaught"}
 local TRAP_TAGS={"Trapped","BeartrapCaught","Bear","InBearTrap","BearTrap"}
 local antiTrapConn=nil
@@ -668,6 +586,7 @@ local function SetAntiTrap(on)
     end)
 end
 
+-- ANTI DIE
 local antiDieActive=false
 local function ConnectAntiDie()
     if not LPHum then return end
@@ -687,6 +606,7 @@ local function ConnectAntiDie()
     end)
 end
 
+-- AUTO BARRICADE
 local barConn=nil
 local function SetBarricade(on)
     if barConn then barConn:Disconnect(); barConn=nil end; S.AutoBarricade=on; if not on then return end
@@ -702,6 +622,7 @@ local function SetBarricade(on)
     end)
 end
 
+-- ESCAPE
 local function EscapeMap()
     pcall(function()
         local gF=workspace:FindFirstChild("GAME"); local cE=gF and gF:FindFirstChild("CAN_ESCAPE")
@@ -740,6 +661,7 @@ local function SetAutoEscape(on)
     end)
 end
 
+-- INSTANT PROMPT
 local promptConn=nil
 local function SetInstantPrompt(on)
     if promptConn then promptConn:Disconnect(); promptConn=nil end; if not on then return end
@@ -747,6 +669,7 @@ local function SetInstantPrompt(on)
     promptConn=workspace.DescendantAdded:Connect(function(d) if d:IsA("ProximityPrompt") then pcall(function() d.HoldDuration=0 end) end end)
 end
 
+-- INSTANT GEN (works even if hidden)
 local function InstantGenNow()
     for _,g in ipairs(LP.PlayerGui:GetChildren()) do if g:IsA("ScreenGui") then
         for _,d in ipairs(g:GetDescendants()) do
@@ -771,30 +694,7 @@ local function StartInstantGen()
 end
 local function StopInstantGen() if genGuiConn then genGuiConn:Disconnect(); genGuiConn=nil end end
 
--- AUTO FARM (fixed)
-local warpRequest = nil
-local function GetWarpRequest()
-    if warpRequest then return warpRequest end
-    pcall(function()
-        warpRequest = RS:WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Request")
-    end)
-    return warpRequest
-end
-local function SendWarpRequests(requests)
-    local req = GetWarpRequest()
-    if not req then return end
-    local tbl = {}
-    for _, r in ipairs(requests) do
-        table.insert(tbl, {r[1], r[2] or {}})
-    end
-    local args = {
-        buffer.fromstring("\003"),
-        "\000",
-        tbl
-    }
-    req:FireServer(unpack(args))
-end
-
+-- AUTO FARM (OLD STYLE, restored)
 local farmThread=nil
 local function SetAutoFarm(on)
     if farmThread then pcall(task.cancel,farmThread); farmThread=nil end; if not on then return end
@@ -807,29 +707,26 @@ local function SetAutoFarm(on)
                     local ig=workspace:FindFirstChild("IGNORE"); if not ig then return end
                     for _,b in ipairs(ig:GetChildren()) do
                         if b.Name=="Battery" and b:IsA("BasePart") then
-                            hrp.CFrame = b.CFrame
-                            for _=1, 10 do
-                                SendWarpRequests({{"75527", {}}})
-                                task.wait(0.25)
-                                if char:FindFirstChild("Battery") then break end
-                            end
-                            break
+                            hrp.CFrame=b.CFrame; task.wait(0.15)
+                            local pp=b:FindFirstChildOfClass("ProximityPrompt",true)
+                            if pp and fireproximityprompt then pcall(function() fireproximityprompt(pp) end) end; break
                         end
                     end
                 end
-                if char:FindFirstChild("Battery") then
-                    local mF=GetMap(); if not mF then return end
-                    local gens=mF:FindFirstChild("Generators"); if not gens then return end
-                    for _,gen in ipairs(gens:GetChildren()) do
-                        local prog=gen:GetAttribute("Progress") or 100
-                        if gen:IsA("Model") and prog<100 and gen.PrimaryPart then
-                            local tCF=gen.PrimaryPart.CFrame
-                            hrp.CFrame = tCF + Vector3.new(0,2,0)
-                            task.wait(0.2)
-                            SendWarpRequests({{"309391", {}}, {"595041", {}}})
-                            task.wait(1)
-                            break
+                local mF=GetMap(); if not mF then return end
+                local gens=mF:FindFirstChild("Generators"); if not gens then return end
+                for _,gen in ipairs(gens:GetChildren()) do
+                    local prog=gen:GetAttribute("Progress") or 100
+                    if gen:IsA("Model") and prog<100 and gen.PrimaryPart then
+                        local tCF=gen.PrimaryPart.CFrame
+                        hrp.CFrame=CFrame.new(tCF.Position-Vector3.new(0,300,0)); task.wait(0.1)
+                        hrp.CFrame=tCF+Vector3.new(0,2,0); task.wait(0.2)
+                        for _,d in ipairs(gen:GetDescendants()) do
+                            if d:IsA("ProximityPrompt") and d.Enabled then
+                                if fireproximityprompt then pcall(function() fireproximityprompt(d) end) end; break
+                            end
                         end
+                        task.wait(3); hrp.CFrame=CFrame.new(tCF.Position-Vector3.new(0,300,0)); task.wait(0.1); break
                     end
                 end
                 EscapeMap()
@@ -838,7 +735,7 @@ local function SetAutoFarm(on)
     end)
 end
 
--- AUTO SWING
+-- AUTO SWING (touch simulation)
 local m1ButtonCache = nil
 local function FindM1Button()
     if m1ButtonCache and m1ButtonCache.Parent then return m1ButtonCache end
@@ -891,39 +788,8 @@ local function SetAutoSwing(on)
     end)
 end
 
--- CAM LOCK
+-- CAM LOCK (unchanged)
 local camActive=false; local camStopPending=false
-
-local fovGui=nil; local fovFrame=nil
-local function CreateFovCircle()
-    if fovGui and fovGui.Parent then return end
-    pcall(function()
-        fovGui=Instance.new("ScreenGui"); fovGui.Name="PH_FOV"; fovGui.ResetOnSpawn=false
-        fovGui.IgnoreGuiInset=true; fovGui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
-        local ok=pcall(function() fovGui.Parent=game:GetService("CoreGui") end)
-        if not ok then fovGui.Parent=LP.PlayerGui end
-        fovFrame=Instance.new("Frame",fovGui); fovFrame.AnchorPoint=Vector2.new(0.5,0.5)
-        fovFrame.BackgroundTransparency=1; fovFrame.BorderSizePixel=0; fovFrame.ZIndex=5
-        local c=Instance.new("UICorner",fovFrame); c.CornerRadius=UDim.new(1,0)
-        local s=Instance.new("UIStroke",fovFrame); s.Color=S.FovColor; s.Thickness=2.5; s.Transparency=0
-        fovFrame.Visible=false
-    end)
-end
-CreateFovCircle()
-task.spawn(function()
-    while task.wait(0.05) do
-        pcall(function()
-            if not S.ShowFOV then if fovFrame then fovFrame.Visible=false end; return end
-            if not fovGui or not fovGui.Parent then CreateFovCircle() end; if not fovFrame then return end
-            local vp=Camera.ViewportSize
-            fovFrame.Size=UDim2.fromOffset(S.CamFOV*2,S.CamFOV*2)
-            fovFrame.Position=UDim2.fromOffset(vp.X*0.5,vp.Y*0.5)
-            local s=fovFrame:FindFirstChildOfClass("UIStroke"); if s then s.Color=S.FovColor end
-            fovFrame.Visible=true
-        end)
-    end
-end)
-
 local function FindTarget()
     local vp=Camera.ViewportSize; local center=Vector2.new(vp.X*0.5,vp.Y*0.5)
     local best=nil; local bestD=S.CamFOV
@@ -1099,14 +965,12 @@ local function SaveCfg(name)
         AutoEscape=S.AutoEscape,AutoBarricade=S.AutoBarricade,
         InstantPrompt=S.InstantPrompt,InstantGen=S.InstantGen,GenDelay=S.GenDelay,
         AutoParry=S.AutoParry,ParryRangeBasic=S.ParryRangeBasic,ParryRangePull=S.ParryRangePull,
-        ShowParry=S.ShowParry,DynamicParry=S.DynamicParry,ShowParryRange=S.ShowParryRange,
+        DynamicParry=S.DynamicParry,ShowParryRange=S.ShowParryRange,
         AutoSwing=S.AutoSwing,SwingRange=S.SwingRange,
         CamRotten=S.CamRotten,CamDoppel=S.CamDoppel,CamAny=S.CamAny,CamAnyRange=S.CamAnyRange,
-        ShowFOV=S.ShowFOV,CamFOV=S.CamFOV,
         AutoShakeWire=S.AutoShakeWire,ShakeSpeed=S.ShakeSpeed,
         AutoFarm=S.AutoFarm,AntiAFK=S.AntiAFK,FPSBooster=S.FPSBooster,
-        UIScale=S.UIScale,UIAlpha=S.UIAlpha,
-        FovColor={S.FovColor.R,S.FovColor.G,S.FovColor.B},Targets={}}
+        UIScale=S.UIScale,UIAlpha=S.UIAlpha,Targets={}}
     for k,v in pairs(S.T) do data.Targets[k]={On=v.On,CR=v.Color.R,CG=v.Color.G,CB=v.Color.B} end
     return pcall(writefile,CFG_FOLDER.."/"..name..".json",HttpService:JSONEncode(data))
 end
@@ -1122,10 +986,9 @@ local function LoadCfg(name)
     S.AntiTrap=d.AntiTrap or false; S.AntiDie=d.AntiDie or false
     S.AutoEscape=d.AutoEscape or false; S.AutoBarricade=d.AutoBarricade or false
     S.InstantPrompt=d.InstantPrompt or false; S.InstantGen=d.InstantGen or false
-    S.AutoParry=d.AutoParry or false; S.ShowParry=d.ShowParry or false
-    S.DynamicParry=d.DynamicParry or false; S.ShowParryRange=d.ShowParryRange or false
+    S.AutoParry=d.AutoParry or false; S.DynamicParry=d.DynamicParry or false; S.ShowParryRange=d.ShowParryRange or false
     S.AutoSwing=d.AutoSwing or false; S.CamRotten=d.CamRotten or false; S.CamDoppel=d.CamDoppel or false
-    S.CamAny=d.CamAny or false; S.ShowFOV=d.ShowFOV or false; S.AutoShakeWire=d.AutoShakeWire or false
+    S.CamAny=d.CamAny or false; S.AutoShakeWire=d.AutoShakeWire or false
     S.AutoFarm=d.AutoFarm or false; S.AntiAFK=d.AntiAFK or false; S.FPSBooster=d.FPSBooster or false
     if d.FovValue then S.FovValue=d.FovValue end; if d.AntiDieHP then S.AntiDieHP=d.AntiDieHP end
     if d.CamFOV then S.CamFOV=d.CamFOV end; if d.GenDelay then S.GenDelay=d.GenDelay end
@@ -1134,7 +997,6 @@ local function LoadCfg(name)
     if d.ShakeSpeed then S.ShakeSpeed=d.ShakeSpeed end; if d.UIScale then S.UIScale=d.UIScale end
     if d.UIAlpha then S.UIAlpha=d.UIAlpha end; if d.NoClip then SetNoClip(d.NoClip) end
     if d.CamAnyRange then S.CamAnyRange=d.CamAnyRange end
-    if d.FovColor then S.FovColor=Color3.new(d.FovColor[1] or 1,d.FovColor[2] or 0.3,d.FovColor[3] or 0.3) end
     if d.Targets then for k,v in pairs(d.Targets) do
         if S.T[k] then S.T[k].On=v.On or false; if v.CR then S.T[k].Color=Color3.new(v.CR,v.CG,v.CB) end end
     end end
@@ -1155,10 +1017,9 @@ local function SyncUI()
         s("AntiRagdoll",S.AntiRagdoll); s("AntiConfusion",S.AntiConfusion); s("AntiTrap",S.AntiTrap)
         s("AntiDie",S.AntiDie); s("AutoBarricade",S.AutoBarricade); s("AutoEscape",S.AutoEscape)
         s("InstantPrompt",S.InstantPrompt); s("InstantGen",S.InstantGen)
-        s("AutoParry",S.AutoParry); s("ShowParry",S.ShowParry)
-        s("DynamicParry",S.DynamicParry); s("ShowParryRange",S.ShowParryRange)
+        s("AutoParry",S.AutoParry); s("DynamicParry",S.DynamicParry); s("ShowParryRange",S.ShowParryRange)
         s("AutoSwing",S.AutoSwing); s("CamRotten",S.CamRotten); s("CamDoppel",S.CamDoppel)
-        s("CamAny",S.CamAny); s("ShowFOV",S.ShowFOV); s("AutoShakeWire",S.AutoShakeWire)
+        s("CamAny",S.CamAny); s("AutoShakeWire",S.AutoShakeWire)
         s("AutoFarm",S.AutoFarm); s("AntiAFK",S.AntiAFK); s("FPSBooster",S.FPSBooster)
         s("FullBright",S.FullBright); s("NoFog",S.NoFog); s("NoShadow",S.NoShadow)
         s("HideGenGui",S.HideGenGui); s("ESPHealth",S.ESPHealth)
@@ -1196,7 +1057,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v7.3.3",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.0",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
@@ -1223,7 +1084,7 @@ local function ShowLangGUI(callback)
     icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58)
     title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v7.3.3"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.0"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84)
     sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
@@ -1266,7 +1127,7 @@ local function ShowLoadingScreen(callback)
     moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46)
     titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v7.3.3"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.0"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84)
     subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
@@ -1315,8 +1176,8 @@ function BuildWindow()
         Background="rbxassetid://113150461786091",
         BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v7.3.3",Color=Color3.fromRGB(120,60,240)})
-    Window:Tag({Title="Beta",Color=Color3.fromRGB(30,130,255),Icon="star"})
+    Window:Tag({Title="v8.0",Color=Color3.fromRGB(120,60,240)})
+    Window:Tag({Title="Final",Color=Color3.fromRGB(30,255,130),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
     local TbInfo    =Window:Tab({Title=Tr("tab_info"),    Icon="info"              })
@@ -1327,12 +1188,10 @@ function BuildWindow()
     local TbConfig  =Window:Tab({Title=Tr("tab_config"),  Icon="folder"            })
     local TbSettings=Window:Tab({Title=Tr("tab_settings"),Icon="sliders-horizontal" })
 
-    -- فتح تبويب المعلومات تلقائياً
-    task.delay(0.3, function()
-        pcall(function() Window:SelectTab(TbInfo) end)
-    end)
+    -- فتح Info تلقائياً
+    task.delay(0.3, function() pcall(function() Window:SelectTab(TbInfo) end) end)
 
-    -- حواف بيضاء للتبويبات
+    -- حواف بيضاء
     task.spawn(function()
         task.wait(0.8)
         pcall(function()
@@ -1362,11 +1221,11 @@ function BuildWindow()
         local ping=math.floor(LP:GetNetworkPing()*1000)
         pcall(function() infoPara:SetDesc("FPS: "..curFPS.."  .  Ping: "..ping.."ms\nAge: "..LP.AccountAge.." days  .  "..executor) end)
     end end)
-    TbInfo:Paragraph({Title=Tr("whats_new_title"),Desc=Tr("whats_new_body"),Thumbnail="rbxassetid://93386553868675",ThumbnailSize=414})
+    TbInfo:Paragraph({Title=Tr("whats_new_title"),Desc=Tr("whats_new_body"),Thumbnail="rbxassetid://93386553868675",ThumbnailSize=150})
     end
 
     do local R=uiRefs
-    R.InfStamina=TbMain:Toggle({Title=Tr("inf_stamina"),Value=S.InfStamina,Callback=function(v) S.InfStamina=v; ConnectStamina(); ToggleMasterLoop(v or S.AntiStun or S.AntiRagdoll or S.CamAny) end})
+    R.InfStamina=TbMain:Toggle({Title=Tr("inf_stamina"),Value=S.InfStamina,Callback=function(v) S.InfStamina=v; ConnectStamina(); ToggleMasterLoop(v or S.AntiStun or S.AntiRagdoll) end})
     R.NoClip=TbMain:Toggle({Title=Tr("noclip"),Value=S.NoClip,Callback=function(v) SetNoClip(v) end})
     R.AllowJump=TbMain:Toggle({Title=Tr("allow_jump"),Value=S.AllowJump,Callback=function(v) S.AllowJump=v; SetAllowJump(v) end})
     R.AutoRun=TbMain:Toggle({Title=Tr("auto_run"),Value=S.AutoRun,Callback=function(v) S.AutoRun=v; SetAutoRun(v) end})
@@ -1394,7 +1253,6 @@ function BuildWindow()
     TbMain:Slider({Title=Tr("parry_range_pull"),Step=1,Value={Min=10,Max=60,Default=50},Callback=function(v) S.ParryRangePull=v end})
     R.DynamicParry=TbMain:Toggle({Title=Tr("dynamic_parry"),Value=S.DynamicParry,Callback=function(v) S.DynamicParry=v; if v then parrySlider:SetDisabled(true) else parrySlider:SetDisabled(false) end end})
     R.ShowParryRange=TbMain:Toggle({Title=Tr("show_parry_range"),Value=S.ShowParryRange,Callback=function(v) S.ShowParryRange=v end})
-    R.ShowParry=TbMain:Toggle({Title=Tr("show_parry"),Value=S.ShowParry,Callback=function(v) S.ShowParry=v end})
     TbMain:Divider()
     R.AutoSwing=TbMain:Toggle({Title=Tr("auto_swing"),Value=S.AutoSwing,Callback=function(v) S.AutoSwing=v; SetAutoSwing(v) end})
     TbMain:Slider({Title=Tr("swing_range"),Step=1,Value={Min=5,Max=25,Default=12},Callback=function(v) S.SwingRange=v end})
@@ -1404,7 +1262,7 @@ function BuildWindow()
     end
 
     do local R=uiRefs
-    TbVisual:Dropdown({Title=Tr("esp_type"),Values={"Highlight","Chams","Name","Simple"},Value=S.ESPMode,Multi=false,Callback=function(v) S.ESPMode=v; ClearAllESP() end})
+    TbVisual:Dropdown({Title=Tr("esp_type"),Values={"Highlight","Chams","Name"},Value=S.ESPMode,Multi=false,Callback=function(v) S.ESPMode=v; ClearAllESP() end})
     R.ESPHealth=TbVisual:Toggle({Title=Tr("health_esp"),Value=S.ESPHealth,Callback=function(v) S.ESPHealth=v end})
     TbVisual:Divider()
     for _,row in ipairs({{"Killer","Killer"},{"Survivor","Survivor"},{"Generator","Generator"},{"Battery","Battery"},{"Fuse","Fuse"},{"Trap","Trap"},{"WireEye","Wire Eye"}}) do
@@ -1426,16 +1284,12 @@ function BuildWindow()
     do local R=uiRefs
     TbCombat:Paragraph({Title="Cam Lock Info",Desc="The Rotten: remote IDs + animation\nDoppelganger: animation + proximity\nAny Killer: distance + facing"})
     TbCombat:Divider()
-    R.CamRotten=TbCombat:Toggle({Title=Tr("cam_rotten"),Value=S.CamRotten,Callback=function(v) S.CamRotten=v; if not v then camActive=false; S.CamTarget=nil end end})
+    R.CamRotten=TbCombat:Toggle({Title=Tr("cam_rotten"),Value=S.CamRotten,Callback=function(v) S.CamRotten=v; if not v then camActive=false end end})
     R.CamDoppel=TbCombat:Toggle({Title=Tr("cam_doppel"),Value=S.CamDoppel,Callback=function(v) S.CamDoppel=v end})
     R.CamAny=TbCombat:Toggle({Title=Tr("cam_any"),Value=S.CamAny,Callback=function(v) S.CamAny=v; ToggleMasterLoop(true) end})
     TbCombat:Slider({Title=Tr("cam_any_range"),Step=1,Value={Min=5,Max=30,Default=15},Callback=function(v) S.CamAnyRange=v end})
-    TbCombat:Divider()
-    R.ShowFOV=TbCombat:Toggle({Title=Tr("show_fov"),Value=S.ShowFOV,Callback=function(v) S.ShowFOV=v end})
-    TbCombat:Colorpicker({Title=Tr("fov_color"),Default=S.FovColor,Callback=function(c) S.FovColor=c end})
-    TbCombat:Slider({Title=Tr("fov_radius"),Step=5,Value={Min=30,Max=300,Default=120},Callback=function(v) S.CamFOV=v end})
     TbCombat:Button({Title=Tr("lock_near"),Callback=function() S.CamTarget=FindTarget(); camActive=S.CamTarget~=nil end})
-    TbCombat:Button({Title=Tr("clear_lock"),Callback=function() camActive=false; S.CamTarget=nil end})
+    TbCombat:Button({Title=Tr("clear_lock"),Callback=function() camActive=false end})
     end
 
     do local R=uiRefs
@@ -1464,7 +1318,7 @@ function BuildWindow()
             if S.AutoSwing then SetAutoSwing(true) end; if S.AutoParry then SetAutoParry(true) end
             if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
             if S.FovValue~=70 then SetFOV(S.FovValue) end; ConnectAntiDie()
-            ToggleMasterLoop(S.InfStamina or S.AntiStun or S.AntiRagdoll or S.CamAny)
+            ToggleMasterLoop(S.InfStamina or S.AntiStun or S.AntiRagdoll)
         end
     end})
     TbConfig:Divider()
@@ -1501,7 +1355,7 @@ function BuildWindow()
     if S.AutoSwing then SetAutoSwing(true) end; if S.AutoParry then SetAutoParry(true) end
     if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
     if S.FovValue~=70 then SetFOV(S.FovValue) end
-    ToggleMasterLoop(S.InfStamina or S.AntiStun or S.AntiRagdoll or S.CamAny)
+    ToggleMasterLoop(S.InfStamina or S.AntiStun or S.AntiRagdoll)
     task.delay(0.9,function() ApplyScale(S.UIScale); ApplyAlpha(S.UIAlpha) end)
 
     LP.CharacterAdded:Connect(function()
@@ -1518,7 +1372,7 @@ function BuildWindow()
         end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v7.3.3","By 7k.u  -  Ready",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v8.0","By 7k.u  -  The Final Cut",5,"moon")
 end
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
