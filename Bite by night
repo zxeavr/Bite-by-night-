@@ -1,5 +1,5 @@
 --[[
-  PHANTOM HUB v8.2 – OPTIMIZED & ALL FIXES
+  PHANTOM HUB v8.2.1 – FOV & AUTORUN FIXED
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
 ]]
@@ -34,7 +34,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.2\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.2.1\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -56,8 +56,8 @@ local T={en={},ar={}}
 
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v8.2"
-T.en.whats_new_body="+ Optimized: single heartbeat, zero lag\n+ FOV works again, applied on respawn\n+ Generator ESP fixed (MAPS.GAME MAP)\n+ Parry circle hides instantly\n+ Auto Run stops completely when off"
+T.en.whats_new_title="What's New  v8.2.1"
+T.en.whats_new_body="+ FOV system rewritten & persistent\n+ Auto Run stops walking when turned off\n+ Optimized & zero lag"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
 T.en.auto_run="Auto Run"; T.en.bypass_slow="Bypass Slowness"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
@@ -82,8 +82,8 @@ T.en.fps_boost="FPS Booster"
 
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v8.2"
-T.ar.whats_new_body="+ تحسين الأداء: حلقة واحدة فقط\n+ إصلاح التحكم بالـ FOV\n+ إصلاح ESP المولدات\n+ دائرة الصد تختفي فوراً\n+ الجري التلقائي يتوقف تماماً"
+T.ar.whats_new_title="الجديد  v8.2.1"
+T.ar.whats_new_body="+ نظام FOV جديد وثابت\n+ الجري التلقائي يتوقف تماماً\n+ أداء مثالي"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
 T.ar.auto_run="جري دائم"; T.ar.bypass_slow="تجاوز الابطاء"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
@@ -139,6 +139,41 @@ S.AutoShakeWire=S.AutoShakeWire or false; S.ShakeSpeed=S.ShakeSpeed or 0.1
 S.AutoFarm=S.AutoFarm or false; S.AntiAFK=S.AntiAFK or false
 S.FPSBooster=S.FPSBooster or false; S.UIScale=S.UIScale or 1.0; S.UIAlpha=S.UIAlpha or 0
 
+local cachedMap=nil
+local function GetMap()
+    if cachedMap and cachedMap.Parent then return cachedMap end; cachedMap=nil
+    local maps=workspace:FindFirstChild("MAPS"); if not maps then return nil end
+    local gm=maps:FindFirstChild("GAME MAP"); if gm then cachedMap=gm; return gm end
+    for _,c in ipairs(maps:GetChildren()) do
+        if c:IsA("Model") or c:IsA("Folder") then cachedMap=c; return c end
+    end
+end
+
+-- FOV SYSTEM (new robust)
+local defaultFOV = Camera.FieldOfView
+local customFOV = S.FovValue
+local isFOVEnabled = (customFOV ~= defaultFOV)
+function SetFOV(v)
+    customFOV = v
+    S.FovValue = v
+    isFOVEnabled = (v ~= defaultFOV)
+    pcall(function() Camera.FieldOfView = v end)
+end
+-- عند تغيير الشخصية، نعيد FOV
+LP.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
+    task.wait(0.5)
+    if isFOVEnabled then
+        pcall(function() Camera.FieldOfView = customFOV end)
+    end
+end)
+-- حلقة خفيفة لضمان بقاء FOV
+RunService.RenderStepped:Connect(function()
+    if isFOVEnabled and Camera.FieldOfView ~= customFOV then
+        Camera.FieldOfView = customFOV
+    end
+end)
+
 -- CORE LOOP – يجمع كل التحديثات المهمة
 local coreConn = nil
 local function StopCoreLoop()
@@ -168,10 +203,15 @@ local function StartCoreLoop()
             hum:ChangeState(Enum.HumanoidStateType.GettingUp)
         end
 
-        -- جري تلقائي
+        -- جري تلقائي (يتوقف عند الإغلاق)
         if S.AutoRun and char then
             local rs = char:GetAttribute("RunSpeed")
             char:SetAttribute("WalkSpeed", (rs and rs~=0) and rs or 24)
+        else
+            -- عند إغلاق auto run، أعد سرعة المشي الافتراضية
+            if char then
+                pcall(function() char:SetAttribute("WalkSpeed", 16) end)
+            end
         end
 
         -- تجاوز البطء
@@ -272,7 +312,7 @@ local function StartCoreLoop()
         end
     end)
 end
-StartCoreLoop() -- تشغيل الحلقة الرئيسية فوراً
+StartCoreLoop()
 
 -- دوال مساعدة متغيرة عالمياً للحلقة
 local lastParryFiredAt = 0
@@ -524,7 +564,6 @@ task.spawn(function()
             if kf then for _,m in ipairs(kf:GetChildren()) do if m.Name~=LP.Name then ApplyESP(m,S.T.Killer,m.Name) end end end
             local af=pf and pf:FindFirstChild("ALIVE")
             if af then for _,m in ipairs(af:GetChildren()) do if m.Name~=LP.Name then ApplyESP(m,S.T.Survivor,m.Name) end end end
-            -- المولدات من المسار المباشر
             local genFolder = workspace.MAPS and workspace.MAPS:FindFirstChild("GAME MAP") and workspace.MAPS["GAME MAP"]:FindFirstChild("Generators")
             if genFolder then ProcessFolder(genFolder,"Generator","Generator") end
             local fuseFolder = workspace.MAPS and workspace.MAPS:FindFirstChild("GAME MAP") and workspace.MAPS["GAME MAP"]:FindFirstChild("FuseBoxes")
@@ -542,13 +581,7 @@ task.spawn(function()
     end
 end)
 
--- FOV
-function SetFOV(v)
-    S.FovValue = v
-    pcall(function() Camera.FieldOfView = v end)
-end
-
--- إعدادات أخرى ثابتة (لمسات سريعة)
+-- LIGHTING
 local origA=Lighting.Ambient; local origBr=Lighting.Brightness
 local origFE=Lighting.FogEnd; local origFS=Lighting.FogStart
 local blindFolder=nil; local blindConn=nil
@@ -581,7 +614,7 @@ task.spawn(function()
     end) end
 end)
 
--- إخفاء واجهة المولد
+-- HIDE GEN GUI
 local BLOCK_GUIS={GeneratorUI=true,WireyesUI=true,Gen=true}
 local hideGuiConn=nil
 local function SetHideGenGui(on)
@@ -594,7 +627,7 @@ local function SetHideGenGui(on)
     hideGuiConn=LP.PlayerGui.ChildAdded:Connect(K)
 end
 
--- ستامينا
+-- STAMINA
 local staminaConn=nil; local settingStamina=false
 local function ConnectStamina()
     if staminaConn then staminaConn:Disconnect(); staminaConn=nil end
@@ -606,7 +639,7 @@ local function ConnectStamina()
     end)
 end
 
--- NoClip, Jump, Auto Run/Bypass (toggling functions)
+-- NOCLIP
 local noClipConn=nil
 function SetNoClip(enabled)
     if noClipConn then noClipConn:Disconnect(); noClipConn=nil end; S.NoClip=enabled
@@ -620,6 +653,7 @@ function SetNoClip(enabled)
     end)
 end
 
+-- JUMP
 local jumpConn=nil
 function SetAllowJump(enabled)
     if jumpConn then jumpConn:Disconnect(); jumpConn=nil end
@@ -633,20 +667,25 @@ function SetAllowJump(enabled)
     end)
 end
 
--- Auto Run toggle: عند الإيقاف يعيد السرعة 16
+-- AUTO RUN toggle – عند الإيقاف يعيد السرعة 16
 function SetAutoRun(on)
     S.AutoRun = on
     if not on then
-        pcall(function() if LPHum then LPHum.WalkSpeed = 16 end end)
+        pcall(function()
+            if LPChar then
+                LPChar:SetAttribute("WalkSpeed", 16)
+                LPChar:SetAttribute("RunSpeed", nil)
+            end
+        end)
     end
 end
 
--- Bypass Slow toggle
+-- BYPASS SLOW toggle
 function SetBypassSlow(on)
     S.BypassSlow = on
 end
 
--- Anti Die
+-- ANTI DIE
 local antiDieActive=false
 function ConnectAntiDie()
     if not LPHum then return end
@@ -664,7 +703,7 @@ function ConnectAntiDie()
     end)
 end
 
--- Instant Prompt / Gen (موجودة باختصار)
+-- INSTANT PROMPT / GEN
 local promptConn=nil
 function SetInstantPrompt(on)
     if promptConn then promptConn:Disconnect(); promptConn=nil end; if not on then return end
@@ -690,7 +729,7 @@ function StartInstantGen()
 end
 function StopInstantGen() if genGuiConn then genGuiConn:Disconnect(); genGuiConn=nil end end
 
--- Auto Farm (نمط قديم)
+-- AUTO FARM (old style)
 local farmThread=nil
 function SetAutoFarm(on)
     if farmThread then pcall(task.cancel,farmThread); farmThread=nil end; if not on then return end
@@ -728,7 +767,7 @@ function SetAutoFarm(on)
     end)
 end
 
--- Wire Shake, Anti AFK, FPS Booster
+-- WIRE SHAKE, ANTI AFK, FPS BOOSTER
 local wireConn=nil
 function SetAutoShakeWire(on)
     if wireConn then wireConn:Disconnect(); wireConn=nil end; if not on then return end
@@ -873,7 +912,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.2",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.2.1",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
@@ -900,7 +939,7 @@ local function ShowLangGUI(callback)
     icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58)
     title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.2"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.2.1"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84)
     sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
@@ -943,7 +982,7 @@ local function ShowLoadingScreen(callback)
     moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46)
     titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.2"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.2.1"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84)
     subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
@@ -992,8 +1031,8 @@ function BuildWindow()
         Background="rbxassetid://113150461786091",
         BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v8.2",Color=Color3.fromRGB(120,60,240)})
-    Window:Tag({Title="Optimized",Color=Color3.fromRGB(30,255,130),Icon="star"})
+    Window:Tag({Title="v8.2.1",Color=Color3.fromRGB(120,60,240)})
+    Window:Tag({Title="FOV Fix",Color=Color3.fromRGB(30,255,130),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
     local TbInfo    =Window:Tab({Title=Tr("tab_info"),    Icon="info"              })
@@ -1131,7 +1170,7 @@ function BuildWindow()
             if S.InstantPrompt then SetInstantPrompt(true) end; if S.AutoFarm then SetAutoFarm(true) end
             if S.AutoSwing then S.AutoSwing=true end; if S.AutoParry then S.AutoParry=true end
             if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
-            if S.FovValue~=70 then SetFOV(S.FovValue) end; ConnectAntiDie()
+            SetFOV(S.FovValue); ConnectAntiDie()
         end
     end})
     TbConfig:Divider()
@@ -1166,7 +1205,7 @@ function BuildWindow()
     if S.InstantPrompt then SetInstantPrompt(true) end; if S.AutoFarm then SetAutoFarm(true) end
     if S.AutoSwing then S.AutoSwing=true end; if S.AutoParry then S.AutoParry=true end
     if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
-    SetFOV(S.FovValue) -- تطبيق أولي للـ FOV
+    SetFOV(S.FovValue)
     task.delay(0.9,function() ApplyScale(S.UIScale); ApplyAlpha(S.UIAlpha) end)
 
     LP.CharacterAdded:Connect(function()
@@ -1174,7 +1213,7 @@ function BuildWindow()
         if S.NoClip then SetNoClip(true) end; if S.AllowJump then SetAllowJump(true) end
         if S.AutoRun then SetAutoRun(true) end; if S.BypassSlow then SetBypassSlow(true) end
         if S.AutoSwing then S.AutoSwing=true end; if S.AutoParry then S.AutoParry=true end
-        SetFOV(S.FovValue) -- إعادة تطبيق
+        SetFOV(S.FovValue)
         task.wait(1)
         pcall(function()
             local pf=workspace:FindFirstChild("PLAYERS"); local kf=pf and pf:FindFirstChild("KILLER")
@@ -1182,7 +1221,7 @@ function BuildWindow()
         end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v8.2","Optimized & All Fixes",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v8.2.1","FOV & Autorun fixed",5,"moon")
 end
 
 -- CAM LOCK (العناصر المتبقية)
