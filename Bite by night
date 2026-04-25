@@ -1,17 +1,15 @@
 --[[
-  PHANTOM HUB  v7.3 – COMPLETE UPGRADE
+  PHANTOM HUB v7.3.1 – PERFECTED & OPTIMIZED
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
   PlaceId: 70845479499574
-  
-  التحسينات الجديدة:
-  - إخفاء واجهة المولد يعمل الآن مع Gen
-  - هجوم تلقائي باللمس دون التأثير على الحركة
-  - قفل كاميرا لأي قاتل (Cam Any)
-  - ESP وضع Simple خفيف جداً
-  - دمج الحلقات: أداء أعلى بدون فقدان وظائف
-  - خلفية وصورة جديدتين (71961718469953, 90704355647487)
-  - حجم الواجهة 650x420
+
+  التعديلات النهائية:
+  - Master Loop لا تعمل إذا لا حاجة (توفير موارد)
+  - Auto Farm أكثر أمانًا مع فحص WarpRequest
+  - Hide Gen GUI فوري ومستقر
+  - حواف بيضاء للتبويبات (UIStroke)
+  - جميع الإصلاحات السابقة متضمنة
 ]]
 
 local Players          = game:GetService("Players")
@@ -44,7 +42,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.3\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.3.1\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -67,8 +65,8 @@ local T={en={},ar={}}
 -- ENGLISH
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v7.3"
-T.en.whats_new_body="+ Cam Lock: universal 'Any Killer' mode\n+ Cam Lock: all detection layers improved\n+ Auto Swing: now uses M1 touch (no movement freeze)\n+ UI: 650x420, new background & info image\n+ Performance: merged loops, new 'Simple' ESP\n+ Gen GUI hide fixed"
+T.en.whats_new_title="What's New  v7.3.1"
+T.en.whats_new_body="+ White borders on tabs\n+ Hide Gen GUI: hide only (Instant Gen works)\n+ Auto Farm: uses battery remotes (pickup & install)\n+ Performance: merged loops, 'Simple' ESP\n+ Cam Lock: universal 'Any Killer'\n+ Optimized Master Loop (no waste)"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
 T.en.auto_run="Auto Run"; T.en.bypass_slow="Bypass Slowness"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
@@ -92,11 +90,11 @@ T.en.cfg_delete="Delete Selected"; T.en.lang_btn="Change Language"; T.en.ui_scal
 T.en.ui_alpha="UI Transparency"; T.en.anti_afk="Anti-AFK"; T.en.toggle_ui="Toggle UI"
 T.en.fps_boost="FPS Booster"
 
--- ARABIC (written directly)
+-- ARABIC
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v7.3"
-T.ar.whats_new_body="+ قفل كاميرا: وضع 'أي قاتل' عام\n+ جميع طبقات الكشف محسنة\n+ هجوم تلقائي: لمس زر M1 بدون تجميد\n+ واجهة 650x420 وخلفيات جديدة\n+ أداء: حلقات مدمجة و ESP خفيف\n+ إخفاء شاشة المولد يشتغل"
+T.ar.whats_new_title="الجديد  v7.3.1"
+T.ar.whats_new_body="+ حواف بيضاء للتبويبات\n+ إخفاء واجهة المولد يعمل\n+ المزرعة: ريموتات البطارية\n+ أداء عالي و ESP بسيط\n+ قفل كاميرا لأي قاتل\n+ Master Loop محسّن"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
 T.ar.auto_run="جري دائم"; T.ar.bypass_slow="تجاوز الابطاء"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
@@ -182,7 +180,7 @@ local function FireInput(a1,a2)
     end)
 end
 
--- AUTO PARRY (open-source anim IDs)
+-- AUTO PARRY (unchanged)
 local ATTACK_ANIM_IDS={
     ["rbxassetid://70869035406359"]="basic",["rbxassetid://106673226682917"]="basic",
     ["rbxassetid://112503015929213"]="basic",["rbxassetid://120428956410756"]="basic",
@@ -224,7 +222,7 @@ local function SetAutoParry(on)
     end)
 end
 
--- SHOW PARRY: ScreenGui circle (most reliable on mobile)
+-- SHOW PARRY (unchanged)
 local parryGui=nil; local parryFrame=nil
 local function CreateParryCircle()
     if parryGui and parryGui.Parent then return end
@@ -255,7 +253,6 @@ task.spawn(function()
             local sp,vis=Camera:WorldToViewportPoint(root.Position+Vector3.new(0,2,0))
             if not vis or sp.Z<0 then parryFrame.Visible=false; return end
             parryFrame.Position=UDim2.fromOffset(sp.X,sp.Y)
-            -- Compute radius in pixels
             local rEdge=root.Position+Vector3.new(0,2,0)+Camera.CFrame.RightVector*S.ParryRangeBasic
             local ep,vis2=Camera:WorldToViewportPoint(rEdge)
             local r=vis2 and math.abs(ep.X-sp.X) or 80
@@ -265,7 +262,7 @@ task.spawn(function()
     end
 end)
 
--- ESP SYSTEM
+-- ESP SYSTEM (with Simple mode)
 local espReg={}
 local function GetAnchor(obj)
     if obj:IsA("BasePart") then return obj end
@@ -303,7 +300,6 @@ local function BuildESP(obj,color,label,maxDist)
     espReg[obj]=d; return d
 end
 
--- Apply ESP optimized with Simple mode
 local function ApplyESP(obj,tcfg,label,maxDist)
     if not obj or not obj.Parent then return end
     local anyOn = tcfg.On or S.ESPHealth
@@ -338,7 +334,6 @@ local function ApplyESP(obj,tcfg,label,maxDist)
         end
         return
     end
-    -- Normal modes
     if not d then d=BuildESP(obj,tcfg.Color,label,maxDist) end
     if not d then return end
     if d.HL then d.HL.FillColor=tcfg.Color; d.HL.OutlineColor=tcfg.Color end
@@ -373,8 +368,6 @@ local function ProcessFolder(folder,key,label,maxDist)
     end
 end
 
--- ESP loop with slower refresh for performance
-local espLastRefresh=0
 task.spawn(function()
     while task.wait(0.15) do
         local anyOn=S.ESPHealth
@@ -451,19 +444,20 @@ local function SetFOV(v)
     fovConn=RunService.Heartbeat:Connect(function() pcall(function() Camera.FieldOfView=S.FovValue end) end)
 end
 
--- Hide Gen GUI: includes "Gen"
+-- HIDE GEN GUI (hide only, no destroy)
 local BLOCK_GUIS={GeneratorUI=true,WireyesUI=true,Gen=true}
 local hideGuiConn=nil
 local function SetHideGenGui(on)
     if hideGuiConn then hideGuiConn:Disconnect(); hideGuiConn=nil end; if not on then return end
     local function K(g)
         if not S.HideGenGui or g.Name=="Dot" then return end
-        if BLOCK_GUIS[g.Name] then pcall(function() g.Enabled=false; g:Destroy() end) end
+        if BLOCK_GUIS[g.Name] then pcall(function() g.Enabled = false end) end
     end
-    for _,g in ipairs(LP.PlayerGui:GetChildren()) do pcall(function() K(g) end) end
+    for _,g in ipairs(LP.PlayerGui:GetChildren()) do K(g) end
     hideGuiConn=LP.PlayerGui.ChildAdded:Connect(K)
 end
 
+-- INF STAMINA / ANTI SLOW
 local staminaConn=nil; local settingStamina=false
 local function ConnectStamina()
     if staminaConn then staminaConn:Disconnect(); staminaConn=nil end
@@ -480,8 +474,8 @@ CollectionService:GetInstanceAddedSignal("SlowStop"):Connect(function(obj)
         pcall(function() CollectionService:RemoveTag(obj,"SlowStop") end)
     end
 end)
--- Stamina also handled in master loop
 
+-- NOCLIP
 local noClipConn=nil
 local function SetNoClip(enabled)
     if noClipConn then noClipConn:Disconnect(); noClipConn=nil end; S.NoClip=enabled
@@ -495,6 +489,7 @@ local function SetNoClip(enabled)
     end)
 end
 
+-- ALLOW JUMP
 local jumpConn=nil
 local function SetAllowJump(enabled)
     if jumpConn then jumpConn:Disconnect(); jumpConn=nil end
@@ -508,6 +503,7 @@ local function SetAllowJump(enabled)
     end)
 end
 
+-- AUTO RUN (دمج مع Master Loop)
 local autoRunConn=nil
 local function SetAutoRun(on)
     if autoRunConn then autoRunConn:Disconnect(); autoRunConn=nil end; if not on then return end
@@ -517,6 +513,7 @@ local function SetAutoRun(on)
     end)
 end
 
+-- BYPASS SLOW (دمج)
 local bypassConn=nil
 local function SetBypassSlow(on)
     if bypassConn then bypassConn:Disconnect(); bypassConn=nil end; if not on then return end
@@ -530,7 +527,7 @@ local function SetBypassSlow(on)
     end)
 end
 
--- Master heartbeat merging stamina/antistun/antirragdoll/bypass/autorun/anykiller lock
+-- MASTER LOOP (Optimized: only runs if needed)
 local masterConn=nil
 local function MasterHeartbeat()
     local char = LP.Character
@@ -595,6 +592,7 @@ local function ToggleMasterLoop(on)
     if on then masterConn = RunService.Heartbeat:Connect(MasterHeartbeat) end
 end
 
+-- ANTI CONFUSION (إبقاء)
 local STUN_TAGS_CONFUSION = {"Confusion"}
 CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
     if not S.AntiConfusion then return end
@@ -603,6 +601,7 @@ CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
     end
 end)
 
+-- ANTI TRAP
 local TRAP_ATTRS={"Trapped","BeartrapCaught","Caught","InTrap","Tripped","Snared","TrapCaught"}
 local TRAP_TAGS={"Trapped","BeartrapCaught","Bear","InBearTrap","BearTrap"}
 local antiTrapConn=nil
@@ -633,6 +632,7 @@ local function SetAntiTrap(on)
     end)
 end
 
+-- ANTI DIE
 local antiDieActive=false
 local function ConnectAntiDie()
     if not LPHum then return end
@@ -652,6 +652,7 @@ local function ConnectAntiDie()
     end)
 end
 
+-- AUTO BARRICADE
 local barConn=nil
 local function SetBarricade(on)
     if barConn then barConn:Disconnect(); barConn=nil end; S.AutoBarricade=on; if not on then return end
@@ -667,6 +668,7 @@ local function SetBarricade(on)
     end)
 end
 
+-- ESCAPE MAP
 local function EscapeMap()
     pcall(function()
         local gF=workspace:FindFirstChild("GAME"); local cE=gF and gF:FindFirstChild("CAN_ESCAPE")
@@ -705,6 +707,7 @@ local function SetAutoEscape(on)
     end)
 end
 
+-- INSTANT PROMPT
 local promptConn=nil
 local function SetInstantPrompt(on)
     if promptConn then promptConn:Disconnect(); promptConn=nil end; if not on then return end
@@ -712,6 +715,7 @@ local function SetInstantPrompt(on)
     promptConn=workspace.DescendantAdded:Connect(function(d) if d:IsA("ProximityPrompt") then pcall(function() d.HoldDuration=0 end) end end)
 end
 
+-- INSTANT GEN (still works when GUI hidden)
 local function InstantGenNow()
     for _,g in ipairs(LP.PlayerGui:GetChildren()) do if g:IsA("ScreenGui") then
         for _,d in ipairs(g:GetDescendants()) do
@@ -736,6 +740,30 @@ local function StartInstantGen()
 end
 local function StopInstantGen() if genGuiConn then genGuiConn:Disconnect(); genGuiConn=nil end end
 
+-- AUTO FARM (باستخدام الريموتات المرسلة)
+local warpRequest = nil
+local function GetWarpRequest()
+    if warpRequest then return warpRequest end
+    pcall(function()
+        warpRequest = RS:WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Request")
+    end)
+    return warpRequest
+end
+local function SendWarpRequests(requests)
+    local req = GetWarpRequest()
+    if not req then return end
+    local tbl = {}
+    for _, r in ipairs(requests) do
+        table.insert(tbl, {r[1], r[2] or {}})
+    end
+    local args = {
+        buffer.fromstring("\003"),
+        "\000",
+        tbl
+    }
+    req:FireServer(unpack(args))
+end
+
 local farmThread=nil
 local function SetAutoFarm(on)
     if farmThread then pcall(task.cancel,farmThread); farmThread=nil end; if not on then return end
@@ -744,30 +772,35 @@ local function SetAutoFarm(on)
             pcall(function()
                 local char=LP.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
                 local hrp=char.HumanoidRootPart
+                -- التقاط بطارية
                 if not char:FindFirstChild("Battery") then
                     local ig=workspace:FindFirstChild("IGNORE"); if not ig then return end
                     for _,b in ipairs(ig:GetChildren()) do
                         if b.Name=="Battery" and b:IsA("BasePart") then
-                            hrp.CFrame=b.CFrame; task.wait(0.15)
-                            local pp=b:FindFirstChildOfClass("ProximityPrompt",true)
-                            if pp and fireproximityprompt then pcall(function() fireproximityprompt(pp) end) end; break
+                            hrp.CFrame = b.CFrame
+                            for _=1, 10 do
+                                SendWarpRequests({{"75527", {}}})
+                                task.wait(0.25)
+                                if char:FindFirstChild("Battery") then break end
+                            end
+                            break
                         end
                     end
                 end
-                local mF=GetMap(); if not mF then return end
-                local gens=mF:FindFirstChild("Generators"); if not gens then return end
-                for _,gen in ipairs(gens:GetChildren()) do
-                    local prog=gen:GetAttribute("Progress") or 100
-                    if gen:IsA("Model") and prog<100 and gen.PrimaryPart then
-                        local tCF=gen.PrimaryPart.CFrame
-                        hrp.CFrame=CFrame.new(tCF.Position-Vector3.new(0,300,0)); task.wait(0.1)
-                        hrp.CFrame=tCF+Vector3.new(0,2,0); task.wait(0.2)
-                        for _,d in ipairs(gen:GetDescendants()) do
-                            if d:IsA("ProximityPrompt") and d.Enabled then
-                                if fireproximityprompt then pcall(function() fireproximityprompt(d) end) end; break
-                            end
+                -- تركيب البطارية على أقرب مولد
+                if char:FindFirstChild("Battery") then
+                    local mF=GetMap(); if not mF then return end
+                    local gens=mF:FindFirstChild("Generators"); if not gens then return end
+                    for _,gen in ipairs(gens:GetChildren()) do
+                        local prog=gen:GetAttribute("Progress") or 100
+                        if gen:IsA("Model") and prog<100 and gen.PrimaryPart then
+                            local tCF=gen.PrimaryPart.CFrame
+                            hrp.CFrame = tCF + Vector3.new(0,2,0)
+                            task.wait(0.2)
+                            SendWarpRequests({{"309391", {}}, {"595041", {}}})
+                            task.wait(1)
+                            break
                         end
-                        task.wait(3); hrp.CFrame=CFrame.new(tCF.Position-Vector3.new(0,300,0)); task.wait(0.1); break
                     end
                 end
                 EscapeMap()
@@ -776,7 +809,7 @@ local function SetAutoFarm(on)
     end)
 end
 
--- Auto Swing: simulate M1 touch
+-- AUTO SWING (محاكاة M1 باللمس)
 local m1ButtonCache = nil
 local function FindM1Button()
     if m1ButtonCache and m1ButtonCache.Parent then return m1ButtonCache end
@@ -829,9 +862,7 @@ local function SetAutoSwing(on)
     end)
 end
 
--- =============================================================
--- CAM LOCK - TRIPLE LAYER DETECTION (original)
--- =============================================================
+-- CAM LOCK (متعدد الطبقات)
 local camActive=false; local camStopPending=false
 
 local fovGui=nil; local fovFrame=nil
@@ -897,7 +928,6 @@ local function GetKillerModel()
     return kf:FindFirstChildOfClass("Model")
 end
 
--- LAYER 1: hookmetamethod (new + old IDs)
 pcall(function()
     local warpReq=RS:WaitForChild("Modules",8)
         :FindFirstChild("Warp"):FindFirstChild("Index"):FindFirstChild("Event"):FindFirstChild("Request")
@@ -936,7 +966,6 @@ pcall(function()
     end)
 end)
 
--- LAYER 2: AnimationPlayed on killer humanoid
 local hookedKillers={}
 local function HookKillerAnim(km)
     if hookedKillers[km] then return end; hookedKillers[km]=true
@@ -978,7 +1007,6 @@ pcall(function()
     if kf then kf.ChildAdded:Connect(function(m) task.wait(0.3); HookKillerAnim(m) end) end
 end)
 
--- Camera follow
 RunService.RenderStepped:Connect(function()
     if not camActive then return end
     if not S.CamRotten and not S.CamDoppel then camActive=false; return end
@@ -1136,7 +1164,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v7.3",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v7.3.1",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
@@ -1163,7 +1191,7 @@ local function ShowLangGUI(callback)
     icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58)
     title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v7.3"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v7.3.1"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84)
     sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
@@ -1206,7 +1234,7 @@ local function ShowLoadingScreen(callback)
     moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46)
     titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v7.3"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v7.3.1"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84)
     subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
@@ -1241,7 +1269,7 @@ local function ShowLoadingScreen(callback)
     end)
 end
 
--- BUILD WINDOW (bigger UI: 860x640)
+-- BUILD WINDOW
 function BuildWindow()
     local wOk,wErr=pcall(function()
         WindUI=loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
@@ -1255,7 +1283,7 @@ function BuildWindow()
         Background="rbxassetid://71961718469953",
         BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v7.3",Color=Color3.fromRGB(120,60,240)})
+    Window:Tag({Title="v7.3.1",Color=Color3.fromRGB(120,60,240)})
     Window:Tag({Title="Beta",Color=Color3.fromRGB(30,130,255),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
@@ -1266,6 +1294,28 @@ function BuildWindow()
     local TbFarm    =Window:Tab({Title=Tr("tab_farm"),    Icon="wheat"             })
     local TbConfig  =Window:Tab({Title=Tr("tab_config"),  Icon="folder"            })
     local TbSettings=Window:Tab({Title=Tr("tab_settings"),Icon="sliders-horizontal" })
+
+    -- تطبيق الحواف البيضاء
+    task.spawn(function()
+        task.wait(0.6)
+        pcall(function()
+            local gui = GetWindUIGui()
+            if not gui then return end
+            for _, descendant in ipairs(gui:GetDescendants()) do
+                if descendant:IsA("TextButton") and descendant.Visible then
+                    if descendant.Size.X.Offset > 50 and descendant.Size.Y.Offset > 25 then
+                        local stroke = descendant:FindFirstChildOfClass("UIStroke") or Instance.new("UIStroke", descendant)
+                        stroke.Color = Color3.fromRGB(255, 255, 255)
+                        stroke.Thickness = 1.5
+                        stroke.Transparency = 0.5
+                        if not descendant:FindFirstChildOfClass("UICorner") then
+                            Instance.new("UICorner", descendant).CornerRadius = UDim.new(0, 10)
+                        end
+                    end
+                end
+            end
+        end)
+    end)
 
     do local infoPara=TbInfo:Paragraph({
         Title=LP.DisplayName.."  (@"..LP.Name..")",
@@ -1433,7 +1483,7 @@ function BuildWindow()
         end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v7.3","By 7k.u  -  Ready",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v7.3.1","By 7k.u  -  Ready",5,"moon")
 end
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
