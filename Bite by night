@@ -1,5 +1,5 @@
 --[[
-  PHANTOM HUB v8.2.6 – AUTORUN FULLY FIXED
+  PHANTOM HUB v8.2.7 – AUTO RUN TRULY FIXED
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
   PlaceId: 70845479499574
@@ -35,7 +35,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.2.6\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.2.7\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -57,8 +57,8 @@ local T={en={},ar={}}
 
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v8.2.6"
-T.en.whats_new_body="+ Auto Run stops running instantly when toggled off\n+ WalkSpeed reset to 16 when disabled"
+T.en.whats_new_title="What's New  v8.2.7"
+T.en.whats_new_body="+ Auto Run now forcefully disables sprinting when OFF\n+ No more running after toggle is disabled"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
 T.en.auto_run="Auto Run"; T.en.bypass_slow="Bypass Slowness"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
@@ -83,8 +83,8 @@ T.en.fps_boost="FPS Booster"
 
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v8.2.6"
-T.ar.whats_new_body="+ الجري التلقائي يتوقف فوراً عند إغلاقه\n+ سرعة المشي تعود إلى 16"
+T.ar.whats_new_title="الجديد  v8.2.7"
+T.ar.whats_new_body="+ الجري التلقائي يُعطّل الركض بالقوّة عند إغلاقه\n+ لا مزيد من الركض بعد إغلاق التفعيل"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
 T.ar.auto_run="جري دائم"; T.ar.bypass_slow="تجاوز الابطاء"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
@@ -214,7 +214,7 @@ local function IsPlayerDisabled()
     return false
 end
 
--- CORE LOOP – single heartbeat
+-- CORE LOOP – single heartbeat with forced sprint disable
 local coreConn = nil
 local function StartCoreLoop()
     if coreConn then coreConn:Disconnect() end
@@ -222,16 +222,24 @@ local function StartCoreLoop()
         local char = LP.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-        -- Auto Run (مضمون التوقف)
-        if S.AutoRun and char then
-            local rs = char:GetAttribute("RunSpeed")
-            char:SetAttribute("WalkSpeed", (rs and rs~=0) and rs or 24)
+        -- Auto Run: نتحكم بحالة Running بشكل قاطع
+        if S.AutoRun then
+            if hum then
+                pcall(function() hum:SetStateEnabled(Enum.HumanoidStateType.Running, true) end)
+            end
+            if char then
+                local rs = char:GetAttribute("RunSpeed")
+                char:SetAttribute("WalkSpeed", (rs and rs~=0) and rs or 24)
+            end
         else
-            -- إذا كان مغلقاً، أعد تعيين السرعة وامسح RunSpeed
+            -- إجبار إيقاف الركض
+            if hum then
+                pcall(function() hum:SetStateEnabled(Enum.HumanoidStateType.Running, false) end)
+            end
             if char then
                 pcall(function()
                     char:SetAttribute("WalkSpeed", 16)
-                    char:SetAttribute("RunSpeed", nil)
+                    char:SetAttribute("RunSpeed", 0)  -- 0 بدل nil لضمان عدم التفسير كـ "مسموح"
                 end)
             end
         end
@@ -254,7 +262,7 @@ local function StartCoreLoop()
             hum:ChangeState(Enum.HumanoidStateType.GettingUp)
         end
 
-        -- تجاوز البطء: يعمل فقط إذا لم يكن اللاعب في حالة إعاقة (مؤقت لحين معلوماتك)
+        -- تجاوز البطء: يعمل فقط إذا لم يكن اللاعب في حالة إعاقة (مؤقت لحين معلومات Dex)
         if S.BypassSlow and char and hum and not IsPlayerDisabled() then
             local spd = S.RunSpeed
             hum.WalkSpeed = spd
@@ -705,14 +713,16 @@ function SetAllowJump(enabled)
     end)
 end
 
--- AUTO RUN – عند الإيقاف يمسح RunSpeed ويعيد WalkSpeed
+-- AUTO RUN – عند الإيقاف يتم تعطيل Running state
 function SetAutoRun(on)
     S.AutoRun = on
     if not on then
         pcall(function()
-            if LPChar then
+            local hum = LPChar and LPChar:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum:SetStateEnabled(Enum.HumanoidStateType.Running, false)
                 LPChar:SetAttribute("WalkSpeed", 16)
-                LPChar:SetAttribute("RunSpeed", nil)
+                LPChar:SetAttribute("RunSpeed", 0)
             end
         end)
     end
@@ -950,7 +960,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.2.6",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.2.7",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
@@ -977,7 +987,7 @@ local function ShowLangGUI(callback)
     icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58)
     title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.2.6"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.2.7"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84)
     sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
@@ -1020,7 +1030,7 @@ local function ShowLoadingScreen(callback)
     moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46)
     titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.2.6"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.2.7"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84)
     subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
@@ -1069,8 +1079,8 @@ function BuildWindow()
         Background="rbxassetid://113150461786091",
         BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v8.2.6",Color=Color3.fromRGB(120,60,240)})
-    Window:Tag({Title="Autorun Fix",Color=Color3.fromRGB(30,255,130),Icon="star"})
+    Window:Tag({Title="v8.2.7",Color=Color3.fromRGB(120,60,240)})
+    Window:Tag({Title="Autorun Perfected",Color=Color3.fromRGB(30,255,130),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
     local TbInfo    =Window:Tab({Title=Tr("tab_info"),    Icon="info"              })
@@ -1259,7 +1269,7 @@ function BuildWindow()
         end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v8.2.6","Autorun Fully Fixed",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v8.2.7","Auto Run finally fixed",5,"moon")
 end
 
 -- CAM LOCK (العناصر المتبقية)
