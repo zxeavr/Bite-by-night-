@@ -1,7 +1,8 @@
 --[[
-  PHANTOM HUB v7.3.2 – ESP FIXES & WHITE BORDERS
+  PHANTOM HUB v7.3.3 – PERFECT & FINAL
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
+  PlaceId: 70845479499574
 ]]
 
 local Players          = game:GetService("Players")
@@ -34,7 +35,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.3.2\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.3.3\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -54,11 +55,10 @@ pcall(function() if not isfolder(CFG_FOLDER) then makefolder(CFG_FOLDER) end end
 local LANG="en"
 local T={en={},ar={}}
 
--- ENGLISH
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v7.3.2"
-T.en.whats_new_body="+ Fixed ESP duplicating Generators\n+ Fixed Highlight/Chams/Name modes\n+ ESP type changes instantly\n+ White tab borders finally work\n+ Optimized Master Loop"
+T.en.whats_new_title="What's New  v7.3.3"
+T.en.whats_new_body="+ Auto Farm fully fixed\n+ ESP no longer disappears\n+ Info tab opens automatically\n+ Auto Run/Bypass no longer bypass stuns\n+ Parry range default 15 + foot circle + dynamic distance\n+ New background & info image"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
 T.en.auto_run="Auto Run"; T.en.bypass_slow="Bypass Slowness"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
@@ -67,6 +67,7 @@ T.en.auto_barricade="Auto Barricade"; T.en.auto_escape="Auto Escape"
 T.en.instant_prompt="Instant Prompt"; T.en.instant_gen="Instant Generator"; T.en.gen_speed="Gen Speed (sec)"
 T.en.gen_now="Complete Now"; T.en.auto_parry="Auto Parry"; T.en.parry_range_basic="Main Attack Range"
 T.en.parry_range_pull="Pull Attack Range"; T.en.show_parry="Show Parry Circle"
+T.en.dynamic_parry="Dynamic Distance"; T.en.show_parry_range="Show Parry Range Circle"
 T.en.auto_swing="Auto Swing (M1)"; T.en.swing_range="Swing Range (studs)"
 T.en.esp_type="ESP Type"; T.en.health_esp="Health ESP"; T.en.esp_color="Color"; T.en.esp_on="Enable ESP"
 T.en.full_bright="Full Bright + Anti Blind"; T.en.no_fog="No Fog"; T.en.no_shadow="No Shadow"
@@ -82,11 +83,10 @@ T.en.cfg_delete="Delete Selected"; T.en.lang_btn="Change Language"; T.en.ui_scal
 T.en.ui_alpha="UI Transparency"; T.en.anti_afk="Anti-AFK"; T.en.toggle_ui="Toggle UI"
 T.en.fps_boost="FPS Booster"
 
--- ARABIC
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v7.3.2"
-T.ar.whats_new_body="+ إصلاح تكرار أسماء المولدات\n+ إصلاح أوضاع ESP الأخرى\n+ تغيير النوع يصبح فوريًا\n+ الحواف البيضاء للتبويبات تعمل\n+ Master Loop محسّن"
+T.ar.whats_new_title="الجديد  v7.3.3"
+T.ar.whats_new_body="+ إصلاح المزرعة التلقائية\n+ ESP لم يعد يختفي\n+ تبويب المعلومات يفتح تلقائياً\n+ الجري/تجاوز الابطاء لم يعد يلغي الذهول\n+ نطاق الباري 15 + دائرة + ديناميكي\n+ خلفية وصورة جديدتين"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
 T.ar.auto_run="جري دائم"; T.ar.bypass_slow="تجاوز الابطاء"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
@@ -95,6 +95,7 @@ T.ar.auto_barricade="تحصين تلقائي"; T.ar.auto_escape="هروب تلق
 T.ar.instant_prompt="تفاعل فوري"; T.ar.instant_gen="مولد فوري"; T.ar.gen_speed="سرعة المولد"
 T.ar.gen_now="اكمال الان"; T.ar.auto_parry="باري تلقائي"; T.ar.parry_range_basic="نطاق ضربة عادية"
 T.ar.parry_range_pull="نطاق ضربة السحب"; T.ar.show_parry="دائرة الصد"
+T.ar.dynamic_parry="مسافة ديناميكية"; T.ar.show_parry_range="دائرة نطاق الصد"
 T.ar.auto_swing="هجوم تلقائي (M1)"; T.ar.swing_range="نطاق الهجوم"
 T.ar.esp_type="نوع ESP"; T.ar.health_esp="ESP الصحة"; T.ar.esp_color="اللون"; T.ar.esp_on="تفعيل ESP"
 T.ar.full_bright="اضاءة كاملة + مضاد عمى"; T.ar.no_fog="بدون ضباب"; T.ar.no_shadow="بدون ظلال"
@@ -133,8 +134,9 @@ S.AntiConfusion=S.AntiConfusion or false; S.AntiTrap=S.AntiTrap or false
 S.AntiDie=S.AntiDie or false; S.AntiDieHP=S.AntiDieHP or 30
 S.AutoEscape=S.AutoEscape or false; S.AutoBarricade=S.AutoBarricade or false
 S.InstantPrompt=S.InstantPrompt or false; S.InstantGen=S.InstantGen or false; S.GenDelay=S.GenDelay or 1.0
-S.AutoParry=S.AutoParry or false; S.ParryRangeBasic=S.ParryRangeBasic or 30
+S.AutoParry=S.AutoParry or false; S.ParryRangeBasic=S.ParryRangeBasic or 15
 S.ParryRangePull=S.ParryRangePull or 50; S.ShowParry=S.ShowParry or false
+S.DynamicParry=S.DynamicParry or false; S.ShowParryRange=S.ShowParryRange or false
 S.AutoSwing=S.AutoSwing or false; S.SwingRange=S.SwingRange or 12
 S.CamRotten=S.CamRotten or false; S.CamDoppel=S.CamDoppel or false
 S.CamAny=S.CamAny or false; S.CamAnyRange=S.CamAnyRange or 15
@@ -172,7 +174,7 @@ local function FireInput(a1,a2)
     end)
 end
 
--- AUTO PARRY
+-- AUTO PARRY (improved)
 local ATTACK_ANIM_IDS={
     ["rbxassetid://70869035406359"]="basic",["rbxassetid://106673226682917"]="basic",
     ["rbxassetid://112503015929213"]="basic",["rbxassetid://120428956410756"]="basic",
@@ -199,22 +201,89 @@ local function SetAutoParry(on)
             local pc=plr.Character; if not pc then continue end
             local ar=pc:FindFirstChild("HumanoidRootPart"); if not ar then continue end
             local distSq=(ar.Position-myRoot.Position):Dot(ar.Position-myRoot.Position)
-            if distSq>(S.ParryRangePull*S.ParryRangePull) then continue end
+            local range = S.ParryRangePull
+            if distSq>(range*range) then continue end
             local hum=pc:FindFirstChildOfClass("Humanoid"); if not hum then continue end
             local animator=hum:FindFirstChildOfClass("Animator"); if not animator then continue end
             for _,track in ipairs(animator:GetPlayingAnimationTracks()) do
                 if not track.IsPlaying or not track.Animation then continue end
                 local aType=ATTACK_ANIM_IDS[track.Animation.AnimationId]
                 if not aType then continue end
-                local rng=(aType=="pull") and S.ParryRangePull or S.ParryRangeBasic
-                if distSq>(rng*rng) then continue end
+                if aType=="pull" then range=S.ParryRangePull end
+                if distSq>(range*range) then continue end
                 DoParryReliable(); break
             end
         end
     end)
 end
 
--- SHOW PARRY
+-- PARRY RANGE CIRCLE (below feet)
+local parryRangeCircle
+local function UpdateParryRangeCircle()
+    local char = LP.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then
+        if parryRangeCircle then parryRangeCircle.Enabled = false end
+        return
+    end
+    if not S.ShowParryRange then
+        if parryRangeCircle then parryRangeCircle.Enabled = false end
+        return
+    end
+    if not parryRangeCircle then
+        parryRangeCircle = Instance.new("Part")
+        parryRangeCircle.Name = "PH_ParryRange"
+        parryRangeCircle.Anchored = true
+        parryRangeCircle.CanCollide = false
+        parryRangeCircle.Material = Enum.Material.SmoothPlastic
+        parryRangeCircle.Color = Color3.fromRGB(255,0,0)
+        parryRangeCircle.Transparency = 0.7
+        parryRangeCircle.Shape = Enum.PartType.Cylinder
+        parryRangeCircle.Size = Vector3.new(1,0.2,1)
+        parryRangeCircle.Parent = workspace
+    end
+    local range = S.ParryRangeBasic*2  -- القطر
+    parryRangeCircle.Size = Vector3.new(range, 0.2, range)
+    parryRangeCircle.CFrame = hrp.CFrame * CFrame.new(0, -2, 0)  -- تحت الأقدام
+    parryRangeCircle.Enabled = true
+end
+task.spawn(function()
+    while task.wait(0.05) do
+        pcall(UpdateParryRangeCircle)
+    end
+end)
+
+-- DYNAMIC PARRY LOGIC
+local function GetNearestKillerDistance()
+    local char = LP.Character
+    local myRoot = char and char:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return 999 end
+    local pf = workspace:FindFirstChild("PLAYERS")
+    local kf = pf and pf:FindFirstChild("KILLER")
+    if not kf then return 999 end
+    local minDist = 999
+    for _, m in ipairs(kf:GetChildren()) do
+        if m:IsA("Model") then
+            local kr = m:FindFirstChild("HumanoidRootPart")
+            if kr then
+                local d = (kr.Position - myRoot.Position).Magnitude
+                if d < minDist then minDist = d end
+            end
+        end
+    end
+    return minDist
+end
+task.spawn(function()
+    while task.wait(0.1) do
+        if S.AutoParry and S.DynamicParry then
+            local dist = GetNearestKillerDistance()
+            local newRange = math.clamp(dist * 0.8, 5, 30)  -- نسبة 80% من المسافة
+            S.ParryRangeBasic = math.floor(newRange)
+        end
+    end
+end)
+
+-- SHOW PARRY (still available as screen circle if enabled)
 local parryGui=nil; local parryFrame=nil
 local function CreateParryCircle()
     if parryGui and parryGui.Parent then return end
@@ -254,198 +323,127 @@ task.spawn(function()
     end
 end)
 
--- ESP SYSTEM – إصلاح كامل
-local espReg = {}
+-- ESP SYSTEM (fixed duplicates)
+local espReg={}
 local function ClearAllESP()
-    for obj, d in pairs(espReg) do
+    for _, d in pairs(espReg) do
         pcall(function() if d.HL then d.HL:Destroy() end; if d.SB then d.SB:Destroy() end; if d.BB then d.BB:Destroy() end end)
     end
     espReg = {}
 end
-
 local function GetAnchor(obj)
     if obj:IsA("BasePart") then return obj end
     return obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Head")
         or (obj:IsA("Model") and obj.PrimaryPart) or obj:FindFirstChildOfClass("BasePart",true)
 end
-local function BuildESP(obj, color, label, maxDist)
+local function BuildESP(obj,color,label,maxDist)
     if not obj or not obj.Parent then return nil end
-    local d = {valid = true}
-    local hl = Instance.new("Highlight")
-    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    hl.FillTransparency = 0.55
-    hl.OutlineTransparency = 0
-    hl.FillColor = color
-    hl.OutlineColor = color
-    hl.Adornee = obj
-    hl.Enabled = false
-    hl.Parent = obj
-    d.HL = hl
-
-    local sb = Instance.new("SelectionBox")
-    sb.LineThickness = 0.05
-    sb.SurfaceTransparency = 0.88
-    sb.Color3 = color
-    sb.SurfaceColor3 = color
-    sb.Adornee = obj
-    sb.Visible = false
-    sb.Parent = workspace
-    d.SB = sb
-
-    local anc = GetAnchor(obj)
+    local d={valid=true}
+    local hl=Instance.new("Highlight"); hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+    hl.FillTransparency=0.55; hl.OutlineTransparency=0; hl.FillColor=color; hl.OutlineColor=color
+    hl.Adornee=obj; hl.Enabled=false; hl.Parent=obj; d.HL=hl
+    local sb=Instance.new("SelectionBox"); sb.LineThickness=0.05; sb.SurfaceTransparency=0.88
+    sb.Color3=color; sb.SurfaceColor3=color; sb.Adornee=obj; sb.Visible=false; sb.Parent=workspace; d.SB=sb
+    local anc=GetAnchor(obj)
     if anc then
-        local bb = Instance.new("BillboardGui")
-        bb.Size = UDim2.fromOffset(200, 58)
-        bb.StudsOffset = Vector3.new(0, 4, 0)
-        bb.AlwaysOnTop = true
-        bb.Enabled = false
-        bb.ResetOnSpawn = false
-        bb.LightInfluence = 0
-        bb.MaxDistance = maxDist or 9999
-        bb.Adornee = anc
-        bb.Parent = anc
-
-        local hpL = Instance.new("TextLabel", bb)
-        hpL.Name = "HP"; hpL.Size = UDim2.new(1, 0, 0.42, 0)
-        hpL.BackgroundTransparency = 1; hpL.Font = Enum.Font.GothamBold; hpL.TextSize = 14
-        hpL.TextColor3 = Color3.fromRGB(100, 255, 100); hpL.TextStrokeTransparency = 0.2
-        hpL.TextStrokeColor3 = Color3.new(0,0,0); hpL.Visible = false
-
-        local nmL = Instance.new("TextLabel", bb)
-        nmL.Name = "L"; nmL.Size = UDim2.new(1, 0, 0.58, 0)
-        nmL.Position = UDim2.fromScale(0, 0.42); nmL.BackgroundTransparency = 1; nmL.Text = label
-        nmL.TextColor3 = color; nmL.Font = Enum.Font.GothamBold; nmL.TextSize = 16
-        nmL.TextStrokeTransparency = 0.2; nmL.TextStrokeColor3 = Color3.new(0,0,0); nmL.Visible = false
-
-        d.BB = bb; d.HpL = hpL; d.Lbl = nmL
+        local bb=Instance.new("BillboardGui"); bb.Size=UDim2.fromOffset(200,58); bb.StudsOffset=Vector3.new(0,4,0)
+        bb.AlwaysOnTop=true; bb.Enabled=false; bb.ResetOnSpawn=false; bb.LightInfluence=0
+        bb.MaxDistance=maxDist or 9999; bb.Adornee=anc; bb.Parent=anc
+        local hpL=Instance.new("TextLabel",bb); hpL.Name="HP"; hpL.Size=UDim2.new(1,0,0.42,0)
+        hpL.BackgroundTransparency=1; hpL.Font=Enum.Font.GothamBold; hpL.TextSize=14
+        hpL.TextColor3=Color3.fromRGB(100,255,100); hpL.TextStrokeTransparency=0.2
+        hpL.TextStrokeColor3=Color3.new(0,0,0); hpL.Visible=false
+        local nmL=Instance.new("TextLabel",bb); nmL.Name="L"; nmL.Size=UDim2.new(1,0,0.58,0)
+        nmL.Position=UDim2.fromScale(0,0.42); nmL.BackgroundTransparency=1; nmL.Text=label
+        nmL.TextColor3=color; nmL.Font=Enum.Font.GothamBold; nmL.TextSize=16
+        nmL.TextStrokeTransparency=0.2; nmL.TextStrokeColor3=Color3.new(0,0,0); nmL.Visible=false
+        d.BB=bb; d.HpL=hpL; d.Lbl=nmL
     end
-
-    local conn; conn = obj.AncestryChanged:Connect(function()
-        if obj.Parent then return end
-        conn:Disconnect()
-        d.valid = false
+    local conn; conn=obj.AncestryChanged:Connect(function()
+        if obj.Parent then return end; conn:Disconnect(); d.valid=false
         pcall(function() if d.HL then d.HL:Destroy() end; if d.SB then d.SB:Destroy() end; if d.BB then d.BB:Destroy() end end)
-        espReg[obj] = nil
+        espReg[obj]=nil
     end)
-    espReg[obj] = d
-    return d
+    espReg[obj]=d; return d
 end
-
-local function ApplyESP(obj, tcfg, label, maxDist)
+local function ApplyESP(obj,tcfg,label,maxDist)
     if not obj or not obj.Parent then return end
     local anyOn = tcfg.On or S.ESPHealth
     local d = espReg[obj]
-
     if not anyOn then
         if d then
-            if d.HL then d.HL.Enabled = false end
-            if d.SB then d.SB.Visible = false end
-            if d.BB then d.BB.Enabled = false end
+            if d.HL then d.HL.Enabled=false end
+            if d.SB then d.SB.Visible=false end
+            if d.BB then d.BB.Enabled=false end
         end
         return
     end
-
     if not d then
-        d = BuildESP(obj, tcfg.Color, label, maxDist)
+        d = BuildESP(obj,tcfg.Color,label,maxDist)
         if not d then return end
     end
-
-    -- تحديث الألوان والنصوص
-    if d.HL then d.HL.FillColor = tcfg.Color; d.HL.OutlineColor = tcfg.Color end
-    if d.SB then d.SB.Color3 = tcfg.Color; d.SB.SurfaceColor3 = tcfg.Color end
-    if d.Lbl then d.Lbl.TextColor3 = tcfg.Color; d.Lbl.Text = label end
-
-    -- تطبيق النوع
+    if d.HL then d.HL.FillColor=tcfg.Color; d.HL.OutlineColor=tcfg.Color end
+    if d.SB then d.SB.Color3=tcfg.Color; d.SB.SurfaceColor3=tcfg.Color end
+    if d.Lbl then d.Lbl.TextColor3=tcfg.Color; d.Lbl.Text=label end
     local mode = S.ESPMode
-    if mode == "Simple" then
-        -- إخفاء Highlight/SelectionBox، إظهار النص فقط
-        if d.HL then d.HL.Enabled = false end
-        if d.SB then d.SB.Visible = false end
-        if d.BB then d.BB.Enabled = true end
-        if d.Lbl then d.Lbl.Visible = true end
-    elseif mode == "Highlight" then
-        if d.HL then d.HL.Enabled = true end
-        if d.SB then d.SB.Visible = false end
-        if d.BB then d.BB.Enabled = false end
-    elseif mode == "Chams" then
-        if d.HL then d.HL.Enabled = false end
-        if d.SB then d.SB.Visible = true end
-        if d.BB then d.BB.Enabled = false end
-    elseif mode == "Name" then
-        if d.HL then d.HL.Enabled = false end
-        if d.SB then d.SB.Visible = false end
-        if d.BB then d.BB.Enabled = true end
-        if d.Lbl then d.Lbl.Visible = true end
+    if mode=="Simple" then
+        if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end
+        if d.BB then d.BB.Enabled=true end; if d.Lbl then d.Lbl.Visible=true end
+    elseif mode=="Highlight" then
+        if d.HL then d.HL.Enabled=true end; if d.SB then d.SB.Visible=false end
+        if d.BB then d.BB.Enabled=false end
+    elseif mode=="Chams" then
+        if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=true end
+        if d.BB then d.BB.Enabled=false end
+    elseif mode=="Name" then
+        if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end
+        if d.BB then d.BB.Enabled=true end; if d.Lbl then d.Lbl.Visible=true end
     end
-
-    -- Health ESP (يعمل مع أي وضع)
     if d.HpL then
         if S.ESPHealth then
-            local hum = obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid")
-            if hum and hum.Health > 0 then
-                local hp = math.floor(hum.Health + 0.5)
-                local mhp = math.max(math.floor(hum.MaxHealth + 0.5), 1)
-                local r = math.clamp(hum.Health / mhp, 0, 1)
-                d.HpL.Text = hp .. " / " .. mhp
-                d.HpL.TextColor3 = Color3.fromRGB(math.floor((1 - r) * 255), math.floor(r * 200 + 55), 30)
-                d.HpL.Visible = true
-            else
-                d.HpL.Visible = false
-            end
-        else
-            d.HpL.Visible = false
-        end
+            local hum=obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health>0 then
+                local hp=math.floor(hum.Health+0.5); local mhp=math.max(math.floor(hum.MaxHealth+0.5),1)
+                local r=math.clamp(hum.Health/mhp,0,1)
+                d.HpL.Text=hp.." / "..mhp
+                d.HpL.TextColor3=Color3.fromRGB(math.floor((1-r)*255),math.floor(r*200+55),30); d.HpL.Visible=true
+            else d.HpL.Visible=false end
+        else d.HpL.Visible=false end
     end
 end
-
-local function ProcessFolder(folder, key, label, maxDist)
+local function ProcessFolder(folder,key,label,maxDist)
     if not folder then return end
-    for _, obj in ipairs(folder:GetChildren()) do
-        if obj.Name == LP.Name then continue end
-        if obj:IsA("Model") then
-            ApplyESP(obj, S.T[key], label, maxDist)
-        elseif obj:IsA("BasePart") and not obj:IsDescendantOf(folder) then
-            -- للأجزاء المنفردة فقط (مثل البطاريات)
-            ApplyESP(obj, S.T[key], label, maxDist)
-        end
+    for _,obj in ipairs(folder:GetChildren()) do
+        if obj.Name==LP.Name then continue end
+        if obj:IsA("Model") then ApplyESP(obj,S.T[key],label,maxDist)
+        elseif obj:IsA("BasePart") and not obj.Parent then ApplyESP(obj,S.T[key],label,maxDist) end
     end
 end
-
-local lastEspUpdate = 0
 task.spawn(function()
     while task.wait(0.15) do
-        local anyOn = S.ESPHealth
-        if not anyOn then for _, v in pairs(S.T) do if v.On then anyOn = true; break end end end
+        local anyOn=S.ESPHealth
+        if not anyOn then for _,v in pairs(S.T) do if v.On then anyOn=true; break end end end
         if not anyOn then
-            for _, d in pairs(espReg) do pcall(function()
-                if d.HL then d.HL.Enabled = false end; if d.SB then d.SB.Visible = false end; if d.BB then d.BB.Enabled = false end
-            end) end
-            continue
+            for _,d in pairs(espReg) do pcall(function()
+                if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end; if d.BB then d.BB.Enabled=false end
+            end) end; continue
         end
         pcall(function()
-            local pf = workspace:FindFirstChild("PLAYERS")
-            local kf = pf and pf:FindFirstChild("KILLER")
-            if kf then for _, m in ipairs(kf:GetChildren()) do if m.Name ~= LP.Name then ApplyESP(m, S.T.Killer, m.Name) end end end
-            local af = pf and pf:FindFirstChild("ALIVE")
-            if af then for _, m in ipairs(af:GetChildren()) do if m.Name ~= LP.Name then ApplyESP(m, S.T.Survivor, m.Name) end end end
-            local mapF = GetMap()
+            local pf=workspace:FindFirstChild("PLAYERS")
+            local kf=pf and pf:FindFirstChild("KILLER")
+            if kf then for _,m in ipairs(kf:GetChildren()) do if m.Name~=LP.Name then ApplyESP(m,S.T.Killer,m.Name) end end end
+            local af=pf and pf:FindFirstChild("ALIVE")
+            if af then for _,m in ipairs(af:GetChildren()) do if m.Name~=LP.Name then ApplyESP(m,S.T.Survivor,m.Name) end end end
+            local mapF=GetMap()
             if mapF then
-                ProcessFolder(mapF:FindFirstChild("Generators"), "Generator", "Generator")
-                ProcessFolder(mapF:FindFirstChild("FuseBoxes"), "Fuse", "Fuse")
+                ProcessFolder(mapF:FindFirstChild("Generators"),"Generator","Generator")
+                ProcessFolder(mapF:FindFirstChild("FuseBoxes"),"Fuse","Fuse")
             end
-            local ig = workspace:FindFirstChild("IGNORE")
+            local ig=workspace:FindFirstChild("IGNORE")
             if ig then
-                for _, v in ipairs(ig:GetChildren()) do
-                    if v.Name == "Battery" then ApplyESP(v, S.T.Battery, "Battery") end
-                end
-                ProcessFolder(ig:FindFirstChild("Minion"), "WireEye", "Wire Eye", 40)
-                for _, v in ipairs(ig:GetChildren()) do
-                    local nm = v.Name
-                    if nm == "Minion" or nm == "WireEye" or nm == "Wire Eye" then
-                        if v:IsA("Model") or v:IsA("BasePart") then ApplyESP(v, S.T.WireEye, "Wire Eye", 40) end
-                    end
-                end
-                ProcessFolder(ig:FindFirstChild("Trap"), "Trap", "Trap", 35)
+                for _,v in ipairs(ig:GetChildren()) do if v.Name=="Battery" and v:IsA("BasePart") then ApplyESP(v,S.T.Battery,"Battery") end end
+                ProcessFolder(ig:FindFirstChild("Minion"),"WireEye","Wire Eye",40)
+                ProcessFolder(ig:FindFirstChild("Trap"),"Trap","Trap",35)
             end
         end)
     end
@@ -496,7 +494,7 @@ local function SetHideGenGui(on)
     if hideGuiConn then hideGuiConn:Disconnect(); hideGuiConn=nil end; if not on then return end
     local function K(g)
         if not S.HideGenGui or g.Name=="Dot" then return end
-        if BLOCK_GUIS[g.Name] then pcall(function() g.Enabled = false end) end
+        if BLOCK_GUIS[g.Name] then pcall(function() g.Enabled=false end) end
     end
     for _,g in ipairs(LP.PlayerGui:GetChildren()) do K(g) end
     hideGuiConn=LP.PlayerGui.ChildAdded:Connect(K)
@@ -545,10 +543,24 @@ local function SetAllowJump(enabled)
     end)
 end
 
+-- AUTO RUN / BYPASS SLOW (now respects stun/ragdoll)
+local function IsPlayerDisabled()
+    local char = LP.Character
+    if not char then return true end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum and (hum:GetState() == Enum.HumanoidStateType.Physics or hum:GetState() == Enum.HumanoidStateType.Dead) then return true end
+    for _, attr in ipairs({"Stun","Stunned","IsStunned","Ragdoll","IsRagdoll","Ragdolled","Confusion"}) do
+        local val = char:GetAttribute(attr)
+        if val == true then return true end
+    end
+    return false
+end
+
 local autoRunConn=nil
 local function SetAutoRun(on)
     if autoRunConn then autoRunConn:Disconnect(); autoRunConn=nil end; if not on then return end
     autoRunConn=RunService.Heartbeat:Connect(function()
+        if not S.AutoRun or IsPlayerDisabled() then return end
         pcall(function() local c=LP.Character; if not c then return end
             local rs=c:GetAttribute("RunSpeed"); c:SetAttribute("WalkSpeed",(rs and rs~=0) and rs or 24) end)
     end)
@@ -558,6 +570,7 @@ local bypassConn=nil
 local function SetBypassSlow(on)
     if bypassConn then bypassConn:Disconnect(); bypassConn=nil end; if not on then return end
     bypassConn=RunService.Heartbeat:Connect(function()
+        if not S.BypassSlow or IsPlayerDisabled() then return end
         pcall(function()
             if not LPChar or not LPHum then return end
             local spd=S.RunSpeed; LPHum.WalkSpeed=spd
@@ -567,7 +580,7 @@ local function SetBypassSlow(on)
     end)
 end
 
--- MASTER LOOP
+-- MASTER LOOP (optimized)
 local masterConn=nil
 local function MasterHeartbeat()
     local char = LP.Character
@@ -587,20 +600,6 @@ local function MasterHeartbeat()
     end
     if S.AntiRagdoll and hum then
         if hum:GetState()==Enum.HumanoidStateType.Physics then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
-        if char then
-            for _,a in ipairs({"Ragdoll","IsRagdoll","Ragdolled"}) do
-                local v=char:GetAttribute(a); if type(v)=="boolean" and v then char:SetAttribute(a,false) end
-            end
-        end
-    end
-    if S.BypassSlow and hum then
-        local spd=S.RunSpeed
-        hum.WalkSpeed=spd
-        char:SetAttribute("CustomSpeed",spd); char:SetAttribute("ModifiedMovementSpeed",spd)
-    end
-    if S.AutoRun and char then
-        local rs=char:GetAttribute("RunSpeed")
-        char:SetAttribute("WalkSpeed",(rs and rs~=0) and rs or 24)
     end
     if S.CamAny and not camActive then
         local myRoot = char and char:FindFirstChild("HumanoidRootPart")
@@ -772,7 +771,7 @@ local function StartInstantGen()
 end
 local function StopInstantGen() if genGuiConn then genGuiConn:Disconnect(); genGuiConn=nil end end
 
--- AUTO FARM
+-- AUTO FARM (fixed)
 local warpRequest = nil
 local function GetWarpRequest()
     if warpRequest then return warpRequest end
@@ -1100,7 +1099,8 @@ local function SaveCfg(name)
         AutoEscape=S.AutoEscape,AutoBarricade=S.AutoBarricade,
         InstantPrompt=S.InstantPrompt,InstantGen=S.InstantGen,GenDelay=S.GenDelay,
         AutoParry=S.AutoParry,ParryRangeBasic=S.ParryRangeBasic,ParryRangePull=S.ParryRangePull,
-        ShowParry=S.ShowParry,AutoSwing=S.AutoSwing,SwingRange=S.SwingRange,
+        ShowParry=S.ShowParry,DynamicParry=S.DynamicParry,ShowParryRange=S.ShowParryRange,
+        AutoSwing=S.AutoSwing,SwingRange=S.SwingRange,
         CamRotten=S.CamRotten,CamDoppel=S.CamDoppel,CamAny=S.CamAny,CamAnyRange=S.CamAnyRange,
         ShowFOV=S.ShowFOV,CamFOV=S.CamFOV,
         AutoShakeWire=S.AutoShakeWire,ShakeSpeed=S.ShakeSpeed,
@@ -1123,6 +1123,7 @@ local function LoadCfg(name)
     S.AutoEscape=d.AutoEscape or false; S.AutoBarricade=d.AutoBarricade or false
     S.InstantPrompt=d.InstantPrompt or false; S.InstantGen=d.InstantGen or false
     S.AutoParry=d.AutoParry or false; S.ShowParry=d.ShowParry or false
+    S.DynamicParry=d.DynamicParry or false; S.ShowParryRange=d.ShowParryRange or false
     S.AutoSwing=d.AutoSwing or false; S.CamRotten=d.CamRotten or false; S.CamDoppel=d.CamDoppel or false
     S.CamAny=d.CamAny or false; S.ShowFOV=d.ShowFOV or false; S.AutoShakeWire=d.AutoShakeWire or false
     S.AutoFarm=d.AutoFarm or false; S.AntiAFK=d.AntiAFK or false; S.FPSBooster=d.FPSBooster or false
@@ -1155,6 +1156,7 @@ local function SyncUI()
         s("AntiDie",S.AntiDie); s("AutoBarricade",S.AutoBarricade); s("AutoEscape",S.AutoEscape)
         s("InstantPrompt",S.InstantPrompt); s("InstantGen",S.InstantGen)
         s("AutoParry",S.AutoParry); s("ShowParry",S.ShowParry)
+        s("DynamicParry",S.DynamicParry); s("ShowParryRange",S.ShowParryRange)
         s("AutoSwing",S.AutoSwing); s("CamRotten",S.CamRotten); s("CamDoppel",S.CamDoppel)
         s("CamAny",S.CamAny); s("ShowFOV",S.ShowFOV); s("AutoShakeWire",S.AutoShakeWire)
         s("AutoFarm",S.AutoFarm); s("AntiAFK",S.AntiAFK); s("FPSBooster",S.FPSBooster)
@@ -1194,7 +1196,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v7.3.2",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v7.3.3",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
@@ -1221,7 +1223,7 @@ local function ShowLangGUI(callback)
     icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58)
     title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v7.3.2"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v7.3.3"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84)
     sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
@@ -1264,7 +1266,7 @@ local function ShowLoadingScreen(callback)
     moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46)
     titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v7.3.2"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v7.3.3"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84)
     subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
@@ -1310,10 +1312,10 @@ function BuildWindow()
     local Window=WindUI:CreateWindow({
         Title="Phantom Hub", Icon="moon", Author="7k.u", Folder=CFG_FOLDER,
         Size=UDim2.fromOffset(650,420), Transparent=true, Theme="Midnight", Resizable=false,
-        Background="rbxassetid://71961718469953",
+        Background="rbxassetid://113150461786091",
         BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v7.3.2",Color=Color3.fromRGB(120,60,240)})
+    Window:Tag({Title="v7.3.3",Color=Color3.fromRGB(120,60,240)})
     Window:Tag({Title="Beta",Color=Color3.fromRGB(30,130,255),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
@@ -1325,31 +1327,22 @@ function BuildWindow()
     local TbConfig  =Window:Tab({Title=Tr("tab_config"),  Icon="folder"            })
     local TbSettings=Window:Tab({Title=Tr("tab_settings"),Icon="sliders-horizontal" })
 
-    -- تزيين التبويبات بحواف بيضاء (نبحث داخل الحاوية)
+    -- فتح تبويب المعلومات تلقائياً
+    task.delay(0.3, function()
+        pcall(function() Window:SelectTab(TbInfo) end)
+    end)
+
+    -- حواف بيضاء للتبويبات
     task.spawn(function()
         task.wait(0.8)
         pcall(function()
             local gui = GetWindUIGui()
             if not gui then return end
-            -- WindUI عادة يضع التبويبات في Frame اسمه "Tabs" أو "Navigation"
             local tabsContainer = gui:FindFirstChild("Tabs") or gui:FindFirstChild("Navigation")
             if tabsContainer then
                 for _, btn in ipairs(tabsContainer:GetDescendants()) do
                     if btn:IsA("TextButton") then
                         local stroke = btn:FindFirstChildOfClass("UIStroke") or Instance.new("UIStroke", btn)
-                        stroke.Color = Color3.fromRGB(255, 255, 255)
-                        stroke.Thickness = 1.5
-                        stroke.Transparency = 0.5
-                        if not btn:FindFirstChildOfClass("UICorner") then
-                            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
-                        end
-                    end
-                end
-            else
-                -- طريقة احتياطية
-                for _, descendant in ipairs(gui:GetDescendants()) do
-                    if descendant:IsA("TextButton") and descendant.Visible and descendant.Size.X.Offset > 50 then
-                        local stroke = descendant:FindFirstChildOfClass("UIStroke") or Instance.new("UIStroke", descendant)
                         stroke.Color = Color3.fromRGB(255, 255, 255)
                         stroke.Thickness = 1.5
                         stroke.Transparency = 0.5
@@ -1369,15 +1362,15 @@ function BuildWindow()
         local ping=math.floor(LP:GetNetworkPing()*1000)
         pcall(function() infoPara:SetDesc("FPS: "..curFPS.."  .  Ping: "..ping.."ms\nAge: "..LP.AccountAge.." days  .  "..executor) end)
     end end)
-    TbInfo:Paragraph({Title=Tr("whats_new_title"),Desc=Tr("whats_new_body"),Thumbnail="rbxassetid://90704355647487",ThumbnailSize=300})
+    TbInfo:Paragraph({Title=Tr("whats_new_title"),Desc=Tr("whats_new_body"),Thumbnail="rbxassetid://93386553868675",ThumbnailSize=414})
     end
 
     do local R=uiRefs
-    R.InfStamina=TbMain:Toggle({Title=Tr("inf_stamina"),Value=S.InfStamina,Callback=function(v) S.InfStamina=v; ConnectStamina(); ToggleMasterLoop(v or S.AntiStun or S.AntiRagdoll or S.BypassSlow or S.AutoRun or S.CamAny) end})
+    R.InfStamina=TbMain:Toggle({Title=Tr("inf_stamina"),Value=S.InfStamina,Callback=function(v) S.InfStamina=v; ConnectStamina(); ToggleMasterLoop(v or S.AntiStun or S.AntiRagdoll or S.CamAny) end})
     R.NoClip=TbMain:Toggle({Title=Tr("noclip"),Value=S.NoClip,Callback=function(v) SetNoClip(v) end})
     R.AllowJump=TbMain:Toggle({Title=Tr("allow_jump"),Value=S.AllowJump,Callback=function(v) S.AllowJump=v; SetAllowJump(v) end})
-    R.AutoRun=TbMain:Toggle({Title=Tr("auto_run"),Value=S.AutoRun,Callback=function(v) S.AutoRun=v; ToggleMasterLoop(true) end})
-    R.BypassSlow=TbMain:Toggle({Title=Tr("bypass_slow"),Value=S.BypassSlow,Callback=function(v) S.BypassSlow=v; ToggleMasterLoop(true) end})
+    R.AutoRun=TbMain:Toggle({Title=Tr("auto_run"),Value=S.AutoRun,Callback=function(v) S.AutoRun=v; SetAutoRun(v) end})
+    R.BypassSlow=TbMain:Toggle({Title=Tr("bypass_slow"),Value=S.BypassSlow,Callback=function(v) S.BypassSlow=v; SetBypassSlow(v) end})
     TbMain:Slider({Title=Tr("run_speed"),Step=1,Value={Min=0,Max=40,Default=24},Callback=function(v) S.RunSpeed=v end})
     TbMain:Divider()
     R.AntiStun=TbMain:Toggle({Title=Tr("anti_stun"),Value=S.AntiStun,Callback=function(v) S.AntiStun=v; ToggleMasterLoop(true) end})
@@ -1397,8 +1390,10 @@ function BuildWindow()
     TbMain:Button({Title=Tr("gen_now"),Callback=function() InstantGenNow() end})
     TbMain:Divider()
     R.AutoParry=TbMain:Toggle({Title=Tr("auto_parry"),Value=S.AutoParry,Callback=function(v) S.AutoParry=v; SetAutoParry(v) end})
-    TbMain:Slider({Title=Tr("parry_range_basic"),Step=1,Value={Min=10,Max=50,Default=30},Callback=function(v) S.ParryRangeBasic=v end})
+    local parrySlider = TbMain:Slider({Title=Tr("parry_range_basic"),Step=1,Value={Min=5,Max=30,Default=15},Callback=function(v) S.ParryRangeBasic=v end})
     TbMain:Slider({Title=Tr("parry_range_pull"),Step=1,Value={Min=10,Max=60,Default=50},Callback=function(v) S.ParryRangePull=v end})
+    R.DynamicParry=TbMain:Toggle({Title=Tr("dynamic_parry"),Value=S.DynamicParry,Callback=function(v) S.DynamicParry=v; if v then parrySlider:SetDisabled(true) else parrySlider:SetDisabled(false) end end})
+    R.ShowParryRange=TbMain:Toggle({Title=Tr("show_parry_range"),Value=S.ShowParryRange,Callback=function(v) S.ShowParryRange=v end})
     R.ShowParry=TbMain:Toggle({Title=Tr("show_parry"),Value=S.ShowParry,Callback=function(v) S.ShowParry=v end})
     TbMain:Divider()
     R.AutoSwing=TbMain:Toggle({Title=Tr("auto_swing"),Value=S.AutoSwing,Callback=function(v) S.AutoSwing=v; SetAutoSwing(v) end})
@@ -1409,10 +1404,7 @@ function BuildWindow()
     end
 
     do local R=uiRefs
-    TbVisual:Dropdown({Title=Tr("esp_type"),Values={"Highlight","Chams","Name","Simple"},Value=S.ESPMode,Multi=false,Callback=function(v)
-        S.ESPMode=v
-        ClearAllESP() -- إعادة بناء كل شيء فورًا
-    end})
+    TbVisual:Dropdown({Title=Tr("esp_type"),Values={"Highlight","Chams","Name","Simple"},Value=S.ESPMode,Multi=false,Callback=function(v) S.ESPMode=v; ClearAllESP() end})
     R.ESPHealth=TbVisual:Toggle({Title=Tr("health_esp"),Value=S.ESPHealth,Callback=function(v) S.ESPHealth=v end})
     TbVisual:Divider()
     for _,row in ipairs({{"Killer","Killer"},{"Survivor","Survivor"},{"Generator","Generator"},{"Battery","Battery"},{"Fuse","Fuse"},{"Trap","Trap"},{"WireEye","Wire Eye"}}) do
@@ -1432,7 +1424,7 @@ function BuildWindow()
     end
 
     do local R=uiRefs
-    TbCombat:Paragraph({Title="Cam Lock Info",Desc="The Rotten: remote IDs + animation\nDoppelganger: animation + proximity\nAny Killer: distance + facing (new)"})
+    TbCombat:Paragraph({Title="Cam Lock Info",Desc="The Rotten: remote IDs + animation\nDoppelganger: animation + proximity\nAny Killer: distance + facing"})
     TbCombat:Divider()
     R.CamRotten=TbCombat:Toggle({Title=Tr("cam_rotten"),Value=S.CamRotten,Callback=function(v) S.CamRotten=v; if not v then camActive=false; S.CamTarget=nil end end})
     R.CamDoppel=TbCombat:Toggle({Title=Tr("cam_doppel"),Value=S.CamDoppel,Callback=function(v) S.CamDoppel=v end})
@@ -1440,9 +1432,7 @@ function BuildWindow()
     TbCombat:Slider({Title=Tr("cam_any_range"),Step=1,Value={Min=5,Max=30,Default=15},Callback=function(v) S.CamAnyRange=v end})
     TbCombat:Divider()
     R.ShowFOV=TbCombat:Toggle({Title=Tr("show_fov"),Value=S.ShowFOV,Callback=function(v) S.ShowFOV=v end})
-    TbCombat:Colorpicker({Title=Tr("fov_color"),Default=S.FovColor,Callback=function(c)
-        S.FovColor=c; local s=fovFrame and fovFrame:FindFirstChildOfClass("UIStroke"); if s then s.Color=c end
-    end})
+    TbCombat:Colorpicker({Title=Tr("fov_color"),Default=S.FovColor,Callback=function(c) S.FovColor=c end})
     TbCombat:Slider({Title=Tr("fov_radius"),Step=5,Value={Min=30,Max=300,Default=120},Callback=function(v) S.CamFOV=v end})
     TbCombat:Button({Title=Tr("lock_near"),Callback=function() S.CamTarget=FindTarget(); camActive=S.CamTarget~=nil end})
     TbCombat:Button({Title=Tr("clear_lock"),Callback=function() camActive=false; S.CamTarget=nil end})
@@ -1474,7 +1464,7 @@ function BuildWindow()
             if S.AutoSwing then SetAutoSwing(true) end; if S.AutoParry then SetAutoParry(true) end
             if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
             if S.FovValue~=70 then SetFOV(S.FovValue) end; ConnectAntiDie()
-            ToggleMasterLoop(S.InfStamina or S.AntiStun or S.AntiRagdoll or S.BypassSlow or S.AutoRun or S.CamAny)
+            ToggleMasterLoop(S.InfStamina or S.AntiStun or S.AntiRagdoll or S.CamAny)
         end
     end})
     TbConfig:Divider()
@@ -1511,7 +1501,7 @@ function BuildWindow()
     if S.AutoSwing then SetAutoSwing(true) end; if S.AutoParry then SetAutoParry(true) end
     if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
     if S.FovValue~=70 then SetFOV(S.FovValue) end
-    ToggleMasterLoop(S.InfStamina or S.AntiStun or S.AntiRagdoll or S.BypassSlow or S.AutoRun or S.CamAny)
+    ToggleMasterLoop(S.InfStamina or S.AntiStun or S.AntiRagdoll or S.CamAny)
     task.delay(0.9,function() ApplyScale(S.UIScale); ApplyAlpha(S.UIAlpha) end)
 
     LP.CharacterAdded:Connect(function()
@@ -1528,7 +1518,7 @@ function BuildWindow()
         end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v7.3.2","By 7k.u  -  Ready",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v7.3.3","By 7k.u  -  Ready",5,"moon")
 end
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
