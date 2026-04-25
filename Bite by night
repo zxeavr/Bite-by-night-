@@ -1,5 +1,5 @@
 --[[
-  PHANTOM HUB v8.4 – HEALTH ESP FIXED + STUN HELPER
+  PHANTOM HUB v8.5 – FINAL PERFECTED
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
   PlaceId: 70845479499574
@@ -35,7 +35,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.4\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.5\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -57,8 +57,8 @@ local T={en={},ar={}}
 
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v8.4"
-T.en.whats_new_body="+ Health ESP now visible in all modes\n+ Bypass Slow helper added (check console)"
+T.en.whats_new_title="What's New  v8.5"
+T.en.whats_new_body="+ Health ESP only on Killer / Survivor\n+ Removed Stun Checker (not needed)\n+ Auto Barricade: open‑source version"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
 T.en.auto_run="Auto Run"; T.en.bypass_slow="Bypass Slowness"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
@@ -83,8 +83,8 @@ T.en.fps_boost="FPS Booster"
 
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v8.4"
-T.ar.whats_new_body="+ صحة ESP تعمل الآن في جميع الأوضاع\n+ مساعد تجاوز البطء (انظر وحدة التحكم)"
+T.ar.whats_new_title="الجديد  v8.5"
+T.ar.whats_new_body="+ صحة ESP فقط على القاتل والناجين\n+ حذف مساعد التجمد\n+ تحصين تلقائي: نسخة محسّنة"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
 T.ar.auto_run="جري دائم"; T.ar.bypass_slow="تجاوز الابطاء"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
@@ -230,6 +230,29 @@ local function IsPlayerDisabled()
     return false
 end
 
+-- AUTO BARRICADE (open‑source RenderStepped)
+local barConn = nil
+function SetBarricade(on)
+    if barConn then barConn:Disconnect(); barConn = nil end
+    S.AutoBarricade = on
+    if not on then return end
+    barConn = RunService.RenderStepped:Connect(function()
+        pcall(function()
+            local dot = LP.PlayerGui:FindFirstChild("Dot")
+            if dot and dot:IsA("ScreenGui") and dot.Enabled then
+                local container = dot:FindFirstChild("Container")
+                if container then
+                    local frame = container:FindFirstChild("Frame")
+                    if frame and frame:IsA("GuiObject") then
+                        frame.AnchorPoint = Vector2.new(0.5, 0.5)
+                        frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+                    end
+                end
+            end
+        end)
+    end)
+end
+
 -- CORE LOOP
 local lastParryFiredAt = 0
 local lastSwing = 0
@@ -272,16 +295,6 @@ function AntiTrapUpdate()
             if o:IsA("BallSocketConstraint") or o:IsA("RopeConstraint") then pcall(function() o:Destroy() end) end
         end end
         if LPHum.WalkSpeed<=0 then LPHum.WalkSpeed=math.max(S.RunSpeed,16) end
-    end)
-end
-
-function BarricadeUpdate()
-    pcall(function()
-        local du; for _,v in ipairs(LP.PlayerGui:GetChildren()) do if v.Name=="Dot" and v.Enabled then du=v; break end end
-        if not du then return end
-        local c=du:FindFirstChild("Container"); local f=c and c:FindFirstChild("Frame")
-        if not f then for _,d in ipairs(du:GetDescendants()) do if d:IsA("Frame") and d.Name~="Container" then f=d; break end end end
-        if f then local vp=Camera.ViewportSize; f.Position=UDim2.fromOffset(vp.X/2,vp.Y/2) end
     end)
 end
 
@@ -348,7 +361,7 @@ task.spawn(function()
     end
 end)
 
--- ESP SYSTEM
+-- ESP SYSTEM (Health only Killer/Survivor)
 local espReg={}
 local function ClearAllESP()
     for _, d in pairs(espReg) do pcall(function() if d.HL then d.HL:Destroy() end; if d.SB then d.SB:Destroy() end; if d.BB then d.BB:Destroy() end end) end
@@ -388,7 +401,8 @@ local function ApplyESP(obj,tcfg,label,maxDist)
     if not obj or not obj.Parent then return end
     local showCategory = tcfg.On
     local hasHumanoid = obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") ~= nil
-    local showHealth = S.ESPHealth and showCategory and hasHumanoid
+    local isPlayer = (tcfg == S.T.Killer or tcfg == S.T.Survivor)
+    local showHealth = S.ESPHealth and showCategory and hasHumanoid and isPlayer
     local anyOn = showCategory or showHealth
     local d = espReg[obj]
     if not anyOn then if d then if d.HL then d.HL.Enabled=false end; if d.SB then d.SB.Visible=false end; if d.BB then d.BB.Enabled=false end end; return end
@@ -702,7 +716,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.4",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.5",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
@@ -723,7 +737,7 @@ local function ShowLangGUI(callback)
     local pg=Instance.new("UIGradient",panel); pg.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(18,8,40)),ColorSequenceKeypoint.new(1,Color3.fromRGB(8,4,20))}); pg.Rotation=135
     local icon=Instance.new("TextLabel",panel); icon.Size=UDim2.fromOffset(40,40); icon.Position=UDim2.new(0.5,-20,0,14); icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58); title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.4"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.5"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84); sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
     local div=Instance.new("Frame",panel); div.Size=UDim2.new(1,-30,0,1); div.Position=UDim2.new(0,15,0,112); div.BackgroundColor3=Color3.fromRGB(80,40,160); div.BackgroundTransparency=0.5; div.BorderSizePixel=0; div.ZIndex=3
@@ -756,7 +770,7 @@ local function ShowLoadingScreen(callback)
     local panel=Instance.new("Frame",sg); panel.AnchorPoint=Vector2.new(0.5,0.5); panel.Position=UDim2.new(0.5,0,0.5,0); panel.Size=UDim2.fromOffset(380,200); panel.BackgroundTransparency=1; panel.ZIndex=2
     local moonL=Instance.new("TextLabel",panel); moonL.Size=UDim2.fromOffset(50,50); moonL.Position=UDim2.new(0.5,-25,0,-10); moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46); titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.4"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.5"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84); subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
     local barBG=Instance.new("Frame",panel); barBG.Size=UDim2.new(1,0,0,14); barBG.Position=UDim2.new(0,0,0,102); barBG.BackgroundColor3=Color3.fromRGB(30,15,60); barBG.BorderSizePixel=0; barBG.ZIndex=3
@@ -783,7 +797,127 @@ local function ShowLoadingScreen(callback)
     end)
 end
 
--- BUILD WINDOW (كل التبويبات)
+-- CORE LOOP START (needs to run BuildWindow and the functions)
+local coreConn = nil
+local function StartCoreLoop()
+    if coreConn then coreConn:Disconnect() end
+    coreConn = RunService.Heartbeat:Connect(function()
+        local char = LP.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+        if S.AutoRun and char then
+            local spd = S.RunSpeed
+            char:SetAttribute("WalkSpeed", spd)
+            char:SetAttribute("RunSpeed", spd)
+        end
+
+        if S.InfStamina and char then
+            pcall(function() char:SetAttribute("Stamina", char:GetAttribute("MaxStamina") or 100) end)
+        end
+        if S.AntiStun and char then
+            for _,a in ipairs({"Stun","Stunned","IsStunned","Blinded","IsBlinded","Slowed","Slowness"}) do
+                local v = char:GetAttribute(a)
+                if type(v)=="boolean" and v then char:SetAttribute(a,false)
+                elseif type(v)=="number" and v>0 then char:SetAttribute(a,0) end
+            end
+            for _,t in ipairs({"Stun","Stunned","Blinded"}) do
+                if CollectionService:HasTag(char,t) then CollectionService:RemoveTag(char,t) end
+            end
+        end
+        if S.AntiRagdoll and hum and hum:GetState()==Enum.HumanoidStateType.Physics then
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+
+        if S.BypassSlow and char and hum and not IsPlayerDisabled() then
+            local spd = S.RunSpeed
+            hum.WalkSpeed = spd
+            char:SetAttribute("CustomSpeed", spd)
+            char:SetAttribute("ModifiedMovementSpeed", spd)
+        end
+
+        if S.AutoParry then
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v.ClassName == "Highlight" and v.Name == "Highlight" and v.Enabled and v.Adornee and v.Adornee:IsA("Model") then
+                        local km = v.Adornee
+                        local kf = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
+                        if kf and km.Parent == kf then
+                            local kr = km:FindFirstChild("HumanoidRootPart")
+                            if kr and (root.Position - kr.Position).Magnitude <= S.ParryRangeBasic then
+                                if (tick() - (lastParryFiredAt or 0)) >= 0.15 then
+                                    lastParryFiredAt = tick()
+                                    pcall(function()
+                                        local rel = RS:WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable")
+                                        rel:FireServer(buffer.fromstring("\a"), buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002"))
+                                    end)
+                                end
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        if S.AutoSwing and char then
+            local myRoot = char:FindFirstChild("HumanoidRootPart")
+            if myRoot and (tick() - lastSwing >= 0.45) then
+                local pf = workspace:FindFirstChild("PLAYERS")
+                local af = pf and pf:FindFirstChild("ALIVE")
+                if af then
+                    local closest, bestDist = nil, S.SwingRange+1
+                    for _, m in ipairs(af:GetChildren()) do
+                        if m.Name ~= LP.Name and not IsParrying(m) then
+                            local hrp = m:FindFirstChild("HumanoidRootPart")
+                            if hrp then
+                                local d = (myRoot.Position - hrp.Position).Magnitude
+                                if d < bestDist then bestDist = d; closest = m end
+                            end
+                        end
+                    end
+                    if closest then
+                        lastSwing = tick()
+                        SimulateM1Click()
+                    end
+                end
+            end
+        end
+
+        if S.AutoEscape and char and char:GetAttribute("Team") == "Survivor" then
+            EscapeMap()
+        end
+
+        if S.AntiTrap and char and hum then
+            AntiTrapUpdate()
+        end
+
+        if S.CamAny and not camActive then
+            local myRoot = char and char:FindFirstChild("HumanoidRootPart")
+            if myRoot then
+                local pf = workspace:FindFirstChild("PLAYERS")
+                local kf = pf and pf:FindFirstChild("KILLER")
+                if kf then
+                    for _, m in ipairs(kf:GetChildren()) do
+                        if m:IsA("Model") then
+                            local kr = m:FindFirstChild("HumanoidRootPart")
+                            if kr and (kr.Position - myRoot.Position).Magnitude <= S.CamAnyRange then
+                                if kr.CFrame.LookVector:Dot((myRoot.Position - kr.Position).Unit) > 0.3 then
+                                    camActive = true
+                                    S.CamTarget = kr
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+StartCoreLoop()
+
+-- BUILD WINDOW
 function BuildWindow()
     local wOk,wErr=pcall(function() WindUI=loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))() end)
     if not wOk or not WindUI then error("[PH] WindUI: "..tostring(wErr)) end
@@ -794,7 +928,7 @@ function BuildWindow()
         Size=UDim2.fromOffset(650,420), Transparent=true, Theme="Midnight", Resizable=false,
         Background="rbxassetid://113150461786091", BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v8.4",Color=Color3.fromRGB(120,60,240)}); Window:Tag({Title="ESP Fix",Color=Color3.fromRGB(30,255,130),Icon="star"})
+    Window:Tag({Title="v8.5",Color=Color3.fromRGB(120,60,240)}); Window:Tag({Title="Final",Color=Color3.fromRGB(30,255,130),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
     local TbInfo    =Window:Tab({Title=Tr("tab_info"),    Icon="info"              })
@@ -845,7 +979,7 @@ function BuildWindow()
     R.AntiDie=TbMain:Toggle({Title=Tr("anti_die"),Value=S.AntiDie,Callback=function(v) S.AntiDie=v end})
     TbMain:Slider({Title=Tr("anti_die_hp"),Step=1,Value={Min=1,Max=100,Default=30},Callback=function(v) S.AntiDieHP=v end})
     TbMain:Divider()
-    R.AutoBarricade=TbMain:Toggle({Title=Tr("auto_barricade"),Value=S.AutoBarricade,Callback=function(v) S.AutoBarricade=v end})
+    R.AutoBarricade=TbMain:Toggle({Title=Tr("auto_barricade"),Value=S.AutoBarricade,Callback=function(v) SetBarricade(v) end})
     R.AutoEscape=TbMain:Toggle({Title=Tr("auto_escape"),Value=S.AutoEscape,Callback=function(v) S.AutoEscape=v end})
     R.InstantPrompt=TbMain:Toggle({Title=Tr("instant_prompt"),Value=S.InstantPrompt,Callback=function(v) S.InstantPrompt=v; SetInstantPrompt(v) end})
     TbMain:Divider()
@@ -904,7 +1038,7 @@ function BuildWindow()
     R.AutoFarm=TbFarm:Toggle({Title=Tr("auto_farm"),Value=S.AutoFarm,Callback=function(v) S.AutoFarm=v; SetAutoFarm(v) end})
     end
 
-    -- Config Tab (ممتلئ)
+    -- Config Tab
     do local cfgInput=""; local selCfg=nil; local cfgDD=nil
     TbConfig:Input({Title=Tr("cfg_name"),Placeholder="v1",Callback=function(t) if t and t~="" then cfgInput=t end end})
     TbConfig:Button({Title=Tr("cfg_create"),Callback=function()
@@ -925,6 +1059,7 @@ function BuildWindow()
             if S.InstantPrompt then SetInstantPrompt(true) end; if S.AutoFarm then SetAutoFarm(true) end
             if S.AutoSwing then S.AutoSwing=true end; if S.AutoParry then S.AutoParry=true end
             if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
+            if S.AutoBarricade then SetBarricade(true) end
             SetFOV(S.FovValue); ConnectAntiDie()
         end
     end})
@@ -940,7 +1075,7 @@ function BuildWindow()
     end})
     end
 
-    -- Settings Tab (ممتلئ)
+    -- Settings Tab
     do local R=uiRefs
     TbSettings:Slider({Title=Tr("ui_scale"),Step=0.05,Value={Min=0.7,Max=1.5,Default=1.0},Callback=function(v) ApplyScale(v) end})
     TbSettings:Slider({Title=Tr("ui_alpha"),Step=0.05,Value={Min=0,Max=0.9,Default=0},Callback=function(v) ApplyAlpha(v) end})
@@ -961,6 +1096,7 @@ function BuildWindow()
     if S.InstantPrompt then SetInstantPrompt(true) end; if S.AutoFarm then SetAutoFarm(true) end
     if S.AutoSwing then S.AutoSwing=true end; if S.AutoParry then S.AutoParry=true end
     if S.AutoShakeWire then SetAutoShakeWire(true) end; if S.FPSBooster then SetFPSBooster(true) end
+    if S.AutoBarricade then SetBarricade(true) end
     SetFOV(S.FovValue)
     task.delay(0.9,function() ApplyScale(S.UIScale); ApplyAlpha(S.UIAlpha) end)
 
@@ -969,16 +1105,17 @@ function BuildWindow()
         if S.NoClip then SetNoClip(true) end; if S.AllowJump then SetAllowJump(true) end
         if S.AutoRun then SetAutoRun(true) end; if S.BypassSlow then SetBypassSlow(true) end
         if S.AutoSwing then S.AutoSwing=true end; if S.AutoParry then S.AutoParry=true end
+        if S.AutoBarricade then SetBarricade(true) end
         SetFOV(S.FovValue)
         task.wait(1)
         pcall(function() local pf=workspace:FindFirstChild("PLAYERS"); local kf=pf and pf:FindFirstChild("KILLER")
             if kf then for _,m in ipairs(kf:GetChildren()) do HookKillerAnim(m) end end end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v8.4","Health ESP Fixed",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v8.5","Final Perfected",5,"moon")
 end
 
--- CAM LOCK (متبقي)
+-- CAM LOCK
 local camActive=false
 function FindNearestSurvivor()
     local char = LP.Character; local myRoot = char and char:FindFirstChild("HumanoidRootPart")
@@ -1060,33 +1197,6 @@ RunService.RenderStepped:Connect(function()
     if S.CamTarget and S.CamTarget:FindFirstChild("HumanoidRootPart") then
         Camera.CFrame=CFrame.new(Camera.CFrame.Position, S.CamTarget:FindFirstChild("HumanoidRootPart").Position + Vector3.new(0,2.5,0))
     else camActive=false; S.CamTarget=nil end
-end)
-
--- BYPASS SLOW HELPER (مُعاد إدراجه)
-print("[PH] Bypass Helper started. Use a stun ability...")
-LP.CharacterAdded:Connect(function(char)
-    char:WaitForChild("Humanoid")
-    task.delay(0.3, function()
-        local attrs = {}
-        for _, attr in ipairs({"Stun","Stunned","IsStunned","Ragdoll","IsRagdoll","Ragdolled","Confusion","Slowed","Slowness"}) do
-            attrs[attr] = char:GetAttribute(attr)
-        end
-        print("[PH] Initial attrs:", HttpService:JSONEncode(attrs))
-    end)
-    char.AttributeChanged:Connect(function(attr)
-        local val = char:GetAttribute(attr)
-        if attr == "Stun" or attr == "Stunned" or attr == "IsStunned" or attr == "Ragdoll" or attr == "Confusion" or attr == "Slowed" or attr == "Slowness" then
-            print("[PH] Attribute changed:", attr, "=", val)
-        end
-    end)
-    for _, tag in ipairs({"Stun","Stunned","Blinded","Confusion","SlowStop"}) do
-        CollectionService:GetInstanceAddedSignal(tag):Connect(function(obj)
-            if obj == char then print("[PH] Tag added:", tag) end
-        end)
-        CollectionService:GetInstanceRemovedSignal(tag):Connect(function(obj)
-            if obj == char then print("[PH] Tag removed:", tag) end
-        end)
-    end
 end)
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
