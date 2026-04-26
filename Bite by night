@@ -331,8 +331,8 @@ local function ApplyESP(obj,tcfg,label,maxDist)
     if d.BB then d.BB.Enabled=showBB end
     if d.Lbl then d.Lbl.Visible=tcfg.On and (mode=="Name") end
     if d.HpL then
-        if S.ESPHealth and (tcfg == S.T.Killer or tcfg == S.T.Survivor) then
-    local hum=obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid")
+        if S.ESPHealth then
+            local hum=obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid")
             if hum and hum.Health>0 then
                 local hp=math.floor(hum.Health+0.5); local mhp=math.max(math.floor(hum.MaxHealth+0.5),1)
                 local r=math.clamp(hum.Health/mhp,0,1)
@@ -547,40 +547,14 @@ CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
         task.defer(function() pcall(function() CollectionService:RemoveTag(obj,"Confusion") end) end)
     end
 end)
--- ANTI STUN (تتوقف تماماً عند الإغلاق)
-local antiStunConn = nil
-function SetAntiStun(on)
-    S.AntiStun = on
-    if antiStunConn then antiStunConn:Disconnect(); antiStunConn = nil end
-    if not on then
-        -- استعادة سرعة المشي الافتراضية عند الإغلاق
-        pcall(function()
-            if LPChar then
-                LPChar:SetAttribute("WalkSpeed", 12)
-                if LPHum then LPHum.WalkSpeed = 12 end
+task.spawn(function()
+    while task.wait(0.1) do pcall(function()
+        if S.AntiStun and LPChar then
+            for _,a in ipairs(STUN_ATTRS) do local v=LPChar:GetAttribute(a)
+                if type(v)=="boolean" and v then LPChar:SetAttribute(a,false)
+                elseif type(v)=="number" and v>0 then LPChar:SetAttribute(a,0) end
             end
-        end)
-        return
-    end
-    antiStunConn = RunService.Heartbeat:Connect(function()
-        if not S.AntiStun then return end
-        local char = LP.Character
-        if not char then return end
-        -- إزالة الذهول والبطء
-        for _, a in ipairs({"Stun","Stunned","IsStunned","Blinded","IsBlinded","Slowed","Slowness"}) do
-            local v = char:GetAttribute(a)
-            if type(v) == "boolean" and v then char:SetAttribute(a, false)
-            elseif type(v) == "number" and v > 0 then char:SetAttribute(a, 0) end
-        end
-        for _, t in ipairs({"Stun","Stunned","Blinded","SlowStop"}) do
-            if CollectionService:HasTag(char, t) then CollectionService:RemoveTag(char, t) end
-        end
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum and hum:GetState() == Enum.HumanoidStateType.Physics then
-            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-        end
-    end)
-end
+            for _,t in ipairs(STUN_TAGS) do if CollectionService:HasTag(LPChar,t) then CollectionService:RemoveTag(LPChar,t) end end
             -- Bypass slowness (merged): restore speed if slowed
             if LPHum and LPHum.WalkSpeed < (S.RunSpeed * 0.5) then
                 LPHum.WalkSpeed = S.RunSpeed
@@ -1358,7 +1332,7 @@ function BuildWindow()
             Title="",
             Desc="",
             Thumbnail="rbxassetid://93386553868675",
-            ThumbnailSize=150,
+            ThumbnailSize=300,
         })
         local infoPara=TbInfo:Paragraph({
             Title=LP.DisplayName.."  (@"..LP.Name..")",
