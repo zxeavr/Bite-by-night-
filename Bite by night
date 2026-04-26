@@ -1,174 +1,57 @@
 --[[
-  نظام الحماية التجريبي - Phantom Hub Auto-Kick Tester
-  الغرض: تجربة آلية طرد اللاعبين عند استخدام نسخة قديمة من السكربت.
+  نظام الطرد بالعلم (Flag System Tester)
+  ضع في version.txt كلمة VALID أو INVALID فقط
 ]]
 
 local Players = game:GetService("Players")
 local LP = Players.LocalPlayer
 
--- الرابط الخام الذي يحتوي على رقم الإصدار الحالي
 local VERSION_URL = "https://raw.githubusercontent.com/zxeavr/Bite-by-night-/refs/heads/main/version.txt"
 
--- رقم الإصدار الموجود في السكربت (يمكن تغييره يدوياً من الواجهة)
-local SCRIPT_VERSION = 77
+-- واجهة بسيطة
+local gui = Instance.new("ScreenGui", LP:WaitForChild("PlayerGui"))
+local f = Instance.new("Frame", gui)
+f.Size = UDim2.new(0,250,0,150)
+f.Position = UDim2.new(0,10,0,10)
+f.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
--- إنشاء واجهة بسيطة للتجربة
-local gui = Instance.new("ScreenGui")
-gui.Name = "KickTester"
-gui.ResetOnSpawn = false
-gui.Parent = LP:WaitForChild("PlayerGui")
+local lbl = Instance.new("TextLabel", f)
+lbl.Size = UDim2.new(1,-10,0,60)
+lbl.Position = UDim2.new(0,5,0,10)
+lbl.BackgroundTransparency = 1
+lbl.Text = "Flag: --"
+lbl.TextColor3 = Color3.fromRGB(255,255,255)
+lbl.Font = Enum.Font.GothamBold
+lbl.TextSize = 14
 
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 300, 0, 230)
-frame.Position = UDim2.new(0, 10, 0, 10)
-frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-frame.Active = true
-frame.Draggable = true
-
--- عنوان
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, -10, 0, 25)
-title.Position = UDim2.new(0, 5, 0, 5)
-title.BackgroundTransparency = 1
-title.Text = "Auto-Kick Tester"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 18
-
--- عرض رقم الإصدار المحلي
-local localVerLabel = Instance.new("TextLabel", frame)
-localVerLabel.Size = UDim2.new(1, -10, 0, 20)
-localVerLabel.Position = UDim2.new(0, 5, 0, 35)
-localVerLabel.BackgroundTransparency = 1
-localVerLabel.Text = "Local Version: " .. SCRIPT_VERSION
-localVerLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-localVerLabel.Font = Enum.Font.Gotham
-localVerLabel.TextSize = 14
-
--- حقل إدخال لتغيير رقم الإصدار المحلي
-local inputBox = Instance.new("TextBox", frame)
-inputBox.Size = UDim2.new(0, 100, 0, 25)
-inputBox.Position = UDim2.new(0, 5, 0, 60)
-inputBox.PlaceholderText = "Enter local ver"
-inputBox.Text = tostring(SCRIPT_VERSION)
-inputBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-inputBox.Font = Enum.Font.Gotham
-inputBox.TextSize = 12
-
--- زر تحديث الرقم المحلي
-local updateLocalBtn = Instance.new("TextButton", frame)
-updateLocalBtn.Size = UDim2.new(0, 80, 0, 25)
-updateLocalBtn.Position = UDim2.new(0, 110, 0, 60)
-updateLocalBtn.Text = "Update"
-updateLocalBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-updateLocalBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-updateLocalBtn.Font = Enum.Font.Gotham
-updateLocalBtn.TextSize = 12
-updateLocalBtn.MouseButton1Click:Connect(function()
-    local num = tonumber(inputBox.Text)
-    if num then
-        SCRIPT_VERSION = num
-        localVerLabel.Text = "Local Version: " .. SCRIPT_VERSION
-    end
-end)
-
--- عرض رقم الإصدار الموجود على الخادم
-local remoteVerLabel = Instance.new("TextLabel", frame)
-remoteVerLabel.Size = UDim2.new(1, -10, 0, 20)
-remoteVerLabel.Position = UDim2.new(0, 5, 0, 95)
-remoteVerLabel.BackgroundTransparency = 1
-remoteVerLabel.Text = "Remote Version: --"
-remoteVerLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-remoteVerLabel.Font = Enum.Font.Gotham
-remoteVerLabel.TextSize = 14
-
--- عرض حالة المقارنة
-local statusLabel = Instance.new("TextLabel", frame)
-statusLabel.Size = UDim2.new(1, -10, 0, 20)
-statusLabel.Position = UDim2.new(0, 5, 0, 120)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "Status: Idle"
-statusLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.TextSize = 14
-
--- زر فحص فوري
-local checkBtn = Instance.new("TextButton", frame)
-checkBtn.Size = UDim2.new(0, 120, 0, 30)
-checkBtn.Position = UDim2.new(0, 5, 0, 150)
-checkBtn.Text = "Check Now (Once)"
-checkBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 60)
-checkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-checkBtn.Font = Enum.Font.Gotham
-checkBtn.TextSize = 14
-checkBtn.MouseButton1Click:Connect(function()
-    statusLabel.Text = "Status: Checking..."
+local function checkFlag()
     pcall(function()
-        local remoteStr = game:HttpGet(VERSION_URL)
-        if remoteStr then
-            remoteStr = remoteStr:match("%d+") -- استخراج الرقم من النص
-            local remoteNum = tonumber(remoteStr)
-            if remoteNum then
-                remoteVerLabel.Text = "Remote Version: " .. remoteNum
-                if SCRIPT_VERSION < remoteNum then
-                    statusLabel.Text = "Status: KICKED! (updating...)"
-                    task.wait(1)
-                    LP:Kick("🚀 New version available! Please rejoin to update.")
-                else
-                    statusLabel.Text = "Status: OK (Local >= Remote)"
-                end
-            else
-                remoteVerLabel.Text = "Remote Version: Invalid"
-                statusLabel.Text = "Status: Error"
-            end
-        else
-            remoteVerLabel.Text = "Remote Version: Fail"
-            statusLabel.Text = "Status: Network Error"
+        local flag = game:HttpGet(VERSION_URL)
+        if flag then flag = flag:match("^%s*(.-)%s*$") end -- إزالة الفراغات
+        lbl.Text = "Flag: " .. (flag or "ERROR")
+        if flag == "INVALID" then
+            lbl.Text = "Flag: INVALID -> KICK!"
+            task.wait(1)
+            LP:Kick("🚀 New update available! Please rejoin.")
         end
     end)
-end)
+end
 
--- حلقة الفحص التلقائي
-local autoLoop = false
-local loopBtn = Instance.new("TextButton", frame)
-loopBtn.Size = UDim2.new(0, 120, 0, 30)
-loopBtn.Position = UDim2.new(0, 5, 0, 190)
-loopBtn.Text = "Start Auto-Check Loop"
-loopBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-loopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-loopBtn.Font = Enum.Font.Gotham
-loopBtn.TextSize = 14
-loopBtn.MouseButton1Click:Connect(function()
-    autoLoop = not autoLoop
-    if autoLoop then
-        loopBtn.Text = "Stop Auto-Check Loop"
-        loopBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
-        task.spawn(function()
-            while autoLoop do
-                task.wait(10) -- اختبر كل 10 ثواني بدلاً من 60 للسرعة
-                pcall(function()
-                    local remoteStr = game:HttpGet(VERSION_URL)
-                    if remoteStr then
-                        remoteStr = remoteStr:match("%d+")
-                        local remoteNum = tonumber(remoteStr)
-                        if remoteNum then
-                            remoteVerLabel.Text = "Remote Version: " .. remoteNum
-                            if SCRIPT_VERSION < remoteNum then
-                                statusLabel.Text = "Status: KICKED!"
-                                task.wait(0.5)
-                                LP:Kick("🚀 New version detected. Rejoin to update!")
-                            else
-                                statusLabel.Text = "Status: OK"
-                            end
-                        end
-                    end
-                end)
-            end
-        end)
-    else
-        loopBtn.Text = "Start Auto-Check Loop"
-        loopBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-        statusLabel.Text = "Status: Loop Stopped"
+-- زر فحص فوري
+local btn = Instance.new("TextButton", f)
+btn.Size = UDim2.new(0,100,0,30)
+btn.Position = UDim2.new(0,5,0,80)
+btn.Text = "Check Now"
+btn.BackgroundColor3 = Color3.fromRGB(60,100,60)
+btn.TextColor3 = Color3.fromRGB(255,255,255)
+btn.Font = Enum.Font.Gotham
+btn.TextSize = 14
+btn.MouseButton1Click:Connect(checkFlag)
+
+-- حلقة فحص تلقائي كل 10 ثواني
+task.spawn(function()
+    while true do
+        checkFlag()
+        task.wait(10)
     end
 end)
