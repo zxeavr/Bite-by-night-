@@ -1332,7 +1332,7 @@ function BuildWindow()
             Title="",
             Desc="",
             Thumbnail="rbxassetid://93386553868675",
-            ThumbnailSize=300,
+            ThumbnailSize=150,
         })
         local infoPara=TbInfo:Paragraph({
             Title=LP.DisplayName.."  (@"..LP.Name..")",
