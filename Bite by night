@@ -547,14 +547,40 @@ CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
         task.defer(function() pcall(function() CollectionService:RemoveTag(obj,"Confusion") end) end)
     end
 end)
-task.spawn(function()
-    while task.wait(0.1) do pcall(function()
-        if S.AntiStun and LPChar then
-            for _,a in ipairs(STUN_ATTRS) do local v=LPChar:GetAttribute(a)
-                if type(v)=="boolean" and v then LPChar:SetAttribute(a,false)
-                elseif type(v)=="number" and v>0 then LPChar:SetAttribute(a,0) end
+-- ANTI STUN (تتوقف تماماً عند الإغلاق)
+local antiStunConn = nil
+function SetAntiStun(on)
+    S.AntiStun = on
+    if antiStunConn then antiStunConn:Disconnect(); antiStunConn = nil end
+    if not on then
+        -- استعادة سرعة المشي الافتراضية عند الإغلاق
+        pcall(function()
+            if LPChar then
+                LPChar:SetAttribute("WalkSpeed", 12)
+                if LPHum then LPHum.WalkSpeed = 12 end
             end
-            for _,t in ipairs(STUN_TAGS) do if CollectionService:HasTag(LPChar,t) then CollectionService:RemoveTag(LPChar,t) end end
+        end)
+        return
+    end
+    antiStunConn = RunService.Heartbeat:Connect(function()
+        if not S.AntiStun then return end
+        local char = LP.Character
+        if not char then return end
+        -- إزالة الذهول والبطء
+        for _, a in ipairs({"Stun","Stunned","IsStunned","Blinded","IsBlinded","Slowed","Slowness"}) do
+            local v = char:GetAttribute(a)
+            if type(v) == "boolean" and v then char:SetAttribute(a, false)
+            elseif type(v) == "number" and v > 0 then char:SetAttribute(a, 0) end
+        end
+        for _, t in ipairs({"Stun","Stunned","Blinded","SlowStop"}) do
+            if CollectionService:HasTag(char, t) then CollectionService:RemoveTag(char, t) end
+        end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum and hum:GetState() == Enum.HumanoidStateType.Physics then
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+    end)
+end
             -- Bypass slowness (merged): restore speed if slowed
             if LPHum and LPHum.WalkSpeed < (S.RunSpeed * 0.5) then
                 LPHum.WalkSpeed = S.RunSpeed
