@@ -1,152 +1,174 @@
 --[[
-  PHANTOM HUB  v7.4.1
-  By 7k.u | Discord | WindUI Midnight | Delta | BBN Only
-  PlaceId: 70845479499574
+  نظام الحماية التجريبي - Phantom Hub Auto-Kick Tester
+  الغرض: تجربة آلية طرد اللاعبين عند استخدام نسخة قديمة من السكربت.
 ]]
 
-local Players          = game:GetService("Players")
-local RunService       = game:GetService("RunService")
-local Lighting         = game:GetService("Lighting")
-local HttpService      = game:GetService("HttpService")
-local RS               = game:GetService("ReplicatedStorage")
-local TweenService     = game:GetService("TweenService")
-local VirtualUser      = game:GetService("VirtualUser")
-local CollectionService= game:GetService("CollectionService")
-local LP               = Players.LocalPlayer
-local Camera           = workspace.CurrentCamera
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
 
--- ========================
--- نظام الحماية الدوري (Auto-Kick)
--- ========================
-local SCRIPT_VERSION = 75  -- غيّر هذا الرقم كلما حدثت السكربت
+-- الرابط الخام الذي يحتوي على رقم الإصدار الحالي
+local VERSION_URL = "https://raw.githubusercontent.com/zxeavr/Bite-by-night-/refs/heads/main/version.txt"
 
-task.spawn(function()
-    while task.wait(60) do  -- يفحص كل 60 ثانية
-        pcall(function()
-            local latestStr = game:HttpGet("https://raw.githubusercontent.com/zxeavr/Bite-by-night-/main/version.txt")
-            if latestStr then
-                local latestNum = tonumber(latestStr)
-                if latestNum and SCRIPT_VERSION < latestNum then
-                    LP:Kick("🚀 Phantom Hub v"..latestStr.." is available!\nPlease rejoin the game to auto-update.")
-                end
-            end
-        end)
+-- رقم الإصدار الموجود في السكربت (يمكن تغييره يدوياً من الواجهة)
+local SCRIPT_VERSION = 77
+
+-- إنشاء واجهة بسيطة للتجربة
+local gui = Instance.new("ScreenGui")
+gui.Name = "KickTester"
+gui.ResetOnSpawn = false
+gui.Parent = LP:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 230)
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.Active = true
+frame.Draggable = true
+
+-- عنوان
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, -10, 0, 25)
+title.Position = UDim2.new(0, 5, 0, 5)
+title.BackgroundTransparency = 1
+title.Text = "Auto-Kick Tester"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+
+-- عرض رقم الإصدار المحلي
+local localVerLabel = Instance.new("TextLabel", frame)
+localVerLabel.Size = UDim2.new(1, -10, 0, 20)
+localVerLabel.Position = UDim2.new(0, 5, 0, 35)
+localVerLabel.BackgroundTransparency = 1
+localVerLabel.Text = "Local Version: " .. SCRIPT_VERSION
+localVerLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+localVerLabel.Font = Enum.Font.Gotham
+localVerLabel.TextSize = 14
+
+-- حقل إدخال لتغيير رقم الإصدار المحلي
+local inputBox = Instance.new("TextBox", frame)
+inputBox.Size = UDim2.new(0, 100, 0, 25)
+inputBox.Position = UDim2.new(0, 5, 0, 60)
+inputBox.PlaceholderText = "Enter local ver"
+inputBox.Text = tostring(SCRIPT_VERSION)
+inputBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+inputBox.Font = Enum.Font.Gotham
+inputBox.TextSize = 12
+
+-- زر تحديث الرقم المحلي
+local updateLocalBtn = Instance.new("TextButton", frame)
+updateLocalBtn.Size = UDim2.new(0, 80, 0, 25)
+updateLocalBtn.Position = UDim2.new(0, 110, 0, 60)
+updateLocalBtn.Text = "Update"
+updateLocalBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+updateLocalBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+updateLocalBtn.Font = Enum.Font.Gotham
+updateLocalBtn.TextSize = 12
+updateLocalBtn.MouseButton1Click:Connect(function()
+    local num = tonumber(inputBox.Text)
+    if num then
+        SCRIPT_VERSION = num
+        localVerLabel.Text = "Local Version: " .. SCRIPT_VERSION
     end
 end)
 
-if game.PlaceId ~= 70845479499574 then
+-- عرض رقم الإصدار الموجود على الخادم
+local remoteVerLabel = Instance.new("TextLabel", frame)
+remoteVerLabel.Size = UDim2.new(1, -10, 0, 20)
+remoteVerLabel.Position = UDim2.new(0, 5, 0, 95)
+remoteVerLabel.BackgroundTransparency = 1
+remoteVerLabel.Text = "Remote Version: --"
+remoteVerLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+remoteVerLabel.Font = Enum.Font.Gotham
+remoteVerLabel.TextSize = 14
+
+-- عرض حالة المقارنة
+local statusLabel = Instance.new("TextLabel", frame)
+statusLabel.Size = UDim2.new(1, -10, 0, 20)
+statusLabel.Position = UDim2.new(0, 5, 0, 120)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Status: Idle"
+statusLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextSize = 14
+
+-- زر فحص فوري
+local checkBtn = Instance.new("TextButton", frame)
+checkBtn.Size = UDim2.new(0, 120, 0, 30)
+checkBtn.Position = UDim2.new(0, 5, 0, 150)
+checkBtn.Text = "Check Now (Once)"
+checkBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 60)
+checkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+checkBtn.Font = Enum.Font.Gotham
+checkBtn.TextSize = 14
+checkBtn.MouseButton1Click:Connect(function()
+    statusLabel.Text = "Status: Checking..."
     pcall(function()
-        local sg=Instance.new("ScreenGui"); sg.IgnoreGuiInset=true; sg.ResetOnSpawn=false
-        local ok2=pcall(function() sg.Parent=game:GetService("CoreGui") end)
-        if not ok2 then sg.Parent=LP.PlayerGui end
-        local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
-        local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
-        lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.4.1\n\nBite By Night only!\nBy 7k.u"
-        task.wait(5); sg:Destroy()
-    end); error("[PH] BBN only.",0)
-end
+        local remoteStr = game:HttpGet(VERSION_URL)
+        if remoteStr then
+            remoteStr = remoteStr:match("%d+") -- استخراج الرقم من النص
+            local remoteNum = tonumber(remoteStr)
+            if remoteNum then
+                remoteVerLabel.Text = "Remote Version: " .. remoteNum
+                if SCRIPT_VERSION < remoteNum then
+                    statusLabel.Text = "Status: KICKED! (updating...)"
+                    task.wait(1)
+                    LP:Kick("🚀 New version available! Please rejoin to update.")
+                else
+                    statusLabel.Text = "Status: OK (Local >= Remote)"
+                end
+            else
+                remoteVerLabel.Text = "Remote Version: Invalid"
+                statusLabel.Text = "Status: Error"
+            end
+        else
+            remoteVerLabel.Text = "Remote Version: Fail"
+            statusLabel.Text = "Status: Network Error"
+        end
+    end)
+end)
 
-local LPChar,LPRoot,LPHum
-local function RefreshChar()
-    LPChar=LP.Character; if not LPChar then return end
-    LPRoot=LPChar:FindFirstChild("HumanoidRootPart")
-    LPHum=LPChar:FindFirstChildOfClass("Humanoid")
-end
-RefreshChar()
-
-local CFG_FOLDER="PhantomHub"; local AUTO_FILE=CFG_FOLDER.."/_autoload.txt"
-pcall(function() if not isfolder(CFG_FOLDER) then makefolder(CFG_FOLDER) end end)
-local LANG="en"; local T={en={},ar={}}
-
-T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
-T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v7.4.1"
-T.en.whats_new_body="+ Auto-Kick for outdated versions\n+ Anti Stun stops completely when disabled\n+ Health ESP only for Killer/Survivor"
-T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
-T.en.auto_run="Auto Run (Force Walk=Run)"; T.en.run_speed="Run Speed"
-T.en.anti_stun="Anti Stun + Bypass Slowness"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
-T.en.anti_trap="Anti Trap"; T.en.anti_die="Anti Die"; T.en.anti_die_hp="HP Threshold"
-T.en.no_blind="No Blindness"
-T.en.auto_barricade="Auto Barricade"; T.en.auto_escape="Auto Escape"
-T.en.instant_prompt="Instant Prompt"; T.en.instant_gen="Instant Generator"; T.en.gen_speed="Gen Speed (sec)"
-T.en.gen_now="Complete Now"; T.en.complete_all="Complete All Generators"
-T.en.auto_parry="Auto Parry"; T.en.parry_range_basic="Main Attack Range"
-T.en.parry_range_pull="Pull Attack Range"; T.en.show_parry="Show Parry Circle"
-T.en.auto_swing="Auto Swing (M1)"; T.en.swing_range="Swing Range"
-T.en.esp_type="ESP Type"; T.en.health_esp="Health ESP"; T.en.esp_color="Color"; T.en.esp_on="Enable ESP"
-T.en.full_bright="Full Bright + Anti Blind"; T.en.no_fog="No Fog"; T.en.no_shadow="No Shadow"
-T.en.fov_ctrl="Field of View"; T.en.hide_gen_gui="Hide Generator GUI"
-T.en.cam_rotten="Cam Lock - The Rotten (Axe)"; T.en.cam_doppel="Cam Lock - Doppelganger/Mimic"
-T.en.show_fov="Show FOV Circle"; T.en.fov_color="FOV Color"; T.en.fov_radius="FOV Radius"
-T.en.lock_near="Lock Nearest"; T.en.clear_lock="Clear Lock"
-T.en.wire_shake="Auto Shake Wire Eye"; T.en.shake_speed="Shake Speed"
-T.en.auto_farm="Auto Farm"; T.en.cfg_name="Config Name"; T.en.cfg_create="Create Config"
-T.en.cfg_select="Select Config"; T.en.cfg_load="Load Config"; T.en.cfg_auto="Auto Load"
-T.en.cfg_delete="Delete Selected"; T.en.lang_btn="Change Language"; T.en.ui_scale="UI Scale"
-T.en.ui_alpha="UI Transparency"; T.en.anti_afk="Anti-AFK"; T.en.toggle_ui="Toggle UI"
-T.en.fps_boost="FPS Booster"
-
-T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
-T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v7.4.1"
-T.ar.whats_new_body="+ طرد تلقائي للإصدارات القديمة\n+ مضاد الذهول يتوقف تماماً\n+ ESP الصحة فقط للقاتل والناجين"
-T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
-T.ar.auto_run="جري دائم (مشي=جري)"; T.ar.run_speed="سرعة الجري"
-T.ar.anti_stun="مضاد الذهول + تجاوز الابطاء"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
-T.ar.anti_trap="مضاد الفخ"; T.ar.anti_die="مضاد الموت"; T.ar.anti_die_hp="حد الدم"
-T.ar.no_blind="مضاد العمى"
-T.ar.auto_barricade="تحصين تلقائي"; T.ar.auto_escape="هروب تلقائي"
-T.ar.instant_prompt="تفاعل فوري"; T.ar.instant_gen="مولد فوري"; T.ar.gen_speed="سرعة المولد"
-T.ar.gen_now="اكمال الان"; T.ar.complete_all="اكمال كل المولدات"
-T.ar.auto_parry="باري تلقائي"; T.ar.parry_range_basic="نطاق ضربة عادية"
-T.ar.parry_range_pull="نطاق ضربة السحب"; T.ar.show_parry="دائرة الصد"
-T.ar.auto_swing="هجوم تلقائي (M1)"; T.ar.swing_range="نطاق الهجوم"
-T.ar.esp_type="نوع ESP"; T.ar.health_esp="ESP الصحة"; T.ar.esp_color="اللون"; T.ar.esp_on="تفعيل ESP"
-T.ar.full_bright="اضاءة كاملة + مضاد عمى"; T.ar.no_fog="بدون ضباب"; T.ar.no_shadow="بدون ظلال"
-T.ar.fov_ctrl="مجال الرؤية"; T.ar.hide_gen_gui="اخفاء واجهة المولد"
-T.ar.cam_rotten="قفل كاميرا - The Rotten (فأس)"; T.ar.cam_doppel="قفل كاميرا - Doppelganger/Mimic"
-T.ar.show_fov="دائرة FOV"; T.ar.fov_color="لون FOV"; T.ar.fov_radius="نطاق FOV"
-T.ar.lock_near="قفل الاقرب"; T.ar.clear_lock="الغاء القفل"
-T.ar.wire_shake="اهتزاز عين السلك"; T.ar.shake_speed="سرعة الاهتزاز"
-T.ar.auto_farm="زراعة تلقائية"; T.ar.cfg_name="اسم الاعداد"; T.ar.cfg_create="انشاء اعداد"
-T.ar.cfg_select="اختيار اعداد"; T.ar.cfg_load="تحميل اعداد"; T.ar.cfg_auto="تحميل تلقائي"
-T.ar.cfg_delete="حذف المختار"; T.ar.lang_btn="تغيير اللغة"; T.ar.ui_scale="حجم الواجهة"
-T.ar.ui_alpha="شفافية الواجهة"; T.ar.anti_afk="مضاد الطرد"; T.ar.toggle_ui="تبديل الواجهة"
-T.ar.fps_boost="معزز FPS"
-local function Tr(k) return (T[LANG] and T[LANG][k]) or T.en[k] or k end
-
-local G=getgenv(); G.PH=G.PH or {}; local S=G.PH
-S.ESPMode=S.ESPMode or "Highlight"; S.ESPHealth=S.ESPHealth or false
-S.T=S.T or {
-    Killer   ={On=false,Color=Color3.fromRGB(255,50,50)},
-    Survivor ={On=false,Color=Color3.fromRGB(50,210,90)},
-    Generator={On=false,Color=Color3.fromRGB(168,85,247)},
-    Battery  ={On=false,Color=Color3.fromRGB(59,130,246)},
-    Fuse     ={On=false,Color=Color3.fromRGB(235,235,235)},
-    Trap     ={On=false,Color=Color3.fromRGB(239,68,68)},
-    WireEye  ={On=false,Color=Color3.fromRGB(255,165,0)},
-}
-S.FullBright=S.FullBright or false; S.NoFog=S.NoFog or false; S.NoShadow=S.NoShadow or false
-S.NoBlind=S.NoBlind or false
-S.FovValue=S.FovValue or 70; S.HideGenGui=S.HideGenGui or false
-S.InfStamina=S.InfStamina or false; S.NoClip=S.NoClip or false
-S.AllowJump=(S.AllowJump~=nil) and S.AllowJump or false
-S.AutoRun=S.AutoRun or false; S.RunSpeed=S.RunSpeed or 24
-S.AntiStun=S.AntiStun or false; S.AntiRagdoll=S.AntiRagdoll or false
-S.AntiConfusion=S.AntiConfusion or false; S.AntiTrap=S.AntiTrap or false
-S.AntiDie=S.AntiDie or false; S.AntiDieHP=S.AntiDieHP or 30
-S.AutoEscape=S.AutoEscape or false; S.AutoBarricade=S.AutoBarricade or false
-S.InstantPrompt=S.InstantPrompt or false; S.InstantGen=S.InstantGen or false; S.GenDelay=S.GenDelay or 1.0
-S.AutoParry=S.AutoParry or false; S.ParryRangeBasic=S.ParryRangeBasic or 30
-S.ParryRangePull=S.ParryRangePull or 50; S.ShowParry=S.ShowParry or false
-S.AutoSwing=S.AutoSwing or false; S.SwingRange=S.SwingRange or 12
-S.CamRotten=S.CamRotten or false; S.CamDoppel=S.CamDoppel or false
-S.CamFOV=S.CamFOV or 120; S.ShowFOV=S.ShowFOV or false
-S.FovColor=S.FovColor or Color3.fromRGB(255,80,80); S.CamTarget=nil
-S.AutoShakeWire=S.AutoShakeWire or false; S.ShakeSpeed=S.ShakeSpeed or 0.1
-S.AutoFarm=S.AutoFarm or false; S.AntiAFK=S.AntiAFK or false
-S.FPSBooster=S.FPSBooster or false; S.UIScale=S.UIScale or 1.0; S.UIAlpha=S.UIAlpha or 0
-
--- ... باقي الكود مطابق تمامًا لـ v7.4 مع التعديلات المطلوبة (Health ESP + Anti Stun) ...
--- يمكنك متابعة الكود من الإصدار الذي عدلته.
+-- حلقة الفحص التلقائي
+local autoLoop = false
+local loopBtn = Instance.new("TextButton", frame)
+loopBtn.Size = UDim2.new(0, 120, 0, 30)
+loopBtn.Position = UDim2.new(0, 5, 0, 190)
+loopBtn.Text = "Start Auto-Check Loop"
+loopBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
+loopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+loopBtn.Font = Enum.Font.Gotham
+loopBtn.TextSize = 14
+loopBtn.MouseButton1Click:Connect(function()
+    autoLoop = not autoLoop
+    if autoLoop then
+        loopBtn.Text = "Stop Auto-Check Loop"
+        loopBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
+        task.spawn(function()
+            while autoLoop do
+                task.wait(10) -- اختبر كل 10 ثواني بدلاً من 60 للسرعة
+                pcall(function()
+                    local remoteStr = game:HttpGet(VERSION_URL)
+                    if remoteStr then
+                        remoteStr = remoteStr:match("%d+")
+                        local remoteNum = tonumber(remoteStr)
+                        if remoteNum then
+                            remoteVerLabel.Text = "Remote Version: " .. remoteNum
+                            if SCRIPT_VERSION < remoteNum then
+                                statusLabel.Text = "Status: KICKED!"
+                                task.wait(0.5)
+                                LP:Kick("🚀 New version detected. Rejoin to update!")
+                            else
+                                statusLabel.Text = "Status: OK"
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+    else
+        loopBtn.Text = "Start Auto-Check Loop"
+        loopBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
+        statusLabel.Text = "Status: Loop Stopped"
+    end
+end)
