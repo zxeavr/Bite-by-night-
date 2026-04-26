@@ -1511,3 +1511,4 @@ function BuildWindow()
 end
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
+
