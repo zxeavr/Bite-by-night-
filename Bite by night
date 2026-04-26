@@ -1,5 +1,5 @@
 --[[
-  PHANTOM HUB v8.6 – AUTORUN FIX, ANTI STUN MERGE, TRAP HELPER
+  PHANTOM HUB v8.8 – MERGED YOUR IMPROVEMENTS
   By 7k.u | Discord
   WindUI Midnight . Delta . BBN Only
   PlaceId: 70845479499574
@@ -35,7 +35,7 @@ if game.PlaceId ~= PLACE_ID then
         local bg=Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl=Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.6\n\nBite By Night only!\n\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v8.8\n\nBite By Night only!\n\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     error("[PH] BBN only.",0)
@@ -57,15 +57,16 @@ local T={en={},ar={}}
 
 T.en.tab_info="Info"; T.en.tab_main="Main"; T.en.tab_visual="Visual"
 T.en.tab_combat="Combat"; T.en.tab_farm="Farm"; T.en.tab_config="Config"; T.en.tab_settings="Settings"
-T.en.whats_new_title="What's New  v8.6"
-T.en.whats_new_body="+ Auto Run now stops instantly when toggled off\n+ Bypass Slow merged into Anti Stun\n+ Removed old Anti Trap, added Trap Helper (check console)"
+T.en.whats_new_title="What's New  v8.8"
+T.en.whats_new_body="+ Your Auto Run, Auto Farm & Jump merged\n+ Auto Run saves previous speed\n+ Auto Farm loops all generators\n+ Allow Jump disables instantly"
 T.en.inf_stamina="Infinite Stamina"; T.en.noclip="NoClip"; T.en.allow_jump="Enable Jump"
-T.en.auto_run="Auto Run"; T.en.run_speed="Run Speed (0-40)"
+T.en.auto_run="Auto Run"; T.en.bypass_slow="Raw Speed (Bypass)"; T.en.run_speed="Run Speed (0-40)"
 T.en.anti_stun="Anti Stun (removes stuns & slows)"; T.en.anti_ragdoll="Anti Ragdoll"; T.en.anti_confusion="Anti Confusion"
-T.en.anti_die="Anti Die"; T.en.anti_die_hp="HP Threshold"
+T.en.anti_trap="Anti Trap (bear traps)"; T.en.anti_die="Anti Die"; T.en.anti_die_hp="HP Threshold"
 T.en.auto_barricade="Auto Barricade"; T.en.auto_escape="Auto Escape"
 T.en.instant_prompt="Instant Prompt"; T.en.instant_gen="Instant Generator"; T.en.gen_speed="Gen Speed (sec)"
-T.en.gen_now="Complete Now"; T.en.auto_parry="Auto Parry"; T.en.parry_range_basic="Main Attack Range"
+T.en.gen_now="Complete Now"; T.en.complete_all_gens="Complete All Generators"
+T.en.auto_parry="Auto Parry"; T.en.parry_range_basic="Main Attack Range"
 T.en.parry_range_pull="Pull Attack Range"; T.en.dynamic_parry="Dynamic Distance"; T.en.show_parry_range="Show Parry Range Circle"
 T.en.auto_swing="Auto Swing (M1)"; T.en.swing_range="Swing Range (studs)"
 T.en.esp_type="ESP Type"; T.en.health_esp="Health ESP"; T.en.esp_color="Color"; T.en.esp_on="Enable ESP"
@@ -83,15 +84,16 @@ T.en.fps_boost="FPS Booster"
 
 T.ar.tab_info="المعلومات"; T.ar.tab_main="الرئيسية"; T.ar.tab_visual="المرئيات"
 T.ar.tab_combat="القتال"; T.ar.tab_farm="الزراعة"; T.ar.tab_config="الاعدادات"; T.ar.tab_settings="الضبط"
-T.ar.whats_new_title="الجديد  v8.6"
-T.ar.whats_new_body="+ الجري التلقائي يتوقف فوراً عند الإغلاق\n+ دمج تجاوز البطء مع مضاد الذهول\n+ حذف مضاد الفخ القديم، إضافة مساعد الفخ (انظر وحدة التحكم)"
+T.ar.whats_new_title="الجديد  v8.8"
+T.ar.whats_new_body="+ دمج تحسيناتك للجري والمزرعة والقفز\n+ الجري يحفظ سرعتك السابقة\n+ المزرعة تتنقل بين كل المولدات\n+ القفز يتعطل فوراً"
 T.ar.inf_stamina="ستامينا لا نهائية"; T.ar.noclip="اختراق الجدران"; T.ar.allow_jump="تفعيل القفز"
-T.ar.auto_run="جري دائم"; T.ar.run_speed="سرعة الجري (0-40)"
+T.ar.auto_run="جري دائم"; T.ar.bypass_slow="سرعة خام (تجاوز)"; T.ar.run_speed="سرعة الجري (0-40)"
 T.ar.anti_stun="مضاد الذهول (يزيل الذهول والبطء)"; T.ar.anti_ragdoll="مضاد السقوط"; T.ar.anti_confusion="مضاد الارتباك"
-T.ar.anti_die="مضاد الموت"; T.ar.anti_die_hp="حد الدم"
+T.ar.anti_trap="مضاد الفخ (فخ الدب)"; T.ar.anti_die="مضاد الموت"; T.ar.anti_die_hp="حد الدم"
 T.ar.auto_barricade="تحصين تلقائي"; T.ar.auto_escape="هروب تلقائي"
 T.ar.instant_prompt="تفاعل فوري"; T.ar.instant_gen="مولد فوري"; T.ar.gen_speed="سرعة المولد"
-T.ar.gen_now="اكمال الان"; T.ar.auto_parry="باري تلقائي"; T.ar.parry_range_basic="نطاق ضربة عادية"
+T.ar.gen_now="اكمال الان"; T.ar.complete_all_gens="اكمال كل المولدات"
+T.ar.auto_parry="باري تلقائي"; T.ar.parry_range_basic="نطاق ضربة عادية"
 T.ar.parry_range_pull="نطاق ضربة السحب"; T.ar.dynamic_parry="مسافة ديناميكية"; T.ar.show_parry_range="دائرة نطاق الصد"
 T.ar.auto_swing="هجوم تلقائي (M1)"; T.ar.swing_range="نطاق الهجوم"
 T.ar.esp_type="نوع ESP"; T.ar.health_esp="ESP الصحة"; T.ar.esp_color="اللون"; T.ar.esp_on="تفعيل ESP"
@@ -124,9 +126,10 @@ S.FullBright=S.FullBright or false; S.NoFog=S.NoFog or false; S.NoShadow=S.NoSha
 S.FovValue=S.FovValue or 70; S.HideGenGui=S.HideGenGui or false
 S.InfStamina=S.InfStamina or false; S.NoClip=S.NoClip or false
 S.AllowJump=(S.AllowJump~=nil) and S.AllowJump or false
-S.AutoRun=S.AutoRun or false; S.RunSpeed=S.RunSpeed or 24
+S.AutoRun=S.AutoRun or false; S.BypassSlow=S.BypassSlow or false; S.RunSpeed=S.RunSpeed or 24
 S.AntiStun=S.AntiStun or false; S.AntiRagdoll=S.AntiRagdoll or false
-S.AntiConfusion=S.AntiConfusion or false; S.AntiDie=S.AntiDie or false; S.AntiDieHP=S.AntiDieHP or 30
+S.AntiConfusion=S.AntiConfusion or false; S.AntiTrap=S.AntiTrap or false
+S.AntiDie=S.AntiDie or false; S.AntiDieHP=S.AntiDieHP or 30
 S.AutoEscape=S.AutoEscape or false; S.AutoBarricade=S.AutoBarricade or false
 S.InstantPrompt=S.InstantPrompt or false; S.InstantGen=S.InstantGen or false; S.GenDelay=S.GenDelay or 1.0
 S.AutoParry=S.AutoParry or false; S.ParryRangeBasic=S.ParryRangeBasic or 20
@@ -183,46 +186,118 @@ RunService.RenderStepped:Connect(function()
     if isFOVEnabled and Camera.FieldOfView ~= customFOV then Camera.FieldOfView = customFOV end
 end)
 
--- AUTO RUN (alwaysRunConnection style – stops instantly)
+-- AUTO RUN (your improvement merged)
 local autoRunConn = nil
+local prevWalkSpeed = 16
 function SetAutoRun(on)
     S.AutoRun = on
     if autoRunConn then autoRunConn:Disconnect(); autoRunConn = nil end
-    if not on then return end
+    if not on then
+        pcall(function() if LPChar then LPChar:SetAttribute("WalkSpeed", prevWalkSpeed) end end)
+        return
+    end
+    prevWalkSpeed = LPChar and LPChar:GetAttribute("WalkSpeed") or 16
     autoRunConn = RunService.Heartbeat:Connect(function()
         pcall(function()
             local char = LP.Character
             if not char then return end
             local rs = char:GetAttribute("RunSpeed")
-            local spd = (rs and rs ~= 0) and rs or S.RunSpeed
+            local spd = (rs and rs ~= 0) and rs or prevWalkSpeed
             char:SetAttribute("WalkSpeed", spd)
-            char:SetAttribute("RunSpeed", spd)
         end)
     end)
 end
 
--- ANTI STUN (now also removes SlowStop – replaces old BypassSlow)
+-- RAW SPEED
+local rawSpeedConn = nil
+function SetBypassSlow(on)
+    S.BypassSlow = on
+    if rawSpeedConn then rawSpeedConn:Disconnect(); rawSpeedConn = nil end
+    if not on then return end
+    rawSpeedConn = RunService.Heartbeat:Connect(function()
+        if not S.BypassSlow then return end
+        pcall(function()
+            local char = LP.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            if hum:GetState() == Enum.HumanoidStateType.Physics then return end
+            for _, attr in ipairs({"Stun","Stunned","IsStunned"}) do
+                if char:GetAttribute(attr) == true then return end
+            end
+            local spd = S.RunSpeed
+            hum.WalkSpeed = spd
+            if char:GetAttribute("Team") == "Survivor" then
+                char:SetAttribute("CustomSpeed", spd)
+            else
+                char:SetAttribute("ModifiedMovementSpeed", spd)
+            end
+        end)
+    end)
+end
+
+-- ALLOW JUMP (your improvement merged)
+local jumpConn = nil
+function SetAllowJump(enabled)
+    S.AllowJump = enabled
+    if jumpConn then jumpConn:Disconnect(); jumpConn = nil end
+    if not enabled then
+        pcall(function() local c=LP.Character; if not c then return end local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=0 end end)
+        return
+    end
+    jumpConn = RunService.Heartbeat:Connect(function()
+        pcall(function() local c=LP.Character; if not c then return end local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=5 end end)
+    end)
+end
+
+-- ANTI STUN
 local function AntiStunUpdate()
-    local char = LP.Char
+    local char = LP.Character
     if not char then return end
-    -- Attributes
     for _, a in ipairs({"Stun","Stunned","IsStunned","Blinded","IsBlinded","Slowed","Slowness"}) do
         local v = char:GetAttribute(a)
         if type(v) == "boolean" and v then char:SetAttribute(a, false)
         elseif type(v) == "number" and v > 0 then char:SetAttribute(a, 0) end
     end
-    -- Tags
     for _, t in ipairs({"Stun","Stunned","Blinded","SlowStop"}) do
         if CollectionService:HasTag(char, t) then CollectionService:RemoveTag(char, t) end
     end
-    -- Ragdoll fallback
     local hum = char:FindFirstChildOfClass("Humanoid")
     if hum and hum:GetState() == Enum.HumanoidStateType.Physics then
         hum:ChangeState(Enum.HumanoidStateType.GettingUp)
     end
 end
 
--- AUTO BARRICADE (open‑source RenderStepped)
+-- ANTI TRAP (Real)
+local trapSignalConn = nil
+function SetAntiTrap(on)
+    S.AntiTrap = on
+    if trapSignalConn then trapSignalConn:Disconnect(); trapSignalConn = nil end
+    if not on then return end
+    trapSignalConn = CollectionService:GetInstanceAddedSignal("Trapped"):Connect(function(obj)
+        if obj ~= LP.Character then return end
+        task.defer(function()
+            pcall(function()
+                CollectionService:RemoveTag(obj, "Trapped")
+                if obj.Parent then
+                    local hrp = obj:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        for _, child in ipairs(hrp:GetChildren()) do
+                            if child:IsA("BallSocketConstraint") or child:IsA("RopeConstraint") then
+                                child:Destroy()
+                            end
+                        end
+                    end
+                end
+            end)
+        end)
+    end)
+    if LP.Character and CollectionService:HasTag(LP.Character, "Trapped") then
+        CollectionService:RemoveTag(LP.Character, "Trapped")
+    end
+end
+
+-- AUTO BARRICADE
 local barConn = nil
 function SetBarricade(on)
     if barConn then barConn:Disconnect(); barConn = nil end
@@ -245,7 +320,87 @@ function SetBarricade(on)
     end)
 end
 
--- CORE LOOP (Heartbeat combiner)
+-- AUTO FARM (your improvement merged)
+local farmThread = nil
+function SetAutoFarm(on)
+    S.AutoFarm = on
+    if farmThread then pcall(task.cancel, farmThread); farmThread = nil end
+    if not on then return end
+    farmThread = task.spawn(function()
+        while S.AutoFarm do task.wait(0.5)
+            pcall(function()
+                local char = LP.Character
+                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+                local hrp = char.HumanoidRootPart
+                local genFolder = workspace.MAPS and workspace.MAPS:FindFirstChild("GAME MAP") and workspace.MAPS["GAME MAP"]:FindFirstChild("Generators")
+                if not genFolder then return end
+                for _, gen in ipairs(genFolder:GetChildren()) do
+                    if not S.AutoFarm then break end
+                    if gen:IsA("Model") and (gen:GetAttribute("Progress") or 100) < 100 and gen.PrimaryPart then
+                        hrp.CFrame = CFrame.new(gen.PrimaryPart.Position + Vector3.new(0,2,0))
+                        repeat
+                            local pp = nil
+                            local rootPart = gen:FindFirstChild("RootPart")
+                            if rootPart then
+                                for _, pointName in ipairs({"Point1","Point2","Point3"}) do
+                                    local point = rootPart:FindFirstChild(pointName)
+                                    if point then
+                                        local proximity = point:FindFirstChildOfClass("ProximityPrompt")
+                                        if proximity and proximity.Enabled then
+                                            pp = proximity
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                            if not pp then break end
+                            if fireproximityprompt then pcall(function() fireproximityprompt(pp) end) end
+                            task.wait(1)
+                        until (gen:GetAttribute("Progress") or 100) >= 100 or not S.AutoFarm
+                        if S.AutoFarm then EscapeMap() end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- COMPLETE ALL GENERATORS
+function CompleteAllGenerators()
+    task.spawn(function()
+        local char = LP.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local hrp = char.HumanoidRootPart
+        local genFolder = workspace.MAPS and workspace.MAPS:FindFirstChild("GAME MAP") and workspace.MAPS["GAME MAP"]:FindFirstChild("Generators")
+        if not genFolder then return end
+        for _, gen in ipairs(genFolder:GetChildren()) do
+            if gen:IsA("Model") and (gen:GetAttribute("Progress") or 100) < 100 and gen.PrimaryPart then
+                hrp.CFrame = CFrame.new(gen.PrimaryPart.Position + Vector3.new(0,2,0))
+                repeat
+                    local pp = nil
+                    local rootPart = gen:FindFirstChild("RootPart")
+                    if rootPart then
+                        for _, pointName in ipairs({"Point1","Point2","Point3"}) do
+                            local point = rootPart:FindFirstChild(pointName)
+                            if point then
+                                local proximity = point:FindFirstChildOfClass("ProximityPrompt")
+                                if proximity and proximity.Enabled then
+                                    pp = proximity
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    if not pp then break end
+                    if fireproximityprompt then pcall(function() fireproximityprompt(pp) end) end
+                    task.wait(1)
+                until (gen:GetAttribute("Progress") or 100) >= 100
+            end
+        end
+    end)
+end
+
+-- CORE LOOP
 local lastParryFiredAt = 0
 local lastSwing = 0
 local parryingPlayers = {}
@@ -484,13 +639,6 @@ function SetNoClip(enabled)
     if not enabled then pcall(function() local c=LP.Character; if not c then return end for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=true end end end); return end
     noClipConn=RunService.Stepped:Connect(function() pcall(function() local c=LP.Character; if not c then return end for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end end) end)
 end
--- JUMP
-local jumpConn=nil
-function SetAllowJump(enabled)
-    if jumpConn then jumpConn:Disconnect(); jumpConn=nil end
-    if not enabled then pcall(function() local c=LP.Character; if not c then return end local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=0 end end); return end
-    jumpConn=RunService.Heartbeat:Connect(function() pcall(function() local c=LP.Character; if not c then return end local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=5 end end) end)
-end
 
 -- ANTI DIE
 local antiDieActive=false
@@ -527,36 +675,6 @@ function StartInstantGen()
     end)
 end
 function StopInstantGen() if genGuiConn then genGuiConn:Disconnect(); genGuiConn=nil end end
-
--- AUTO FARM (old style)
-local farmThread=nil
-function SetAutoFarm(on)
-    if farmThread then pcall(task.cancel,farmThread); farmThread=nil end; if not on then return end
-    farmThread=task.spawn(function() while S.AutoFarm do task.wait(0.5)
-        pcall(function()
-            local char=LP.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            local hrp=char.HumanoidRootPart
-            if not char:FindFirstChild("Battery") then
-                local ig=workspace:FindFirstChild("IGNORE"); if not ig then return end
-                for _,b in ipairs(ig:GetChildren()) do if b.Name=="Battery" and b:IsA("BasePart") then hrp.CFrame=b.CFrame; task.wait(0.15)
-                    local pp=b:FindFirstChildOfClass("ProximityPrompt",true); if pp and fireproximityprompt then pcall(function() fireproximityprompt(pp) end) end; break end end
-            end
-            local mF=workspace.MAPS and workspace.MAPS:FindFirstChild("GAME MAP"); if not mF then return end
-            local gens=mF:FindFirstChild("Generators"); if not gens then return end
-            for _,gen in ipairs(gens:GetChildren()) do
-                local prog=gen:GetAttribute("Progress") or 100
-                if gen:IsA("Model") and prog<100 and gen.PrimaryPart then
-                    local tCF=gen.PrimaryPart.CFrame
-                    hrp.CFrame=CFrame.new(tCF.Position-Vector3.new(0,300,0)); task.wait(0.1)
-                    hrp.CFrame=tCF+Vector3.new(0,2,0); task.wait(0.2)
-                    for _,d in ipairs(gen:GetDescendants()) do if d:IsA("ProximityPrompt") and d.Enabled then if fireproximityprompt then pcall(function() fireproximityprompt(d) end) end; break end end
-                    task.wait(3); hrp.CFrame=CFrame.new(tCF.Position-Vector3.new(0,300,0)); task.wait(0.1); break
-                end
-            end
-            EscapeMap()
-        end)
-    end end)
-end
 
 -- WIRE SHAKE, ANTI AFK, FPS BOOSTER
 local wireConn=nil
@@ -596,9 +714,9 @@ local function SaveCfg(name)
     local data={name=name,LANG=LANG,ESPMode=S.ESPMode,ESPHealth=S.ESPHealth,
         FullBright=S.FullBright,NoFog=S.NoFog,NoShadow=S.NoShadow,FovValue=S.FovValue,
         HideGenGui=S.HideGenGui,InfStamina=S.InfStamina,NoClip=S.NoClip,
-        AllowJump=S.AllowJump,AutoRun=S.AutoRun,RunSpeed=S.RunSpeed,
+        AllowJump=S.AllowJump,AutoRun=S.AutoRun,BypassSlow=S.BypassSlow,RunSpeed=S.RunSpeed,
         AntiStun=S.AntiStun,AntiRagdoll=S.AntiRagdoll,AntiConfusion=S.AntiConfusion,
-        AntiDie=S.AntiDie,AntiDieHP=S.AntiDieHP,
+        AntiTrap=S.AntiTrap,AntiDie=S.AntiDie,AntiDieHP=S.AntiDieHP,
         AutoEscape=S.AutoEscape,AutoBarricade=S.AutoBarricade,
         InstantPrompt=S.InstantPrompt,InstantGen=S.InstantGen,GenDelay=S.GenDelay,
         AutoParry=S.AutoParry,ParryRangeBasic=S.ParryRangeBasic,ParryRangePull=S.ParryRangePull,
@@ -618,18 +736,18 @@ local function LoadCfg(name)
     LANG=d.LANG or LANG; S.ESPMode=d.ESPMode or "Highlight"; S.ESPHealth=d.ESPHealth or false
     S.FullBright=d.FullBright or false; S.NoFog=d.NoFog or false; S.NoShadow=d.NoShadow or false
     S.HideGenGui=d.HideGenGui or false; S.InfStamina=d.InfStamina or false
-    S.AllowJump=d.AllowJump or false; S.AutoRun=d.AutoRun or false; S.RunSpeed=d.RunSpeed or 24
+    S.AllowJump=d.AllowJump or false; S.AutoRun=d.AutoRun or false; S.BypassSlow=d.BypassSlow or false
     S.AntiStun=d.AntiStun or false; S.AntiRagdoll=d.AntiRagdoll or false; S.AntiConfusion=d.AntiConfusion or false
-    S.AntiDie=d.AntiDie or false; S.AntiDieHP=d.AntiDieHP or 30
+    S.AntiTrap=d.AntiTrap or false; S.AntiDie=d.AntiDie or false; S.AntiDieHP=d.AntiDieHP or 30
     S.AutoEscape=d.AutoEscape or false; S.AutoBarricade=d.AutoBarricade or false
     S.InstantPrompt=d.InstantPrompt or false; S.InstantGen=d.InstantGen or false
     S.AutoParry=d.AutoParry or false; S.DynamicParry=d.DynamicParry or false; S.ShowParryRange=d.ShowParryRange or false
     S.AutoSwing=d.AutoSwing or false; S.CamRotten=d.CamRotten or false; S.CamDoppel=d.CamDoppel or false
     S.CamAny=d.CamAny or false; S.AutoShakeWire=d.AutoShakeWire or false
     S.AutoFarm=d.AutoFarm or false; S.AntiAFK=d.AntiAFK or false; S.FPSBooster=d.FPSBooster or false
-    if d.FovValue then S.FovValue=d.FovValue end; if d.AntiDieHP then S.AntiDieHP=d.AntiDieHP end
+    if d.FovValue then S.FovValue=d.FovValue end
     if d.CamFOV then S.CamFOV=d.CamFOV end; if d.GenDelay then S.GenDelay=d.GenDelay end
-    if d.ParryRangeBasic then S.ParryRangeBasic=d.ParryRangeBasic end
+    if d.RunSpeed then S.RunSpeed=d.RunSpeed end; if d.ParryRangeBasic then S.ParryRangeBasic=d.ParryRangeBasic end
     if d.ParryRangePull then S.ParryRangePull=d.ParryRangePull end; if d.SwingRange then S.SwingRange=d.SwingRange end
     if d.ShakeSpeed then S.ShakeSpeed=d.ShakeSpeed end; if d.UIScale then S.UIScale=d.UIScale end
     if d.UIAlpha then S.UIAlpha=d.UIAlpha end; if d.NoClip then SetNoClip(d.NoClip) end
@@ -648,9 +766,10 @@ local function SyncUI()
     task.delay(0.12,function() pcall(function()
         local function s(k,v) if uiRefs[k] then uiRefs[k]:Set(v) end end
         s("InfStamina",S.InfStamina); s("NoClip",S.NoClip); s("AllowJump",S.AllowJump)
-        s("AutoRun",S.AutoRun); s("AntiStun",S.AntiStun)
+        s("AutoRun",S.AutoRun); s("BypassSlow",S.BypassSlow); s("AntiStun",S.AntiStun)
         s("AntiRagdoll",S.AntiRagdoll); s("AntiConfusion",S.AntiConfusion)
-        s("AntiDie",S.AntiDie); s("AutoBarricade",S.AutoBarricade); s("AutoEscape",S.AutoEscape)
+        s("AntiTrap",S.AntiTrap); s("AntiDie",S.AntiDie)
+        s("AutoBarricade",S.AutoBarricade); s("AutoEscape",S.AutoEscape)
         s("InstantPrompt",S.InstantPrompt); s("InstantGen",S.InstantGen)
         s("AutoParry",S.AutoParry); s("DynamicParry",S.DynamicParry); s("ShowParryRange",S.ShowParryRange)
         s("AutoSwing",S.AutoSwing); s("CamRotten",S.CamRotten); s("CamDoppel",S.CamDoppel)
@@ -690,7 +809,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local WH="https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
         req({Url=WH,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.6",color=7864319,fields={
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v8.8",color=7864319,fields={
                 {name="User",value=LP.Name,inline=true},{name="Lang",value=LANG,inline=true},
                 {name="Time",value=os.date("%Y-%m-%d %H:%M"),inline=false}
             }}}})})
@@ -711,7 +830,7 @@ local function ShowLangGUI(callback)
     local pg=Instance.new("UIGradient",panel); pg.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(18,8,40)),ColorSequenceKeypoint.new(1,Color3.fromRGB(8,4,20))}); pg.Rotation=135
     local icon=Instance.new("TextLabel",panel); icon.Size=UDim2.fromOffset(40,40); icon.Position=UDim2.new(0.5,-20,0,14); icon.BackgroundTransparency=1; icon.Text="🌙"; icon.TextSize=30; icon.ZIndex=3
     local title=Instance.new("TextLabel",panel); title.Size=UDim2.new(1,-30,0,28); title.Position=UDim2.new(0,15,0,58); title.BackgroundTransparency=1; title.Font=Enum.Font.GothamBold; title.TextSize=17
-    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.6"; title.ZIndex=3
+    title.TextColor3=Color3.fromRGB(230,215,255); title.Text="Phantom Hub  v8.8"; title.ZIndex=3
     local sub=Instance.new("TextLabel",panel); sub.Size=UDim2.new(1,-30,0,22); sub.Position=UDim2.new(0,15,0,84); sub.BackgroundTransparency=1; sub.Font=Enum.Font.Gotham; sub.TextSize=13
     sub.TextColor3=Color3.fromRGB(140,110,200); sub.Text="Choose language  /  اختر لغتك"; sub.ZIndex=3
     local div=Instance.new("Frame",panel); div.Size=UDim2.new(1,-30,0,1); div.Position=UDim2.new(0,15,0,112); div.BackgroundColor3=Color3.fromRGB(80,40,160); div.BackgroundTransparency=0.5; div.BorderSizePixel=0; div.ZIndex=3
@@ -744,7 +863,7 @@ local function ShowLoadingScreen(callback)
     local panel=Instance.new("Frame",sg); panel.AnchorPoint=Vector2.new(0.5,0.5); panel.Position=UDim2.new(0.5,0,0.5,0); panel.Size=UDim2.fromOffset(380,200); panel.BackgroundTransparency=1; panel.ZIndex=2
     local moonL=Instance.new("TextLabel",panel); moonL.Size=UDim2.fromOffset(50,50); moonL.Position=UDim2.new(0.5,-25,0,-10); moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=40; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,0,0,36); titleL.Position=UDim2.new(0,0,0,46); titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=26
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.6"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.8"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,0,0,22); subL.Position=UDim2.new(0,0,0,84); subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=14
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading script..."; subL.ZIndex=3
     local barBG=Instance.new("Frame",panel); barBG.Size=UDim2.new(1,0,0,14); barBG.Position=UDim2.new(0,0,0,102); barBG.BackgroundColor3=Color3.fromRGB(30,15,60); barBG.BorderSizePixel=0; barBG.ZIndex=3
@@ -771,103 +890,7 @@ local function ShowLoadingScreen(callback)
     end)
 end
 
--- CORE LOOP
-local coreConn = nil
-local function StartCoreLoop()
-    if coreConn then coreConn:Disconnect() end
-    coreConn = RunService.Heartbeat:Connect(function()
-        local char = LP.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-
-        if S.InfStamina and char then
-            pcall(function() char:SetAttribute("Stamina", char:GetAttribute("MaxStamina") or 100) end)
-        end
-        if S.AntiStun and char then
-            AntiStunUpdate()
-        end
-        if S.AntiRagdoll and hum and hum:GetState()==Enum.HumanoidStateType.Physics then
-            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-        end
-
-        if S.AutoParry then
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            if root then
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    if v.ClassName == "Highlight" and v.Name == "Highlight" and v.Enabled and v.Adornee and v.Adornee:IsA("Model") then
-                        local km = v.Adornee
-                        local kf = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
-                        if kf and km.Parent == kf then
-                            local kr = km:FindFirstChild("HumanoidRootPart")
-                            if kr and (root.Position - kr.Position).Magnitude <= S.ParryRangeBasic then
-                                if (tick() - (lastParryFiredAt or 0)) >= 0.15 then
-                                    lastParryFiredAt = tick()
-                                    pcall(function()
-                                        local rel = RS:WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable")
-                                        rel:FireServer(buffer.fromstring("\a"), buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002"))
-                                    end)
-                                end
-                                break
-                            end
-                        end
-                    end
-                end
-            end
-        end
-
-        if S.AutoSwing and char then
-            local myRoot = char:FindFirstChild("HumanoidRootPart")
-            if myRoot and (tick() - lastSwing >= 0.45) then
-                local pf = workspace:FindFirstChild("PLAYERS")
-                local af = pf and pf:FindFirstChild("ALIVE")
-                if af then
-                    local closest, bestDist = nil, S.SwingRange+1
-                    for _, m in ipairs(af:GetChildren()) do
-                        if m.Name ~= LP.Name and not IsParrying(m) then
-                            local hrp = m:FindFirstChild("HumanoidRootPart")
-                            if hrp then
-                                local d = (myRoot.Position - hrp.Position).Magnitude
-                                if d < bestDist then bestDist = d; closest = m end
-                            end
-                        end
-                    end
-                    if closest then
-                        lastSwing = tick()
-                        SimulateM1Click()
-                    end
-                end
-            end
-        end
-
-        if S.AutoEscape and char and char:GetAttribute("Team") == "Survivor" then
-            EscapeMap()
-        end
-
-        if S.CamAny and not camActive then
-            local myRoot = char and char:FindFirstChild("HumanoidRootPart")
-            if myRoot then
-                local pf = workspace:FindFirstChild("PLAYERS")
-                local kf = pf and pf:FindFirstChild("KILLER")
-                if kf then
-                    for _, m in ipairs(kf:GetChildren()) do
-                        if m:IsA("Model") then
-                            local kr = m:FindFirstChild("HumanoidRootPart")
-                            if kr and (kr.Position - myRoot.Position).Magnitude <= S.CamAnyRange then
-                                if kr.CFrame.LookVector:Dot((myRoot.Position - kr.Position).Unit) > 0.3 then
-                                    camActive = true
-                                    S.CamTarget = kr
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end)
-end
-StartCoreLoop()
-
--- BUILD WINDOW (واجهة معدلة)
+-- BUILD WINDOW
 function BuildWindow()
     local wOk,wErr=pcall(function() WindUI=loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))() end)
     if not wOk or not WindUI then error("[PH] WindUI: "..tostring(wErr)) end
@@ -878,7 +901,7 @@ function BuildWindow()
         Size=UDim2.fromOffset(650,420), Transparent=true, Theme="Midnight", Resizable=false,
         Background="rbxassetid://113150461786091", BackgroundImageTransparency=0.45, User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v8.6",Color=Color3.fromRGB(120,60,240)}); Window:Tag({Title="Final",Color=Color3.fromRGB(30,255,130),Icon="star"})
+    Window:Tag({Title="v8.8",Color=Color3.fromRGB(120,60,240)}); Window:Tag({Title="Merged",Color=Color3.fromRGB(30,255,130),Icon="star"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
     local TbInfo    =Window:Tab({Title=Tr("tab_info"),    Icon="info"              })
@@ -912,17 +935,19 @@ function BuildWindow()
         TbInfo:Paragraph({Title=Tr("whats_new_title"),Desc=Tr("whats_new_body"),Thumbnail="rbxassetid://93386553868675",ThumbnailSize=150})
     end
 
-    -- Main Tab (بدون BypassSlow و AntiTrap)
+    -- Main Tab
     do local R=uiRefs
     R.InfStamina=TbMain:Toggle({Title=Tr("inf_stamina"),Value=S.InfStamina,Callback=function(v) S.InfStamina=v; ConnectStamina() end})
     R.NoClip=TbMain:Toggle({Title=Tr("noclip"),Value=S.NoClip,Callback=function(v) SetNoClip(v) end})
-    R.AllowJump=TbMain:Toggle({Title=Tr("allow_jump"),Value=S.AllowJump,Callback=function(v) S.AllowJump=v; SetAllowJump(v) end})
+    R.AllowJump=TbMain:Toggle({Title=Tr("allow_jump"),Value=S.AllowJump,Callback=function(v) SetAllowJump(v) end})
     R.AutoRun=TbMain:Toggle({Title=Tr("auto_run"),Value=S.AutoRun,Callback=function(v) SetAutoRun(v) end})
+    R.BypassSlow=TbMain:Toggle({Title=Tr("bypass_slow"),Value=S.BypassSlow,Callback=function(v) SetBypassSlow(v) end})
     TbMain:Slider({Title=Tr("run_speed"),Step=1,Value={Min=0,Max=40,Default=24},Callback=function(v) S.RunSpeed=v end})
     TbMain:Divider()
     R.AntiStun=TbMain:Toggle({Title=Tr("anti_stun"),Value=S.AntiStun,Callback=function(v) S.AntiStun=v end})
     R.AntiRagdoll=TbMain:Toggle({Title=Tr("anti_ragdoll"),Value=S.AntiRagdoll,Callback=function(v) S.AntiRagdoll=v end})
     R.AntiConfusion=TbMain:Toggle({Title=Tr("anti_confusion"),Value=S.AntiConfusion,Callback=function(v) S.AntiConfusion=v end})
+    R.AntiTrap=TbMain:Toggle({Title=Tr("anti_trap"),Value=S.AntiTrap,Callback=function(v) S.AntiTrap=v; SetAntiTrap(v) end})
     TbMain:Divider()
     R.AntiDie=TbMain:Toggle({Title=Tr("anti_die"),Value=S.AntiDie,Callback=function(v) S.AntiDie=v end})
     TbMain:Slider({Title=Tr("anti_die_hp"),Step=1,Value={Min=1,Max=100,Default=30},Callback=function(v) S.AntiDieHP=v end})
@@ -934,6 +959,7 @@ function BuildWindow()
     R.InstantGen=TbMain:Toggle({Title=Tr("instant_gen"),Value=S.InstantGen,Callback=function(v) S.InstantGen=v; if v then StartInstantGen() else StopInstantGen() end end})
     TbMain:Slider({Title=Tr("gen_speed"),Step=0.1,Value={Min=0.1,Max=3,Default=1.0},Callback=function(v) S.GenDelay=v end})
     TbMain:Button({Title=Tr("gen_now"),Callback=function() InstantGenNow() end})
+    TbMain:Button({Title=Tr("complete_all_gens"),Callback=function() CompleteAllGenerators() end})
     TbMain:Divider()
     R.AutoParry=TbMain:Toggle({Title=Tr("auto_parry"),Value=S.AutoParry,Callback=function(v) S.AutoParry=v end})
     local parrySlider = TbMain:Slider({Title=Tr("parry_range_basic"),Step=1,Value={Min=5,Max=30,Default=20},Callback=function(v) S.ParryRangeBasic=v end})
@@ -948,7 +974,7 @@ function BuildWindow()
     TbMain:Slider({Title=Tr("shake_speed"),Step=0.1,Value={Min=0.1,Max=5,Default=0.1},Callback=function(v) S.ShakeSpeed=v end})
     end
 
-    -- Visual Tab (بدون تغيير)
+    -- Visual Tab
     do local R=uiRefs
     TbVisual:Dropdown({Title=Tr("esp_type"),Values={"Highlight","Chams","Name"},Value=S.ESPMode,Multi=false,Callback=function(v) S.ESPMode=v; ClearAllESP() end})
     R.ESPHealth=TbVisual:Toggle({Title=Tr("health_esp"),Value=S.ESPHealth,Callback=function(v) S.ESPHealth=v end})
@@ -986,7 +1012,7 @@ function BuildWindow()
     R.AutoFarm=TbFarm:Toggle({Title=Tr("auto_farm"),Value=S.AutoFarm,Callback=function(v) S.AutoFarm=v; SetAutoFarm(v) end})
     end
 
-    -- Config Tab (بدون BypassSlow و AntiTrap)
+    -- Config Tab
     do local cfgInput=""; local selCfg=nil; local cfgDD=nil
     TbConfig:Input({Title=Tr("cfg_name"),Placeholder="v1",Callback=function(t) if t and t~="" then cfgInput=t end end})
     TbConfig:Button({Title=Tr("cfg_create"),Callback=function()
@@ -1002,6 +1028,7 @@ function BuildWindow()
         if n then
             SyncUI(); ConnectStamina(); SetAntiAFK(S.AntiAFK)
             if S.AllowJump then SetAllowJump(true) end; if S.AutoRun then SetAutoRun(true) end
+            if S.BypassSlow then SetBypassSlow(true) end; if S.AntiTrap then SetAntiTrap(true) end
             if S.InstantGen then StartInstantGen() end
             if S.FullBright then SetFullBright(true) end; if S.HideGenGui then SetHideGenGui(true) end
             if S.InstantPrompt then SetInstantPrompt(true) end; if S.AutoFarm then SetAutoFarm(true) end
@@ -1038,7 +1065,10 @@ function BuildWindow()
     end
 
     ConnectStamina(); SetAntiAFK(S.AntiAFK)
-    if S.AllowJump then SetAllowJump(true) end; if S.AutoRun then SetAutoRun(true) end
+    if S.AllowJump then SetAllowJump(true) end
+    if S.AutoRun then SetAutoRun(true) end
+    if S.BypassSlow then SetBypassSlow(true) end
+    if S.AntiTrap then SetAntiTrap(true) end
     if S.InstantGen then StartInstantGen() end
     if S.FullBright then SetFullBright(true) end; if S.HideGenGui then SetHideGenGui(true) end
     if S.InstantPrompt then SetInstantPrompt(true) end; if S.AutoFarm then SetAutoFarm(true) end
@@ -1051,7 +1081,8 @@ function BuildWindow()
     LP.CharacterAdded:Connect(function()
         task.wait(1); RefreshChar(); ConnectStamina(); ConnectAntiDie()
         if S.NoClip then SetNoClip(true) end; if S.AllowJump then SetAllowJump(true) end
-        if S.AutoRun then SetAutoRun(true) end
+        if S.AutoRun then SetAutoRun(true) end; if S.BypassSlow then SetBypassSlow(true) end
+        if S.AntiTrap then SetAntiTrap(true) end
         if S.AutoSwing then S.AutoSwing=true end; if S.AutoParry then S.AutoParry=true end
         if S.AutoBarricade then SetBarricade(true) end
         SetFOV(S.FovValue)
@@ -1060,7 +1091,7 @@ function BuildWindow()
             if kf then for _,m in ipairs(kf:GetChildren()) do HookKillerAnim(m) end end end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v8.6","AutoRun & AntiStun merged",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v8.8","Your improvements merged",5,"moon")
 end
 
 -- CAM LOCK
@@ -1145,33 +1176,6 @@ RunService.RenderStepped:Connect(function()
     if S.CamTarget and S.CamTarget:FindFirstChild("HumanoidRootPart") then
         Camera.CFrame=CFrame.new(Camera.CFrame.Position, S.CamTarget:FindFirstChild("HumanoidRootPart").Position + Vector3.new(0,2.5,0))
     else camActive=false; S.CamTarget=nil end
-end)
-
--- TRAP HELPER (بديل AntiTrap – يطبع في وحدة التحكم عند الوقوع في فخ)
-print("[PH] Trap Helper started. Fall into a trap to see debug info...")
-LP.CharacterAdded:Connect(function(char)
-    char:WaitForChild("Humanoid")
-    task.delay(0.3, function()
-        if char.Parent then
-            print("[PH] Trap Helper active on new character.")
-        end
-    end)
-    local watchedAttrs = {"Trapped","BeartrapCaught","Caught","InTrap","Tripped","Snared","TrapCaught"}
-    local watchedTags = {"Trapped","BeartrapCaught","Bear","InBearTrap","BearTrap"}
-    char.AttributeChanged:Connect(function(attr)
-        if table.find(watchedAttrs, attr) then
-            local val = char:GetAttribute(attr)
-            print("[TRAP] Attribute changed:", attr, "=", val)
-        end
-    end)
-    for _, tag in ipairs(watchedTags) do
-        CollectionService:GetInstanceAddedSignal(tag):Connect(function(obj)
-            if obj == char then print("[TRAP] Tag ADDED:", tag) end
-        end)
-        CollectionService:GetInstanceRemovedSignal(tag):Connect(function(obj)
-            if obj == char then print("[TRAP] Tag REMOVED:", tag) end
-        end)
-    end
 end)
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
