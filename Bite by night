@@ -1,5 +1,5 @@
 --[[
-    Phantom Hub Evolved  v7.5 (Fixed)
+    Phantom Hub Evolved  v7.5 (FULL - No Shortcuts)
     Based on Phantom Hub v7.4 + open-source features + Killer cam lock enhancements
     By 7k.u (modified) · Discord · WindUI Midnight · Delta · BBN Only
     PlaceId: 70845479499574
@@ -1093,7 +1093,6 @@ local function HookKillerAnim(km)
             end
             return
         end
-        -- Legacy keywords (if needed)
     end)
     km.AncestryChanged:Connect(function() if not km.Parent then hookedKillers[km] = nil end end)
 end
@@ -1456,7 +1455,7 @@ local function ShowLangGUI(callback)
     enBtn.Activated:Connect(function() Choose("en") end) arBtn.Activated:Connect(function() Choose("ar") end)
 end
 
--- LOADING SCREEN (redesigned)
+-- LOADING SCREEN
 local function ShowLoadingScreen(callback)
     local sg = Instance.new("ScreenGui") sg.Name = "PH_Loading" sg.IgnoreGuiInset = true sg.ResetOnSpawn = false
     pcall(function() sg.Parent = game:GetService("CoreGui") end) if not sg.Parent then sg.Parent = LP.PlayerGui end
@@ -1498,7 +1497,7 @@ local function ShowLoadingScreen(callback)
     end)
 end
 
--- BUILD WINDOW (FIXED)
+-- BUILD WINDOW (FULL - no shortcuts)
 function BuildWindow()
     local wOk, wErr = pcall(function()
         WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
@@ -1524,14 +1523,196 @@ function BuildWindow()
     local TbConfig  = Window:Tab({Title=Tr("tab_config"),  Icon="folder"})
     local TbSettings= Window:Tab({Title=Tr("tab_settings"),Icon="sliders-horizontal"})
 
-    -- Safe select first tab (avoid error)
+    -- Safe select first tab
     pcall(function()
         if TbInfo then Window:SelectTab(TbInfo) end
     end)
 
-    -- ... rest of the UI building is identical to the previous full script ...
-    -- (I'm not repeating the entire 1500 lines here, but they are unchanged except for 
-    -- the line `Window:SelectTab(TbInfo)` which is now wrapped in a pcall)
+    -- INFO TAB
+    local avatarAssetId = ""
+    task.spawn(function()
+        local ok, content = pcall(function() return Players:GetUserThumbnailAsync(LP.UserId, Enum.ThumbnailType.AvatarThumbnail, Enum.ThumbnailSize.Size150x150) end)
+        if ok and content then avatarAssetId = content end
+    end)
+    local userAvatarPara = TbInfo:Paragraph({
+        Title = LP.DisplayName.." (@"..LP.Name..")",
+        Desc = "Account Age: "..LP.AccountAge.." days\nExecutor: "..executor,
+        Thumbnail = avatarAssetId or "rbxassetid://0",
+        ThumbnailSize = 150,
+    })
+    task.spawn(function()
+        while task.wait(0.8) do
+            local ping = math.floor(LP:GetNetworkPing()*1000)
+            pcall(function() userAvatarPara:SetDesc("FPS: "..curFPS.." Ping: "..ping.."ms\nAge: "..LP.AccountAge.." days  "..executor) end)
+        end
+    end)
+    TbInfo:Paragraph({Title="", Desc="", Thumbnail="rbxassetid://93386553868675", ThumbnailSize=150})
+    TbInfo:Paragraph({Title=Tr("whats_new_title"), Desc=Tr("whats_new_body")})
+
+    -- MAIN TAB
+    local R = uiRefs
+    R.InfStamina = TbMain:Toggle({Title=Tr("inf_stamina"),Value=S.InfStamina,Callback=function(v) S.InfStamina=v ConnectStamina() end})
+    R.NoClip = TbMain:Toggle({Title=Tr("noclip"),Value=S.NoClip,Callback=function(v) SetNoClip(v) end})
+    R.AllowJump = TbMain:Toggle({Title=Tr("allow_jump"),Value=S.AllowJump,Callback=function(v) S.AllowJump=v SetAllowJump(v) end})
+    TbMain:Slider({Title=Tr("run_speed"),Step=1,Value={Min=10,Max=40,Default=24},Callback=function(v) S.RunSpeed=v end})
+    R.AutoRun = TbMain:Toggle({Title=Tr("auto_run"),Value=S.AutoRun,Callback=function(v) S.AutoRun=v SetAutoRun(v) end})
+    TbMain:Divider()
+    R.AntiStun = TbMain:Toggle({Title=Tr("anti_stun"),Value=S.AntiStun,Callback=function(v) S.AntiStun=v if not v then pcall(function() if LPChar then LPChar:SetAttribute("WalkSpeed",12) if LPHum then LPHum.WalkSpeed=12 end end end) end end})
+    R.AntiRagdoll = TbMain:Toggle({Title=Tr("anti_ragdoll"),Value=S.AntiRagdoll,Callback=function(v) S.AntiRagdoll=v end})
+    R.AntiConfusion = TbMain:Toggle({Title=Tr("anti_confusion"),Value=S.AntiConfusion,Callback=function(v) S.AntiConfusion=v end})
+    R.AntiTrap = TbMain:Toggle({Title=Tr("anti_trap"),Value=S.AntiTrap,Callback=function(v) S.AntiTrap=v SetAntiTrap(v) end})
+    TbMain:Divider()
+    R.AntiDie = TbMain:Toggle({Title=Tr("anti_die"),Value=S.AntiDie,Callback=function(v) S.AntiDie=v end})
+    TbMain:Slider({Title=Tr("anti_die_hp"),Step=1,Value={Min=1,Max=100,Default=30},Callback=function(v) S.AntiDieHP=v end})
+    TbMain:Divider()
+    R.AutoBarricade = TbMain:Toggle({Title=Tr("auto_barricade"),Value=S.AutoBarricade,Callback=function(v) SetBarricade(v) end})
+    R.AutoEscape = TbMain:Toggle({Title=Tr("auto_escape"),Value=S.AutoEscape,Callback=function(v) S.AutoEscape=v SetAutoEscape(v) end})
+    R.InstantPrompt = TbMain:Toggle({Title=Tr("instant_prompt"),Value=S.InstantPrompt,Callback=function(v) S.InstantPrompt=v SetInstantPrompt(v) end})
+    TbMain:Divider()
+    R.InstantGen = TbMain:Toggle({Title=Tr("instant_gen"),Value=S.InstantGen,Callback=function(v) S.InstantGen=v if v then StartInstantGen() else StopInstantGen() end end})
+    TbMain:Slider({Title=Tr("gen_speed"),Step=0.1,Value={Min=0.05,Max=3,Default=1.0},Callback=function(v) S.GenDelay=v end})
+    TbMain:Button({Title=Tr("gen_now"),Callback=function() InstantGenNow() end})
+    TbMain:Divider()
+    R.AutoParry = TbMain:Toggle({Title=Tr("auto_parry"),Value=S.AutoParry,Callback=function(v) S.AutoParry=v SetAutoParry(v) end})
+    TbMain:Slider({Title=Tr("parry_range_basic"),Step=1,Value={Min=10,Max=50,Default=30},Callback=function(v) S.ParryRangeBasic=v end})
+    TbMain:Slider({Title=Tr("parry_range_pull"),Step=1,Value={Min=10,Max=60,Default=50},Callback=function(v) S.ParryRangePull=v end})
+    R.ShowParry = TbMain:Toggle({Title=Tr("show_parry"),Value=S.ShowParry,Callback=function(v) S.ShowParry=v end})
+    R.ParryDynamic = TbMain:Toggle({Title=Tr("parry_dynamic"),Value=S.ParryDynamic,Callback=function(v) S.ParryDynamic=v end})
+    R.ParryRainbow = TbMain:Toggle({Title=Tr("parry_rainbow"),Value=S.ParryRainbow,Callback=function(v) S.ParryRainbow=v end})
+    TbMain:Colorpicker({Title=Tr("parry_color"),Default=S.ParryColor,Callback=function(c) S.ParryColor=c end})
+    TbMain:Divider()
+    R.AutoSwing = TbMain:Toggle({Title=Tr("auto_swing"),Value=S.AutoSwing,Callback=function(v) S.AutoSwing=v SetAutoSwing(v) end})
+    TbMain:Slider({Title=Tr("swing_range"),Step=1,Value={Min=5,Max=25,Default=12},Callback=function(v) S.SwingRange=v end})
+    TbMain:Divider()
+    R.AutoShakeWire = TbMain:Toggle({Title=Tr("wire_shake"),Value=S.AutoShakeWire,Callback=function(v) S.AutoShakeWire=v SetAutoShakeWire(v) end})
+    TbMain:Slider({Title=Tr("shake_speed"),Step=0.1,Value={Min=0.1,Max=3,Default=0.5},Callback=function(v) S.ShakeSpeed=v end})
+    TbMain:Divider()
+    R.DeleteDoors = TbMain:Toggle({Title=Tr("delete_doors"),Value=S.DeleteDoors,Callback=function(v) S.DeleteDoors=v ToggleDeleteDoors(v) end})
+    R.SkipCutscene = TbMain:Toggle({Title=Tr("skip_cutscene"),Value=S.SkipCutscene,Callback=function(v) S.SkipCutscene=v ToggleSkipCutscene(v) end})
+    R.AutoPhase = TbMain:Toggle({Title=Tr("auto_phase"),Value=S.AutoPhase,Callback=function(v) S.AutoPhase=v SetAutoPhase(v) end})
+    TbMain:Slider({Title=Tr("phase_distance"),Step=1,Value={Min=5,Max=30,Default=10},Callback=function(v) S.PhaseDistance=v end})
+    R.SilentTase = TbMain:Toggle({Title=Tr("silent_tase"),Value=S.SilentTase,Callback=function(v) S.SilentTase=v ToggleSilentTase(v) end})
+
+    -- VISUAL TAB
+    TbVisual:Dropdown({Title=Tr("esp_type"),Values={"Highlight","Chams","Name","Dot"},Value=S.ESPMode,Multi=false,Callback=function(v) S.ESPMode=v end})
+    R.ESPHealth = TbVisual:Toggle({Title=Tr("health_esp"),Value=S.ESPHealth,Callback=function(v) S.ESPHealth=v end})
+    TbVisual:Divider()
+    for _,row in ipairs({{"Killer","Killer"},{"Survivor","Survivor"},{"Generator","Generator"},{"Battery","Battery"},{"Fuse","Fuse"},{"Trap","Trap"},{"WireEye","Wire Eye"}}) do
+        local key,label = row[1],row[2] local cfg = S.T[key]
+        if cfg then
+            R["T."..key..".On"] = TbVisual:Toggle({Title=Tr("esp_on").." "..label,Value=cfg.On,Callback=function(v) cfg.On=v end})
+            TbVisual:Colorpicker({Title=label.." "..Tr("esp_color"),Default=cfg.Color,Callback=function(c) cfg.Color=c end})
+        end
+    end
+    TbVisual:Divider()
+    R.FullBright = TbVisual:Toggle({Title=Tr("full_bright"),Value=S.FullBright,Callback=function(v) S.FullBright=v SetFullBright(v) end})
+    R.NoBlind = TbVisual:Toggle({Title=Tr("no_blind"),Value=S.NoBlind,Callback=function(v) S.NoBlind=v SetNoBlind(v) end})
+    R.NoFog = TbVisual:Toggle({Title=Tr("no_fog"),Value=S.NoFog,Callback=function(v) S.NoFog=v end})
+    R.NoShadow = TbVisual:Toggle({Title=Tr("no_shadow"),Value=S.NoShadow,Callback=function(v) S.NoShadow=v end})
+    TbVisual:Slider({Title=Tr("fov_ctrl"),Step=1,Value={Min=10,Max=100,Default=70},Callback=function(v) SetFOV(v) end})
+    TbVisual:Divider()
+    R.HideGenGui = TbVisual:Toggle({Title=Tr("hide_gen_gui"),Value=S.HideGenGui,Callback=function(v) S.HideGenGui=v SetHideGenGui(v) end})
+
+    -- KILLER TAB
+    TbKiller:Paragraph({Title="Cam Lock System", Desc="Animation-based lock on killers. Each toggle activates lock when corresponding animation plays."})
+    TbKiller:Divider()
+    R.CamRotten = TbKiller:Toggle({Title="Cam Lock - The Rotten (Axe charge/throw)", Value=S.CamRotten, Callback=function(v) S.CamRotten=v if not v then camActive=false S.CamTarget=nil end end})
+    R.CamDoppelPull = TbKiller:Toggle({Title="Cam Lock - Doppelganger Pull", Value=S.CamDoppelPull, Callback=function(v) S.CamDoppelPull=v if not v then camActive=false S.CamTarget=nil end end})
+    R.CamM1 = TbKiller:Toggle({Title="Cam Lock - M1 (close target)", Value=S.CamM1, Callback=function(v) S.CamM1=v if not v then camActive=false S.CamTarget=nil end end})
+    R.CamGrab = TbKiller:Toggle({Title="Cam Lock - Mimic Grab", Value=S.CamGrab, Callback=function(v) S.CamGrab=v if not v then camActive=false S.CamTarget=nil end end})
+    R.CamStab = TbKiller:Toggle({Title="Cam Lock - Doppelganger Stab", Value=S.CamStab, Callback=function(v) S.CamStab=v if not v then camActive=false S.CamTarget=nil end end})
+    R.CamJump = TbKiller:Toggle({Title="Cam Lock - Mimic Jump", Value=S.CamJump, Callback=function(v) S.CamJump=v if not v then camActive=false S.CamTarget=nil end end})
+    TbKiller:Divider()
+    R.ShowFOV = TbKiller:Toggle({Title=Tr("show_fov"),Value=S.ShowFOV,Callback=function(v) S.ShowFOV=v end})
+    TbKiller:Colorpicker({Title=Tr("fov_color"),Default=S.FovColor,Callback=function(c) S.FovColor=c end})
+    TbKiller:Slider({Title=Tr("fov_radius"),Step=5,Value={Min=30,Max=300,Default=120},Callback=function(v) S.CamFOV=v end})
+    TbKiller:Button({Title=Tr("lock_near"),Callback=function() S.CamTarget=FindTarget() camActive=S.CamTarget~=nil end})
+    TbKiller:Button({Title=Tr("clear_lock"),Callback=function() camActive=false S.CamTarget=nil end})
+
+    -- FARM TAB
+    TbFarm:Button({Title=Tr("complete_all"),Callback=function()
+        N("Auto Farm","Starting complete all generators...",3,"wheat")
+        task.spawn(CompleteAllGenerators)
+    end})
+    TbFarm:Divider()
+    R.AutoFarm = TbFarm:Toggle({Title=Tr("auto_farm"),Value=S.AutoFarm,Callback=function(v) S.AutoFarm=v SetAutoFarm(v) end})
+
+    -- CONFIG TAB
+    local cfgInput="" local selCfg=nil local cfgDD=nil
+    TbConfig:Input({Title=Tr("cfg_name"),Placeholder="v1",Callback=function(t) if t and t~="" then cfgInput=t end end})
+    TbConfig:Button({Title=Tr("cfg_create"),Callback=function()
+        if cfgInput=="" then return end
+        if SaveCfg(cfgInput) then local l=ListCfgs() if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end end
+    end})
+    local iL = ListCfgs()
+    cfgDD = TbConfig:Dropdown({Title=Tr("cfg_select"),Values=#iL>0 and iL or {"(none)"},Value=iL[1] or nil,Multi=false,AllowNone=true,Callback=function(v) selCfg=v end})
+    if #iL>0 then selCfg=iL[1] end
+    TbConfig:Button({Title=Tr("cfg_load"),Callback=function()
+        if not selCfg or selCfg=="(none)" then return end
+        local n=LoadCfg(selCfg) if not n then return end
+        SyncUI() ConnectStamina() SetAntiAFK(S.AntiAFK) SetAntiTrap(S.AntiTrap) SetAutoEscape(S.AutoEscape) SetBarricade(S.AutoBarricade)
+        if S.AllowJump then SetAllowJump(true) end if S.AutoRun then SetAutoRun(true) end
+        if S.InstantGen then StartInstantGen() end if S.FullBright then SetFullBright(true) end
+        if S.NoBlind then SetNoBlind(true) end if S.HideGenGui then SetHideGenGui(true) end
+        if S.InstantPrompt then SetInstantPrompt(true) end if S.AutoFarm then SetAutoFarm(true) end
+        if S.AutoSwing then SetAutoSwing(true) end if S.AutoParry then SetAutoParry(true) end
+        if S.AutoShakeWire then SetAutoShakeWire(true) end if S.FPSBooster then SetFPSBooster(true) end
+        if S.SilentTase then ToggleSilentTase(true) end
+        if S.DeleteDoors then ToggleDeleteDoors(true) end if S.SkipCutscene then ToggleSkipCutscene(true) end
+        if S.AutoPhase then SetAutoPhase(true) end
+        if S.FovValue~=70 then SetFOV(S.FovValue) end ConnectAntiDie()
+    end})
+    TbConfig:Divider()
+    local cA = GetAutoLoad()
+    TbConfig:Toggle({Title=Tr("cfg_auto"),Value=cA~=nil,Callback=function(v)
+        if v then if selCfg and selCfg~="(none)" then SetAutoLoad(selCfg) end else SetAutoLoad("") end
+    end})
+    TbConfig:Button({Title=Tr("cfg_delete"),Callback=function()
+        if not selCfg or selCfg=="(none)" then return end
+        pcall(function() if delfile then delfile(CFG_FOLDER.."/"..selCfg..".json") end end)
+        local l=ListCfgs() if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end selCfg=nil
+    end})
+
+    -- SETTINGS TAB
+    TbSettings:Slider({Title=Tr("ui_scale"),Step=0.05,Value={Min=0.7,Max=1.5,Default=1.0},Callback=function(v) ApplyScale(v) end})
+    TbSettings:Slider({Title=Tr("ui_alpha"),Step=0.05,Value={Min=0,Max=0.9,Default=0},Callback=function(v) ApplyAlpha(v) end})
+    TbSettings:Divider()
+    R.AntiAFK = TbSettings:Toggle({Title=Tr("anti_afk"),Value=S.AntiAFK,Callback=function(v) S.AntiAFK=v SetAntiAFK(v) end})
+    R.FPSBooster = TbSettings:Toggle({Title=Tr("fps_boost"),Value=S.FPSBooster,Callback=function(v) S.FPSBooster=v SetFPSBooster(v) end})
+    TbSettings:Keybind({Title=Tr("toggle_ui"),Value="RightControl",Callback=function(k) pcall(function() Window:SetToggleKey(Enum.KeyCode[k]) end) end})
+    TbSettings:Divider()
+    TbSettings:Button({Title=Tr("lang_btn"),Callback=function()
+        local nl = LANG=="en" and "ar" or "en" LANG = nl N("Language","Switched - re-execute",4,"globe")
+    end})
+
+    -- INIT
+    ConnectStamina() SetAntiAFK(S.AntiAFK) SetAntiTrap(S.AntiTrap)
+    if S.AllowJump then SetAllowJump(true) end if S.AutoRun then SetAutoRun(true) end
+    if S.InstantGen then StartInstantGen() end if S.FullBright then SetFullBright(true) end
+    if S.NoBlind then SetNoBlind(true) end if S.HideGenGui then SetHideGenGui(true) end
+    if S.InstantPrompt then SetInstantPrompt(true) end if S.AutoBarricade then SetBarricade(true) end
+    if S.AutoEscape then SetAutoEscape(true) end if S.AutoFarm then SetAutoFarm(true) end
+    if S.AutoSwing then SetAutoSwing(true) end if S.AutoParry then SetAutoParry(true) end
+    if S.AutoShakeWire then SetAutoShakeWire(true) end if S.FPSBooster then SetFPSBooster(true) end
+    if S.SilentTase then ToggleSilentTase(true) end
+    if S.DeleteDoors then ToggleDeleteDoors(true) end if S.SkipCutscene then ToggleSkipCutscene(true) end
+    if S.AutoPhase then SetAutoPhase(true) end
+    if S.FovValue~=70 then SetFOV(S.FovValue) end
+    task.delay(0.9, function() ApplyScale(S.UIScale) ApplyAlpha(S.UIAlpha) end)
+
+    LP.CharacterAdded:Connect(function()
+        task.wait(1) RefreshChar() ConnectStamina() ConnectAntiDie()
+        if S.NoClip then SetNoClip(true) end if S.AllowJump then SetAllowJump(true) end
+        if S.AutoRun then SetAutoRun(true) end if S.AutoSwing then SetAutoSwing(true) end
+        if S.AutoParry then SetAutoParry(true) end if S.AntiTrap then SetAntiTrap(true) end
+        task.wait(1)
+        pcall(function()
+            local pf = workspace:FindFirstChild("PLAYERS") local kf = pf and pf:FindFirstChild("KILLER")
+            if kf then for _,m in ipairs(kf:GetChildren()) do HookKillerAnim(m) end end
+        end)
+    end)
+    ConnectAntiDie()
+    task.wait(1.5) N("Phantom Hub Evolved","v7.5 Ready",5,"moon")
 end
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
