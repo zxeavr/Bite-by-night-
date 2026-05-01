@@ -2,11 +2,15 @@
   PHANTOM HUB  v7.6 R4
   By 7k.u | WindUI Midnight | Delta | BBN PlaceId: 70845479499574
 
-  FIXES in R4:
-  - Can't move bug: force WalkSpeed=16 on spawn/load if stuck at 0
-  - Anti Trap rework: teleport to lobby, wait 8s, return to map
-  - Auto Farm anti-cheat: random delays, offsets, scrambled order
-  - Improved initial WalkSpeed safeguard
+  R4 FIXES:
+  ✅ Can't move: NEVER touch WalkSpeed/Humanoid.WalkSpeed anymore
+     Root cause was SetAutoRun(false) forcing WalkSpeed=16 on load
+  ✅ Anti Trap: teleport to LOBBY for 8 seconds then return
+     Tag confirmed: "Trapped" (from console screenshot)
+  ✅ Auto Run: uses RunSpeed attribute only, zero connection to AntiStun
+  ✅ Anti Stun: completely separate from Auto Run, clears on disable
+  ✅ Auto Farm: random delays + underground bypass for anti-cheat
+  ✅ Helper: confirmed working (console shows [TRAP] logs)
 ]]
 
 local Players           = game:GetService("Players")
@@ -24,6 +28,7 @@ local Camera            = workspace.CurrentCamera
 local SCRIPT_VERSION = 76
 local VERSION_URL = "https://raw.githubusercontent.com/zxeavr/Bite-by-night-/main/version.txt"
 local WH_URL = "https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
+
 task.spawn(function() pcall(function()
     local ok,res = pcall(function() return game:HttpGet(VERSION_URL) end)
     if ok and res then
@@ -39,47 +44,41 @@ if game.PlaceId ~= 70845479499574 then
         local sg = Instance.new("ScreenGui"); sg.IgnoreGuiInset=true; sg.ResetOnSpawn=false
         local ok2 = pcall(function() sg.Parent=game:GetService("CoreGui") end)
         if not ok2 then sg.Parent=LP.PlayerGui end
-        local bg = Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
-        local lbl = Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
-        lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.6 R4\n\nBite By Night only!\nBy 7k.u"
+        local bg = Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0)
+        bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
+        local lbl = Instance.new("TextLabel",bg)
+        lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
+        lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true
+        lbl.Font=Enum.Font.GothamBold; lbl.TextColor3=Color3.fromRGB(200,100,255)
+        lbl.Text="Phantom Hub v7.6 R4\n\nBite By Night only!\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end); error("[PH] BBN only.",0)
 end
 
--- CHARACTER REFS (safe)
+-- CHAR REFS
 local LPChar, LPRoot, LPHum
 local function RefreshChar()
-    LPChar = LP.Character
-    if not LPChar then return end
+    LPChar = LP.Character; if not LPChar then return end
     LPRoot = LPChar:FindFirstChild("HumanoidRootPart")
     LPHum  = LPChar:FindFirstChildOfClass("Humanoid")
 end
 RefreshChar()
 
-local CFG_FOLDER = "PhantomHub"
-local AUTO_FILE  = CFG_FOLDER.."/_autoload.txt"
+local CFG_FOLDER = "PhantomHub"; local AUTO_FILE = CFG_FOLDER.."/_autoload.txt"
 pcall(function() if not isfolder(CFG_FOLDER) then makefolder(CFG_FOLDER) end end)
-
 local LANG = "en"
 
--- ============================================================
--- DEBUG HELPER (prints to console when enabled)
--- ============================================================
+-- DEBUG HELPER
+-- To use: Settings → Enable "Debug Helpers" → Open Delta console
 local S_Debug = false
 local function Log(...)
     if not S_Debug then return end
-    local parts = {}
-    for _,v in ipairs({...}) do parts[#parts+1] = tostring(v) end
-    print("[PH] " .. table.concat(parts, " "))
+    local parts={}; for _,v in ipairs({...}) do parts[#parts+1]=tostring(v) end
+    print("[PH] "..table.concat(parts," "))
 end
 
--- ============================================================
 -- GLOBAL STATE
--- ============================================================
 local G = getgenv(); G.PH = G.PH or {}; local S = G.PH
-
--- Defaults (only set if not already set, so config persists across re-execute)
 local function def(k,v) if S[k]==nil then S[k]=v end end
 
 def("ESPMode","Highlight"); def("ESPHealth",false); def("ShowGenProgress",false)
@@ -95,6 +94,7 @@ def("T",{
 def("FullBright",false); def("NoFog",false); def("NoShadow",false)
 def("NoBlind",false); def("FovValue",70); def("HideGenGui",false)
 def("InfStamina",false); def("NoClip",false); def("AllowJump",false)
+-- FIX: AutoRun default false, NEVER forced on start
 def("AutoRun",false); def("RunSpeed",24)
 def("AntiStun",false); def("AntiRagdoll",false); def("AntiConfusion",false)
 def("AntiTrap",false); def("AntiDie",false); def("AntiDieHP",30)
@@ -104,7 +104,7 @@ def("InstantPrompt",false); def("InstantGen",false); def("GenDelay",1.0)
 def("AutoParry",false); def("ParryRange",15); def("ParryRangePull",40)
 def("ShowParryViz",false); def("ParryDynamic",false); def("ParryRainbow",false)
 def("ParryColor",Color3.fromRGB(255,60,60)); def("ParryAlpha",0.5)
--- Cam Lock (renamed, not Aimbot)
+-- Cam Lock
 def("CamLockRotten",false); def("CamLockM1",false)
 def("CamLockDoppelPull",false); def("CamLockDoppelStab",false)
 def("CamLockMimicGrab",false); def("CamLockMimicJump",false)
@@ -112,191 +112,141 @@ def("CamFOV",120); def("ShowFOV",false)
 def("FovColor",Color3.fromRGB(255,80,80)); def("FovAlpha",0)
 def("AutoShakeWire",false); def("ShakeSpeed",0.5)
 def("AutoFarm",false); def("FarmMode","TP"); def("FarmSpeed",30)
-def("FarmUnderground",false); def("FarmAntiCheat",false)
+def("FarmUnderground",false)
 def("AntiAFK",false); def("FPSBooster",false)
-def("UIScale",1.0); def("UIAlpha",0)
-def("DebugHelpers",false)
+def("UIScale",1.0); def("UIAlpha",0); def("DebugHelpers",false)
 
--- ============================================================
--- CAM LOCK (smooth continuous target tracking)
--- Animation-based: fires when killer plays specific animation
--- Tracks target with CFrame.Lerp for smooth, no-jitter follow
--- ============================================================
+-- CAM LOCK (animation-based)
 local CAM_ANIMS = {
-    -- Rotten Axe charge → START lock
-    ["rbxassetid://93908270616381"]  = {key="CamLockRotten",    stop=false},
-    ["rbxassetid://77150341615948"]  = {key="CamLockRotten",    stop=false},
-    -- Rotten Axe throw → STOP lock
-    ["rbxassetid://119495869953586"] = {key="CamLockRotten",    stop=true},
-    ["rbxassetid://112567039316532"] = {key="CamLockRotten",    stop=true},
-    -- M1 attacks
-    ["rbxassetid://112503015929213"] = {key="CamLockM1",        stop=false},
-    ["rbxassetid://106673226682917"] = {key="CamLockM1",        stop=false},
-    ["rbxassetid://70869035406359"]  = {key="CamLockM1",        stop=false},
-    ["rbxassetid://102810363618918"] = {key="CamLockM1",        stop=false},
-    ["rbxassetid://120428956410756"] = {key="CamLockM1",        stop=false},
-    -- Doppelganger
+    ["rbxassetid://93908270616381"]  = {key="CamLockRotten",     stop=false},
+    ["rbxassetid://77150341615948"]  = {key="CamLockRotten",     stop=false},
+    ["rbxassetid://119495869953586"] = {key="CamLockRotten",     stop=true},
+    ["rbxassetid://112567039316532"] = {key="CamLockRotten",     stop=true},
+    ["rbxassetid://112503015929213"] = {key="CamLockM1",         stop=false},
+    ["rbxassetid://106673226682917"] = {key="CamLockM1",         stop=false},
+    ["rbxassetid://70869035406359"]  = {key="CamLockM1",         stop=false},
+    ["rbxassetid://102810363618918"] = {key="CamLockM1",         stop=false},
+    ["rbxassetid://120428956410756"] = {key="CamLockM1",         stop=false},
     ["rbxassetid://133752270724243"] = {key="CamLockDoppelPull", stop=false},
     ["rbxassetid://109788581549466"] = {key="CamLockDoppelStab", stop=false},
-    -- Mimic
     ["rbxassetid://95722006705414"]  = {key="CamLockMimicGrab",  stop=false},
     ["rbxassetid://71098053103714"]  = {key="CamLockMimicJump",  stop=false},
     ["rbxassetid://81381542397159"]  = {key="CamLockMimicJump",  stop=false},
 }
-
 local camLockActive = false
-local camLockTarget = nil  -- HumanoidRootPart of target
-
+local camLockTarget = nil
 local function AnyCamLockOn()
     return S.CamLockRotten or S.CamLockM1 or S.CamLockDoppelPull
         or S.CamLockDoppelStab or S.CamLockMimicGrab or S.CamLockMimicJump
 end
-
 local function CamLockStop()
-    camLockActive = false
-    camLockTarget = nil
-    pcall(function() Camera.CameraType = Enum.CameraType.Custom end)
-    Log("CamLock STOPPED")
+    camLockActive=false; camLockTarget=nil
+    pcall(function() Camera.CameraType=Enum.CameraType.Custom end)
 end
-
--- Find nearest target inside FOV circle (from ALIVE folder)
 local function FindBestTarget()
-    local vp = Camera.ViewportSize
-    local center = Vector2.new(vp.X*0.5, vp.Y*0.5)
-    local best, bestDist = nil, math.huge
-    local pf = workspace:FindFirstChild("PLAYERS")
-    local af = pf and pf:FindFirstChild("ALIVE")
+    local vp=Camera.ViewportSize; local center=Vector2.new(vp.X*0.5,vp.Y*0.5)
+    local best,bestD=nil,math.huge
+    local pf=workspace:FindFirstChild("PLAYERS"); local af=pf and pf:FindFirstChild("ALIVE")
     if not af then return nil end
-    for _, m in ipairs(af:GetChildren()) do
-        if m.Name == LP.Name then continue end
-        local hrp = m:FindFirstChild("HumanoidRootPart")
-        if not hrp then continue end
-        local sp, vis = Camera:WorldToViewportPoint(hrp.Position)
-        if not vis or sp.Z < 0 then continue end
-        -- Check inside FOV circle
-        local screenDist = (Vector2.new(sp.X,sp.Y) - center).Magnitude
-        if screenDist > S.CamFOV then continue end
-        -- Also check world distance for proximity
-        local myChar = LP.Character
-        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-        local worldDist = myRoot and (hrp.Position - myRoot.Position).Magnitude or screenDist
-        if worldDist < bestDist then
-            bestDist = worldDist
-            best = hrp
-        end
+    for _,m in ipairs(af:GetChildren()) do
+        if m.Name==LP.Name then continue end
+        local hrp=m:FindFirstChild("HumanoidRootPart"); if not hrp then continue end
+        local sp,vis=Camera:WorldToViewportPoint(hrp.Position)
+        if not vis or sp.Z<0 then continue end
+        local sd=(Vector2.new(sp.X,sp.Y)-center).Magnitude
+        if sd>S.CamFOV then continue end
+        local mc=LP.Character; local mr=mc and mc:FindFirstChild("HumanoidRootPart")
+        local wd=mr and (hrp.Position-mr.Position).Magnitude or sd
+        if wd<bestD then bestD=wd; best=hrp end
     end
     return best
 end
-
 local function CamLockStart(track)
-    local target = FindBestTarget()
-    if not target then
-        Log("CamLock: no target in FOV")
-        return
-    end
-    camLockTarget = target
-    camLockActive = true
-    Camera.CameraType = Enum.CameraType.Scriptable
-    Log("CamLock STARTED on " .. tostring(target.Parent and target.Parent.Name))
-    -- Auto-stop when animation finishes
-    local conn; conn = track.Stopped:Connect(function()
-        conn:Disconnect()
-        if camLockTarget == target then CamLockStop() end
+    local target=FindBestTarget(); if not target then return end
+    camLockTarget=target; camLockActive=true
+    Camera.CameraType=Enum.CameraType.Scriptable
+    local conn; conn=track.Stopped:Connect(function()
+        conn:Disconnect(); if camLockTarget==target then CamLockStop() end
     end)
 end
-
--- Smooth cam lock tracking - runs every frame
 RunService.RenderStepped:Connect(function()
     if not camLockActive then return end
     if not AnyCamLockOn() then CamLockStop(); return end
     if not camLockTarget or not camLockTarget.Parent then CamLockStop(); return end
-    -- Smooth follow: Lerp toward target
-    Camera.CameraType = Enum.CameraType.Scriptable
-    local goal = CFrame.new(Camera.CFrame.Position, camLockTarget.Position + Vector3.new(0, 2, 0))
-    Camera.CFrame = Camera.CFrame:Lerp(goal, 0.2)
+    Camera.CameraType=Enum.CameraType.Scriptable
+    local goal=CFrame.new(Camera.CFrame.Position,camLockTarget.Position+Vector3.new(0,2,0))
+    Camera.CFrame=Camera.CFrame:Lerp(goal,0.2)
 end)
-
--- Hook killer animations
-local hookedKillers = {}
+local hookedKillers={}
 local function HookKiller(km)
-    if not km or hookedKillers[km] then return end
-    hookedKillers[km] = true
-    local hum = km:FindFirstChildOfClass("Humanoid"); if not hum then return end
+    if not km or hookedKillers[km] then return end; hookedKillers[km]=true
+    local hum=km:FindFirstChildOfClass("Humanoid"); if not hum then return end
     hum.AnimationPlayed:Connect(function(track)
         if not track or not track.Animation then return end
-        local cfg = CAM_ANIMS[track.Animation.AnimationId]
-        if not cfg then return end
+        local cfg=CAM_ANIMS[track.Animation.AnimationId]; if not cfg then return end
         if not S[cfg.key] then return end
         if cfg.stop then CamLockStop() else CamLockStart(track) end
     end)
-    km.AncestryChanged:Connect(function()
-        if not km.Parent then hookedKillers[km] = nil end
-    end)
+    km.AncestryChanged:Connect(function() if not km.Parent then hookedKillers[km]=nil end end)
 end
 task.spawn(function()
     while task.wait(0.5) do pcall(function()
-        local kf = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
+        local kf=workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
         if not kf then return end
-        for _, m in ipairs(kf:GetChildren()) do HookKiller(m) end
+        for _,m in ipairs(kf:GetChildren()) do HookKiller(m) end
     end) end
 end)
 pcall(function()
-    local kf = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
+    local kf=workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
     if kf then kf.ChildAdded:Connect(function(m) task.wait(0.2); HookKiller(m) end) end
 end)
 
--- ============================================================
 -- FOV CIRCLE
--- ============================================================
-local fovGui, fovFrame
+local fovGui,fovFrame; local fovRH=0
 local function MakeFov()
     if fovGui and fovGui.Parent then return end
     pcall(function()
-        fovGui = Instance.new("ScreenGui"); fovGui.Name="PH_FOV"
+        fovGui=Instance.new("ScreenGui"); fovGui.Name="PH_FOV"
         fovGui.ResetOnSpawn=false; fovGui.IgnoreGuiInset=true
-        local ok = pcall(function() fovGui.Parent=game:GetService("CoreGui") end)
+        local ok=pcall(function() fovGui.Parent=game:GetService("CoreGui") end)
         if not ok then fovGui.Parent=LP.PlayerGui end
-        fovFrame = Instance.new("Frame",fovGui)
+        fovFrame=Instance.new("Frame",fovGui)
         fovFrame.AnchorPoint=Vector2.new(0.5,0.5); fovFrame.BackgroundTransparency=1
         fovFrame.BorderSizePixel=0; fovFrame.ZIndex=5
         Instance.new("UICorner",fovFrame).CornerRadius=UDim.new(1,0)
-        local st = Instance.new("UIStroke",fovFrame)
+        local st=Instance.new("UIStroke",fovFrame)
         st.Color=S.FovColor; st.Thickness=2.5; st.Transparency=S.FovAlpha
     end)
 end
 MakeFov()
-local fovRainbowH = 0
 task.spawn(function()
     while task.wait(0.04) do pcall(function()
-        if not S.ShowFOV then if fovFrame then fovFrame.Visible=false end return end
-        if not fovGui or not fovGui.Parent then MakeFov() end
-        if not fovFrame then return end
-        local vp = Camera.ViewportSize
-        fovFrame.Size=UDim2.fromOffset(S.CamFOV*2, S.CamFOV*2)
-        fovFrame.Position=UDim2.fromOffset(vp.X*0.5, vp.Y*0.5)
-        local st = fovFrame:FindFirstChildOfClass("UIStroke")
+        if not S.ShowFOV then if fovFrame then fovFrame.Visible=false end; return end
+        if not fovGui or not fovGui.Parent then MakeFov() end; if not fovFrame then return end
+        local vp=Camera.ViewportSize
+        fovFrame.Size=UDim2.fromOffset(S.CamFOV*2,S.CamFOV*2)
+        fovFrame.Position=UDim2.fromOffset(vp.X*0.5,vp.Y*0.5)
+        local st=fovFrame:FindFirstChildOfClass("UIStroke")
         if st then
             st.Transparency=S.FovAlpha
-            if S.ParryRainbow then fovRainbowH=(fovRainbowH+0.006)%1; st.Color=Color3.fromHSV(fovRainbowH,1,1)
+            if S.ParryRainbow then fovRH=(fovRH+0.006)%1; st.Color=Color3.fromHSV(fovRH,1,1)
             else st.Color=S.FovColor end
         end
         fovFrame.Visible=true
     end) end
 end)
 
--- ============================================================
--- 3D PARRY VISUALIZER (ForceField sphere around killer)
--- ============================================================
-local vizPart; local vizRainbowH = 0
+-- 3D PARRY VISUALIZER
+local vizPart; local vizRH=0
 local function MakeViz()
     if vizPart and vizPart.Parent then return end
     pcall(function()
-        vizPart = Instance.new("Part"); vizPart.Name="PH_Viz"
+        vizPart=Instance.new("Part"); vizPart.Name="PH_Viz"
         vizPart.Anchored=true; vizPart.CanCollide=false; vizPart.CastShadow=false
         vizPart.Shape=Enum.PartType.Ball; vizPart.Material=Enum.Material.ForceField
         pcall(function() vizPart.CanQuery=false end)
-        vizPart.Transparency=S.ParryAlpha; vizPart.Color=S.ParryColor
         local sz=S.ParryRange*2; vizPart.Size=Vector3.new(sz,sz,sz)
+        vizPart.Transparency=S.ParryAlpha; vizPart.Color=S.ParryColor
         vizPart.Parent=workspace
     end)
 end
@@ -305,182 +255,162 @@ task.spawn(function()
         if not S.ShowParryViz then
             if vizPart and vizPart.Parent then vizPart.Transparency=1 end; return
         end
-        if not vizPart or not vizPart.Parent then MakeViz() end
-        if not vizPart then return end
-        local kf = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
-        local km = kf and kf:FindFirstChildOfClass("Model")
+        if not vizPart or not vizPart.Parent then MakeViz() end; if not vizPart then return end
+        local kf=workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
+        local km=kf and kf:FindFirstChildOfClass("Model")
         if not km then vizPart.Transparency=1; return end
-        local kr = km:FindFirstChild("HumanoidRootPart") or km:FindFirstChildOfClass("BasePart")
+        local kr=km:FindFirstChild("HumanoidRootPart") or km:FindFirstChildOfClass("BasePart")
         if not kr then vizPart.Transparency=1; return end
-        local range = S.ParryRange
+        local range=S.ParryRange
         if S.ParryDynamic then
-            local mc = LP.Character; local mr = mc and mc:FindFirstChild("HumanoidRootPart")
-            if mr then
-                local d = (kr.Position-mr.Position).Magnitude
-                range = math.clamp(S.ParryRange*(1-d/80), S.ParryRange*0.25, S.ParryRange)
-            end
+            local mc=LP.Character; local mr=mc and mc:FindFirstChild("HumanoidRootPart")
+            if mr then local d=(kr.Position-mr.Position).Magnitude
+                range=math.clamp(S.ParryRange*(1-d/80),S.ParryRange*0.25,S.ParryRange) end
         end
         local sz=range*2; vizPart.Size=Vector3.new(sz,sz,sz); vizPart.CFrame=kr.CFrame
         vizPart.Transparency=S.ParryAlpha
-        if S.ParryRainbow then vizRainbowH=(vizRainbowH+0.007)%1; vizPart.Color=Color3.fromHSV(vizRainbowH,1,1)
+        if S.ParryRainbow then vizRH=(vizRH+0.007)%1; vizPart.Color=Color3.fromHSV(vizRH,1,1)
         else vizPart.Color=S.ParryColor end
     end) end
 end)
 
 -- ============================================================
--- RUN SPEED (always active, no AutoRun needed)
--- Sets "RunSpeed" attribute which BBN reads for run speed
--- Does NOT set WalkSpeed directly (that causes the can't move bug)
+-- HELPER FUNCTION: check if player is in game (ALIVE/KILLER)
+-- ============================================================
+local function IsInGame()
+    if not LP.Character then return false end
+    local pf=workspace:FindFirstChild("PLAYERS"); if not pf then return false end
+    local af=pf:FindFirstChild("ALIVE"); local kf=pf:FindFirstChild("KILLER")
+    return (af and af:FindFirstChild(LP.Name)) or (kf and kf:FindFirstChild(LP.Name))
+end
+
+-- ============================================================
+-- RUN SPEED
+-- FIX: ONLY sets "RunSpeed" attribute (BBN's run speed system)
+-- NEVER touches Humanoid.WalkSpeed - that's what caused can't-move bug
+-- Only applies when player is IN GAME (alive/killer), not in lobby
 -- ============================================================
 task.spawn(function()
-    while task.wait(0.15) do
-        if LPChar then
+    while task.wait(0.2) do
+        if LPChar and IsInGame() then
             pcall(function() LPChar:SetAttribute("RunSpeed", S.RunSpeed) end)
         end
     end
 end)
 
--- AUTO RUN: forces WalkSpeed when walking (separate from RunSpeed)
+-- AUTO RUN: also only uses RunSpeed attribute, not WalkSpeed
 local autoRunConn
 local function SetAutoRun(on)
     if autoRunConn then autoRunConn:Disconnect(); autoRunConn=nil end
+    -- FIX: when OFF, do NOTHING - don't restore any speed value
+    -- The game manages its own WalkSpeed
     if not on then
-        -- Restore normal walkspeed (16 is BBN default)
-        pcall(function()
-            if LPHum then LPHum.WalkSpeed=16 end
-            if LPChar then LPChar:SetAttribute("WalkSpeed",nil) end
-        end)
+        Log("AutoRun OFF - no speed changes")
         return
     end
-    autoRunConn = RunService.Heartbeat:Connect(function() pcall(function()
-        if not LPChar or not LPHum then return end
-        -- Only boost WalkSpeed if actively moving
-        local moveDir = LPHum.MoveDirection
-        if moveDir.Magnitude > 0.1 then
-            LPHum.WalkSpeed = S.RunSpeed
-        end
+    autoRunConn=RunService.Heartbeat:Connect(function() pcall(function()
+        if not LPChar or not IsInGame() then return end
+        LPChar:SetAttribute("RunSpeed",S.RunSpeed)
     end) end)
+    Log("AutoRun ON - RunSpeed="..S.RunSpeed)
 end
 
 -- ============================================================
--- INFINITE STAMINA (independent of run speed)
+-- INFINITE STAMINA (completely separate from speed)
 -- ============================================================
 local staminaConn; local settingStamina=false
 local function ConnectStamina()
     if staminaConn then staminaConn:Disconnect(); staminaConn=nil end
     if not S.InfStamina or not LPChar then return end
-    pcall(function() LPChar:SetAttribute("Stamina", LPChar:GetAttribute("MaxStamina") or 100) end)
-    staminaConn = LPChar.AttributeChanged:Connect(function(attr)
+    pcall(function() LPChar:SetAttribute("Stamina",LPChar:GetAttribute("MaxStamina") or 100) end)
+    staminaConn=LPChar.AttributeChanged:Connect(function(attr)
         if settingStamina or attr~="Stamina" then return end
         settingStamina=true
-        pcall(function() LPChar:SetAttribute("Stamina", LPChar:GetAttribute("MaxStamina") or 100) end)
+        pcall(function() LPChar:SetAttribute("Stamina",LPChar:GetAttribute("MaxStamina") or 100) end)
         settingStamina=false
     end)
 end
--- SlowStop signal
+-- SlowStop only if InfStamina or AntiStun is ON
 CollectionService:GetInstanceAddedSignal("SlowStop"):Connect(function(obj)
     if not LP.Character then return end
     if obj~=LP.Character and not obj:IsDescendantOf(LP.Character) then return end
     if S.InfStamina or S.AntiStun then
         pcall(function() CollectionService:RemoveTag(obj,"SlowStop") end)
-        Log("SlowStop tag removed")
+        Log("SlowStop removed")
     end
 end)
 task.spawn(function()
     while task.wait(0.1) do
         if S.InfStamina and LPChar then pcall(function()
-            LPChar:SetAttribute("Stamina", LPChar:GetAttribute("MaxStamina") or 100)
-            if CollectionService:HasTag(LPChar,"SlowStop") then
-                CollectionService:RemoveTag(LPChar,"SlowStop")
-            end
+            LPChar:SetAttribute("Stamina",LPChar:GetAttribute("MaxStamina") or 100)
+            if CollectionService:HasTag(LPChar,"SlowStop") then CollectionService:RemoveTag(LPChar,"SlowStop") end
         end) end
     end
 end)
 
 -- ============================================================
--- ANTI STUN (FIX: clears bypass_slow + SlowStop on disable)
+-- ANTI STUN
+-- FIX: completely separate from AutoRun and InfStamina
+-- ON: clears stun tags/attrs every frame
+-- OFF: removes ONLY the forced values, restores nothing else
 -- ============================================================
 local STUN_ATTRS = {"Stun","Stunned","IsStunned","Blinded","IsBlinded","Slowed","Slowness","bypass_slow"}
 local STUN_TAGS  = {"SlowStop","Stun","Stunned","Blinded","Slowed","bypass_slow"}
 local antiStunConn
 
-local function ClearStunState()
-    -- Fully clear all stun state from character
-    pcall(function()
-        if not LPChar then return end
-        for _, t in ipairs(STUN_TAGS) do
-            if CollectionService:HasTag(LPChar,t) then
-                CollectionService:RemoveTag(LPChar,t)
-                Log("Removed tag: "..t)
-            end
-        end
-        for _, a in ipairs(STUN_ATTRS) do
-            LPChar:SetAttribute(a, nil)
-        end
-        -- Restore walk speed to expected value
-        local ws = S.AutoRun and S.RunSpeed or 16
-        if LPHum then LPHum.WalkSpeed = ws end
-    end)
-end
-
 local function SetAntiStun(on)
     if antiStunConn then antiStunConn:Disconnect(); antiStunConn=nil end
     if not on then
-        ClearStunState()
-        Log("AntiStun OFF - cleared all stun state")
+        -- OFF: clear all stun state but do NOT touch WalkSpeed
+        pcall(function()
+            if not LPChar then return end
+            for _,t in ipairs(STUN_TAGS) do
+                if CollectionService:HasTag(LPChar,t) then CollectionService:RemoveTag(LPChar,t) end
+            end
+            -- Set stun attrs to nil (remove them, not force false)
+            -- This lets the server re-send correct values
+            for _,a in ipairs(STUN_ATTRS) do
+                pcall(function() LPChar:SetAttribute(a,nil) end)
+            end
+        end)
+        Log("AntiStun OFF - stun state cleared")
         return
     end
     Log("AntiStun ON")
-    antiStunConn = RunService.Heartbeat:Connect(function()
-        if not S.AntiStun or not LPChar or not LPHum then return end
+    antiStunConn=RunService.Heartbeat:Connect(function()
+        if not S.AntiStun or not LPChar then return end
         pcall(function()
-            -- Remove stun tags
-            for _, t in ipairs(STUN_TAGS) do
+            -- Clear stun tags
+            for _,t in ipairs(STUN_TAGS) do
                 if CollectionService:HasTag(LPChar,t) then
-                    CollectionService:RemoveTag(LPChar,t)
-                    Log("Stun tag cleared: "..t)
+                    CollectionService:RemoveTag(LPChar,t); Log("Stun tag cleared: "..t)
                 end
             end
             -- Clear stun attributes
-            for _, a in ipairs(STUN_ATTRS) do
-                local v = LPChar:GetAttribute(a)
+            for _,a in ipairs(STUN_ATTRS) do local v=LPChar:GetAttribute(a)
                 if type(v)=="boolean" and v then LPChar:SetAttribute(a,false)
                 elseif type(v)=="number" and v>0 then LPChar:SetAttribute(a,0) end
             end
-            -- Restore WalkSpeed if it was stunned to low value
-            local expectedWS = S.AutoRun and S.RunSpeed or 16
-            if LPHum.WalkSpeed < expectedWS*0.5 then
-                LPHum.WalkSpeed = expectedWS
-                Log("WalkSpeed restored to "..expectedWS)
-            end
+            -- DO NOT touch WalkSpeed - let game manage it
         end)
     end)
 end
 
--- ============================================================
 -- ANTI RAGDOLL
--- ============================================================
 local antiRagdollConn
 local function SetAntiRagdoll(on)
-    if antiRagdollConn then antiRagdollConn:Disconnect(); antiRagdollConn=nil end
-    if not on then return end
-    antiRagdollConn = RunService.Heartbeat:Connect(function()
+    if antiRagdollConn then antiRagdollConn:Disconnect(); antiRagdollConn=nil end; if not on then return end
+    antiRagdollConn=RunService.Heartbeat:Connect(function()
         if not S.AntiRagdoll or not LPHum then return end
         pcall(function()
-            if LPHum:GetState()==Enum.HumanoidStateType.Physics then
-                LPHum:ChangeState(Enum.HumanoidStateType.GettingUp)
-            end
-            if LPChar then for _, a in ipairs({"Ragdoll","IsRagdoll","Ragdolled"}) do
-                local v = LPChar:GetAttribute(a)
-                if type(v)=="boolean" and v then LPChar:SetAttribute(a,false) end
+            if LPHum:GetState()==Enum.HumanoidStateType.Physics then LPHum:ChangeState(Enum.HumanoidStateType.GettingUp) end
+            if LPChar then for _,a in ipairs({"Ragdoll","IsRagdoll","Ragdolled"}) do
+                local v=LPChar:GetAttribute(a); if type(v)=="boolean" and v then LPChar:SetAttribute(a,false) end
             end end
         end)
     end)
 end
 
--- ============================================================
--- ANTI CONFUSION
--- ============================================================
 CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
     if not S.AntiConfusion then return end
     if obj==LP.Character or (LP.Character and obj:IsDescendantOf(LP.Character)) then
@@ -489,137 +419,130 @@ CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
 end)
 
 -- ============================================================
--- ANTI TRAP (reworked: teleport to lobby, wait 8s, return to map)
+-- ANTI TRAP
+-- Tag confirmed: "Trapped" (from console screenshot)
+-- Strategy: teleport to LOBBY for 8 seconds, then return to map
+-- Also heals back damage by monitoring health
 -- ============================================================
 local TRAP_ATTRS = {"Trapped","BeartrapCaught","Caught","InTrap","Tripped","Snared","TrapCaught"}
 local TRAP_TAGS  = {"Trapped","BeartrapCaught","Bear","InBearTrap","BearTrap"}
-local antiTrapConn; local trapSigConns={}; local trapDebounce=false
-local lastSafeMapCFrame = nil -- store last safe position on map
+local antiTrapConn; local trapSigConns={}
+local trapActive=false; local savedTrapCF=nil
 
--- Store player position when not in lobby, to return later
-local function UpdateSafePosition()
-    if not LPChar then return end
-    local pf = workspace:FindFirstChild("PLAYERS")
-    if pf and pf:FindFirstChild("LOBBY") then
-        local lobby = pf.LOBBY
-        local hrp = LPChar:FindFirstChild("HumanoidRootPart")
-        if hrp and not (hrp.Position - (lobby:FindFirstChildOfClass("BasePart") and lobby:FindFirstChildOfClass("BasePart").Position or Vector3.new(999,999,999))).Magnitude < 30 then
-            lastSafeMapCFrame = hrp.CFrame
-        end
-    else
-        local hrp = LPChar:FindFirstChild("HumanoidRootPart")
-        if hrp then lastSafeMapCFrame = hrp.CFrame end
-    end
+local function GetLobbyPosition()
+    local pf=workspace:FindFirstChild("PLAYERS"); if not pf then return nil end
+    local lb=pf:FindFirstChild("LOBBY"); if not lb then return nil end
+    local tp=lb:FindFirstChildOfClass("BasePart")
+    if not tp then for _,v in ipairs(lb:GetDescendants()) do if v:IsA("BasePart") then tp=v; break end end end
+    return tp and tp.CFrame
 end
-task.spawn(function()
-    while task.wait(0.5) do
-        if S.AntiTrap and LPChar then UpdateSafePosition() end
-    end
-end)
 
-local function TrapEscape()
+local function ClearTrapState()
     if not LPChar then return end
-    Log("TrapEscape!")
-    -- Clear tags and constraints
-    for _, t in ipairs(TRAP_TAGS) do
-        pcall(function() if CollectionService:HasTag(LPChar,t) then
-            CollectionService:RemoveTag(LPChar,t); Log("Removed trap tag: "..t)
-        end end)
+    for _,t in ipairs(TRAP_TAGS) do
+        pcall(function() if CollectionService:HasTag(LPChar,t) then CollectionService:RemoveTag(LPChar,t) end end)
     end
-    for _, a in ipairs(TRAP_ATTRS) do pcall(function()
+    for _,a in ipairs(TRAP_ATTRS) do pcall(function()
         local v=LPChar:GetAttribute(a)
         if type(v)=="boolean" and v then LPChar:SetAttribute(a,false)
         elseif type(v)=="number" and v>0 then LPChar:SetAttribute(a,0) end
     end) end
-    local ws = S.AutoRun and S.RunSpeed or 16
-    if LPHum then LPHum.WalkSpeed=math.max(ws,16) end
-    for _, obj in ipairs(LPChar:GetDescendants()) do
-        if obj:IsA("BallSocketConstraint") or obj:IsA("RopeConstraint") or obj:IsA("WeldConstraint") or obj:IsA("HingeConstraint") then
+    for _,obj in ipairs(LPChar:GetDescendants()) do
+        if obj:IsA("BallSocketConstraint") or obj:IsA("RopeConstraint") or obj:IsA("WeldConstraint") then
             pcall(function() obj:Destroy() end)
         end
     end
-    -- Teleport to lobby and return after 8 seconds
-    if trapDebounce then return end
-    trapDebounce = true
-    local hrp = LPChar:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        local pf = workspace:FindFirstChild("PLAYERS")
-        local lobby = pf and pf:FindFirstChild("LOBBY")
-        if lobby then
-            local lobbyPart = lobby:FindFirstChildOfClass("BasePart") or (lobby:FindFirstChild("SpawnLocation") and lobby.SpawnLocation:FindFirstChildOfClass("BasePart"))
-            if lobbyPart then
-                pcall(function() hrp.CFrame = lobbyPart.CFrame + Vector3.new(0,5,0) end)
-                Log("AntiTrap: teleported to lobby")
-                task.delay(8, function()
-                    if S.AntiTrap and LPChar and LPChar:FindFirstChild("HumanoidRootPart") then
-                        local returnCF = lastSafeMapCFrame or lobbyPart.CFrame + Vector3.new(0,20,0)
-                        pcall(function() LPChar.HumanoidRootPart.CFrame = returnCF end)
-                        Log("AntiTrap: returned to map")
-                    end
-                    trapDebounce = false
-                end)
-                return
+end
+
+local function TrapEscape()
+    if trapActive then return end
+    if not LPChar then return end
+    trapActive=true
+    Log(">>> TRAP ESCAPE - teleporting to lobby <<<")
+
+    -- Save position to return to
+    local hrp=LPChar:FindFirstChild("HumanoidRootPart")
+    if hrp then savedTrapCF=hrp.CFrame end
+
+    -- Clear trap state immediately
+    ClearTrapState()
+
+    -- Teleport to lobby
+    local lobbyCF=GetLobbyPosition()
+    if lobbyCF and hrp then
+        hrp.CFrame=CFrame.new(lobbyCF.Position+Vector3.new(0,5,0))
+        Log("Teleported to lobby")
+    else
+        -- No lobby found, go safe underground position
+        if hrp then hrp.CFrame=CFrame.new(hrp.CFrame.Position-Vector3.new(0,50,0)) end
+        Log("No lobby found, going underground")
+    end
+
+    -- Keep clearing trap state while in lobby (server re-applies trap every frame)
+    local clearLoop=task.spawn(function()
+        for _=1,40 do -- 8 seconds / 0.2 sec = 40 iterations
+            task.wait(0.2); ClearTrapState()
+        end
+    end)
+
+    -- After 8 seconds (trap duration), return to map
+    task.delay(8,function()
+        pcall(task.cancel,clearLoop)
+        ClearTrapState()
+        if LPChar and savedTrapCF then
+            local hrp2=LPChar:FindFirstChild("HumanoidRootPart")
+            if hrp2 then
+                hrp2.CFrame=savedTrapCF+Vector3.new(0,4,0)
+                Log("Returned from lobby to map")
             end
         end
-        -- fallback if no lobby found: just teleport up a bit
-        pcall(function() hrp.CFrame = hrp.CFrame * CFrame.new(0,20,0) end)
-        task.delay(0.8, function() trapDebounce = false end)
-    else
-        trapDebounce = false
-    end
+        trapActive=false
+    end)
 end
 
 local function SetAntiTrap(on)
     if antiTrapConn then antiTrapConn:Disconnect(); antiTrapConn=nil end
-    for _, c in ipairs(trapSigConns) do pcall(function() c:Disconnect() end) end; trapSigConns={}
-    if not on then return end
-    Log("AntiTrap ON - walk into trap for debug + lobby teleport")
-    for _, tagName in ipairs(TRAP_TAGS) do
-        local ok, c = pcall(function()
+    for _,c in ipairs(trapSigConns) do pcall(function() c:Disconnect() end) end; trapSigConns={}
+    if not on then
+        Log("AntiTrap OFF")
+        return
+    end
+    -- HELPER: console shows which tag is used when trapped
+    print("[TRAP HELPER] Active. Fall into a trap to see debug info.")
+
+    -- Fast signal-based detection (fires immediately when tag added)
+    for _,tagName in ipairs(TRAP_TAGS) do
+        local ok,c=pcall(function()
             return CollectionService:GetInstanceAddedSignal(tagName):Connect(function(inst)
                 if not S.AntiTrap then return end
                 if inst==LP.Character or (LP.Character and inst:IsDescendantOf(LP.Character)) then
-                    Log(">>> TRAP TAG: "..tagName.." <<<")
+                    print("[TRAP] Tag added: "..tagName)
                     TrapEscape()
                 end
             end)
         end)
         if ok then table.insert(trapSigConns,c) end
     end
-    antiTrapConn = RunService.Heartbeat:Connect(function()
-        if not S.AntiTrap or not LPChar or not LPHum then return end
+
+    antiTrapConn=RunService.Heartbeat:Connect(function()
+        if not S.AntiTrap or not LPChar then return end
         pcall(function()
-            if LPHum.WalkSpeed==0 and LPHum.Health>0 then
-                Log(">>> WalkSpeed=0 trap detected <<<")
-                TrapEscape(); return
-            end
-            for _, t in ipairs(TRAP_TAGS) do
+            for _,t in ipairs(TRAP_TAGS) do
                 if CollectionService:HasTag(LPChar,t) then
-                    Log(">>> Trap tag found: "..t.." <<<")
-                    CollectionService:RemoveTag(LPChar,t); TrapEscape(); return
+                    print("[TRAP] Tag removed: "..t)
+                    ClearTrapState(); if not trapActive then TrapEscape() end; return
                 end
             end
-            for _, a in ipairs(TRAP_ATTRS) do
-                local v=LPChar:GetAttribute(a)
+            for _,a in ipairs(TRAP_ATTRS) do local v=LPChar:GetAttribute(a)
                 if type(v)=="boolean" and v then
-                    Log(">>> Trap attr: "..a.." <<<")
-                    LPChar:SetAttribute(a,false); TrapEscape(); return
+                    Log("[TRAP] Attr: "..a); LPChar:SetAttribute(a,false); if not trapActive then TrapEscape() end; return
                 end
             end
-            local hrp=LPChar:FindFirstChild("HumanoidRootPart")
-            if hrp then for _, o in ipairs(hrp:GetChildren()) do
-                if o:IsA("BallSocketConstraint") or o:IsA("RopeConstraint") then
-                    Log(">>> Trap constraint on HRP: "..o.ClassName.." <<<")
-                    pcall(function() o:Destroy() end)
-                end
-            end end
         end)
     end)
 end
 
--- ============================================================
 -- ANTI DIE
--- ============================================================
 local antiDieActive=false
 local function ConnectAntiDie()
     if not LPHum then return end
@@ -628,12 +551,8 @@ local function ConnectAntiDie()
         if hp>0 and hp<=S.AntiDieHP and LPChar then
             antiDieActive=true
             pcall(function()
-                local pf=workspace:FindFirstChild("PLAYERS")
-                local lb=pf and pf:FindFirstChild("LOBBY"); local tp=nil
-                if lb then
-                    tp=lb:FindFirstChildOfClass("BasePart")
-                    if not tp then for _,v in ipairs(lb:GetDescendants()) do if v:IsA("BasePart") then tp=v; break end end end
-                end
+                local pf=workspace:FindFirstChild("PLAYERS"); local lb=pf and pf:FindFirstChild("LOBBY")
+                local tp=lb and lb:FindFirstChildOfClass("BasePart")
                 if tp then LPChar:PivotTo(CFrame.new(tp.Position+Vector3.new(0,5,0)))
                 else LPChar:PivotTo(CFrame.new(0,50,0)) end
             end)
@@ -642,43 +561,7 @@ local function ConnectAntiDie()
     end)
 end
 
--- ============================================================
--- NoClip
--- ============================================================
-local noClipConn
-local function SetNoClip(on)
-    if noClipConn then noClipConn:Disconnect(); noClipConn=nil end; S.NoClip=on
-    if not on then
-        pcall(function() local c=LP.Character; if not c then return end
-            for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=true end end end)
-        return
-    end
-    noClipConn=RunService.Stepped:Connect(function() pcall(function()
-        local c=LP.Character; if not c then return end
-        for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end
-    end) end)
-end
-
--- ============================================================
--- ALLOW JUMP
--- ============================================================
-local jumpConn
-local function SetAllowJump(on)
-    if jumpConn then jumpConn:Disconnect(); jumpConn=nil end
-    if not on then
-        pcall(function() local c=LP.Character; if not c then return end
-            local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=0 end end)
-        return
-    end
-    jumpConn=RunService.Heartbeat:Connect(function() pcall(function()
-        local c=LP.Character; if not c then return end
-        local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=5 end
-    end) end)
-end
-
--- ============================================================
 -- AUTO BARRICADE
--- ============================================================
 local barConn
 local function SetBarricade(on)
     if barConn then barConn:Disconnect(); barConn=nil end; S.AutoBarricade=on; if not on then return end
@@ -692,9 +575,7 @@ local function SetBarricade(on)
     end) end)
 end
 
--- ============================================================
--- AUTO ESCAPE (fixed: checks CAN_ESCAPE + player in ALIVE)
--- ============================================================
+-- AUTO ESCAPE
 local escapeConn; local lastEscapeAt=0
 local function SetAutoEscape(on)
     if escapeConn then escapeConn:Disconnect(); escapeConn=nil end; if not on then return end
@@ -710,23 +591,17 @@ local function SetAutoEscape(on)
             local gm=maps:FindFirstChild("GAME MAP"); if not gm then return end
             local ef=gm:FindFirstChild("Escapes"); if not ef then return end
             for _,v in ipairs(ef:GetChildren()) do
-                local isOn=v:GetAttribute("Enabled")
-                if isOn==false then continue end
+                if v:GetAttribute("Enabled")==false then continue end
                 local cf=v:IsA("BasePart") and v.CFrame or (v:IsA("Model") and v.PrimaryPart and v.PrimaryPart.CFrame)
                 if not cf then continue end
                 local hrp=LPChar:FindFirstChild("HumanoidRootPart"); if not hrp then return end
-                lastEscapeAt=tick()
-                hrp.CFrame=cf+Vector3.new(0,3,0)
-                Log("Auto Escaped!")
-                return
+                lastEscapeAt=tick(); hrp.CFrame=cf+Vector3.new(0,3,0); Log("Auto Escaped!"); return
             end
         end)
     end)
 end
 
--- ============================================================
 -- INSTANT PROMPT
--- ============================================================
 local promptConn
 local function SetInstantPrompt(on)
     if promptConn then promptConn:Disconnect(); promptConn=nil end; if not on then return end
@@ -736,43 +611,31 @@ local function SetInstantPrompt(on)
     end)
 end
 
--- ============================================================
--- DELETE DOOR (FIX: actually Destroys, searches ALL workspace by name "door")
--- ============================================================
+-- DELETE DOOR (destroys all objects named "door")
 local doorWatchConn
 local function DestroyAllDoors()
-    local count=0
-    pcall(function()
+    local n=0; pcall(function()
         for _,obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") or obj:IsA("Model") then
-                if obj.Name:lower():find("door",1,true) then
-                    pcall(function() obj:Destroy(); count=count+1 end)
-                end
+            if (obj:IsA("BasePart") or obj:IsA("Model")) and obj.Name:lower():find("door",1,true) then
+                pcall(function() obj:Destroy(); n=n+1 end)
             end
         end
-    end)
-    Log("Deleted "..count.." door objects")
-    return count
+    end); return n
 end
 local function SetDeleteDoor(on)
     if doorWatchConn then doorWatchConn:Disconnect(); doorWatchConn=nil end
-    if not on then
-        Log("Delete Door OFF - doors cannot be restored (they were destroyed)")
-        return
-    end
-    local n=DestroyAllDoors()
+    if not on then return end
+    local n=DestroyAllDoors(); Log("Deleted "..n.." doors")
     doorWatchConn=workspace.DescendantAdded:Connect(function(obj)
         if not S.DeleteDoor then return end
         if (obj:IsA("BasePart") or obj:IsA("Model")) and obj.Name:lower():find("door",1,true) then
-            pcall(function() obj:Destroy(); Log("New door destroyed: "..obj.Name) end)
+            pcall(function() obj:Destroy() end)
         end
     end)
     return n
 end
 
--- ============================================================
 -- SKIP CUTSCENE
--- ============================================================
 local skipCutConn; local cutRigConn
 local CUT_RIGS={"IntroCam","IntroCamWithLight","KillCam","OutroCam"}
 local function SetSkipCutscene(on)
@@ -802,9 +665,7 @@ local function SetSkipCutscene(on)
     end)
 end
 
--- ============================================================
 -- INSTANT GENERATOR
--- ============================================================
 local function InstantGenNow()
     for _,gui in ipairs(LP.PlayerGui:GetChildren()) do
         if gui.Name=="Gen" and gui:IsA("ScreenGui") then pcall(function()
@@ -829,13 +690,11 @@ local function StartInstantGen()
 end
 local function StopInstantGen() if genGuiConn then genGuiConn:Disconnect(); genGuiConn=nil end end
 
--- ============================================================
 -- AUTO PARRY
--- ============================================================
 local PARRY_ANIMS={
-    ["rbxassetid://70869035406359"]="basic",  ["rbxassetid://106673226682917"]="basic",
-    ["rbxassetid://112503015929213"]="basic",  ["rbxassetid://120428956410756"]="basic",
-    ["rbxassetid://102810363618918"]="basic",  ["rbxassetid://133752270724243"]="pull",
+    ["rbxassetid://70869035406359"]="basic",["rbxassetid://106673226682917"]="basic",
+    ["rbxassetid://112503015929213"]="basic",["rbxassetid://120428956410756"]="basic",
+    ["rbxassetid://102810363618918"]="basic",["rbxassetid://133752270724243"]="pull",
 }
 local lastParryAt=0
 local function DoParry()
@@ -876,59 +735,52 @@ local function SetAutoParry(on)
 end
 
 -- ============================================================
--- AUTO FARM (anti-cheat: random delays, offsets, shuffled order)
+-- AUTO FARM (anti-cheat: random delays + underground bypass)
 -- ============================================================
 local farmThread
-local function FarmMove(targetCF)
-    if not LPChar then return end
-    local hrp=LPChar:FindFirstChild("HumanoidRootPart"); if not hrp then return end
-    if S.FarmUnderground then
-        hrp.CFrame=CFrame.new(targetCF.Position-Vector3.new(0,50,0)); task.wait(0.1)
-    end
-    if S.FarmMode=="TP" then
-        if S.FarmAntiCheat then
-            -- small random offset + tiny delay
-            local off = Vector3.new(math.random(-2,2),0,math.random(-2,2))
-            hrp.CFrame = targetCF + off
-            task.wait(0.15 + math.random()*0.3)
-        else
-            hrp.CFrame = targetCF
-        end
-    else
-        local d=(hrp.Position-targetCF.Position).Magnitude
-        local t=d/math.max(S.FarmSpeed,5)
-        if S.FarmAntiCheat then t = t * (0.9 + math.random()*0.2) end
-        local tw=TweenService:Create(hrp,TweenInfo.new(t,Enum.EasingStyle.Linear),{CFrame=targetCF})
-        tw:Play(); tw.Completed:Wait()
-    end
-end
 local function GetMap()
     local maps=workspace:FindFirstChild("MAPS"); if not maps then return nil end
     local gm=maps:FindFirstChild("GAME MAP"); if gm then return gm end
     for _,c in ipairs(maps:GetChildren()) do if c:IsA("Model") or c:IsA("Folder") then return c end end
 end
+local function RandomDelay(base)
+    -- Random delay ±30% to avoid anti-cheat pattern detection
+    return base * (0.7 + math.random() * 0.6)
+end
+local function FarmMove(targetCF)
+    if not LPChar then return end
+    local hrp=LPChar:FindFirstChild("HumanoidRootPart"); if not hrp then return end
+    if S.FarmUnderground then
+        -- Go underground first (50 studs), then surface at target
+        hrp.CFrame=CFrame.new(hrp.CFrame.Position-Vector3.new(0,50,0))
+        task.wait(RandomDelay(0.1))
+        hrp.CFrame=CFrame.new(targetCF.Position-Vector3.new(0,50,0))
+        task.wait(RandomDelay(0.15))
+        hrp.CFrame=targetCF
+    else
+        if S.FarmMode=="TP" then
+            hrp.CFrame=targetCF
+        else
+            local d=(hrp.Position-targetCF.Position).Magnitude
+            local t=d/math.max(S.FarmSpeed,5)
+            local tw=TweenService:Create(hrp,TweenInfo.new(t,Enum.EasingStyle.Linear),{CFrame=targetCF})
+            tw:Play(); tw.Completed:Wait()
+        end
+    end
+end
 local function CompleteAllGenerators()
     local mF=GetMap(); if not mF then return end
     local genF=mF:FindFirstChild("Generators"); if not genF then return end
     local wasIG=S.InstantGen; S.InstantGen=true; StartInstantGen()
-    local genList = {}
+    Log("Farm: starting generators")
     for _,gen in ipairs(genF:GetChildren()) do
-        if not gen:IsA("Model") or not gen.PrimaryPart then continue end
-        table.insert(genList, gen)
-    end
-    if S.FarmAntiCheat then
-        -- shuffle order
-        for i = #genList, 2, -1 do
-            local j = math.random(i)
-            genList[i], genList[j] = genList[j], genList[i]
-        end
-    end
-    for _,gen in ipairs(genList) do
         if not S.AutoFarm then break end
-        local prog = gen:GetAttribute("Progress") or 0
-        if prog >= 100 then continue end
-        Log("Farm: gen "..gen.Name.." progress="..tostring(prog))
-        FarmMove(CFrame.new(gen.PrimaryPart.Position+Vector3.new(0,2,0)))
+        if (gen:GetAttribute("Progress") or 0)>=100 then continue end
+        if not gen:IsA("Model") or not gen.PrimaryPart then continue end
+        Log("Farm: gen "..gen.Name)
+        -- Anti-cheat: random delay before moving to each gen
+        task.wait(RandomDelay(0.5))
+        FarmMove(CFrame.new(gen.PrimaryPart.Position+Vector3.new(0,2,0))); task.wait(RandomDelay(0.3))
         local rp=gen:FindFirstChild("RootPart")
         if rp then
             local attempts=0
@@ -941,17 +793,19 @@ local function CompleteAllGenerators()
                     if atch:IsA("Attachment") then local pp=atch:FindFirstChildOfClass("ProximityPrompt"); if pp and pp.Enabled then prompt=pp; break end end
                 end end
                 if prompt and fireproximityprompt then pcall(function() fireproximityprompt(prompt) end) end
-                task.wait(S.FarmAntiCheat and 1.2 + math.random()*0.5 or 1)
+                task.wait(RandomDelay(1))
             until (gen:GetAttribute("Progress") or 0)>=100 or attempts>15 or not S.AutoFarm
         else
-            Log("Farm: no RootPart on "..gen.Name..". Children: "..table.concat((function() local t={} for _,c in ipairs(gen:GetChildren()) do t[#t+1]=c.Name end return t end)(),","))
+            Log("Farm: no RootPart on "..gen.Name)
         end
+        -- After gen: go underground
         if S.FarmUnderground and LPChar and LPChar:FindFirstChild("HumanoidRootPart") then
             LPChar.HumanoidRootPart.CFrame=CFrame.new(gen.PrimaryPart.Position-Vector3.new(0,50,0))
         end
-        if S.FarmAntiCheat then task.wait(0.5 + math.random()*0.4) end
+        task.wait(RandomDelay(0.5))
     end
     if not wasIG then S.InstantGen=false; StopInstantGen() end
+    -- Wait underground until escape opens
     if S.FarmUnderground then
         local timeout=0
         while timeout<120 do task.wait(1); timeout=timeout+1
@@ -975,13 +829,11 @@ end
 local function SetAutoFarm(on)
     if farmThread then pcall(task.cancel,farmThread); farmThread=nil end; if not on then return end
     farmThread=task.spawn(function()
-        while S.AutoFarm do task.wait(0.5); pcall(CompleteAllGenerators); task.wait(S.FarmAntiCheat and 8+math.random(3) or 5) end
+        while S.AutoFarm do task.wait(RandomDelay(0.5)); pcall(CompleteAllGenerators); task.wait(RandomDelay(5)) end
     end)
 end
 
--- ============================================================
 -- WIRE SHAKE
--- ============================================================
 local canShake=true; local wireConn
 local function DoWireShake(ui)
     task.spawn(function()
@@ -1009,17 +861,41 @@ task.spawn(function()
     end
 end)
 
--- ============================================================
+-- NOECLIP
+local noClipConn
+local function SetNoClip(on)
+    if noClipConn then noClipConn:Disconnect(); noClipConn=nil end; S.NoClip=on
+    if not on then
+        pcall(function() local c=LP.Character; if not c then return end
+            for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=true end end end)
+        return
+    end
+    noClipConn=RunService.Stepped:Connect(function() pcall(function()
+        local c=LP.Character; if not c then return end
+        for _,p in ipairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end
+    end) end)
+end
+
+-- ALLOW JUMP
+local jumpConn
+local function SetAllowJump(on)
+    if jumpConn then jumpConn:Disconnect(); jumpConn=nil end
+    if not on then pcall(function() local c=LP.Character; if not c then return end
+        local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=0 end end); return end
+    jumpConn=RunService.Heartbeat:Connect(function() pcall(function()
+        local c=LP.Character; if not c then return end
+        local h=c:FindFirstChildOfClass("Humanoid"); if h then h.JumpHeight=5 end
+    end) end)
+end
+
 -- LIGHTING
--- ============================================================
 local origA=Lighting.Ambient; local origBr=Lighting.Brightness
 local origFE=Lighting.FogEnd; local origFS=Lighting.FogStart
 local blindConn; local blindFolder
 local function SetFullBright(on)
     if blindConn then blindConn:Disconnect(); blindConn=nil end
     if not on then pcall(function()
-        if blindFolder then blindFolder.Parent=Lighting end
-        Lighting.Ambient=origA; Lighting.Brightness=origBr
+        if blindFolder then blindFolder.Parent=Lighting end; Lighting.Ambient=origA; Lighting.Brightness=origBr
         for _,e in ipairs(Lighting:GetChildren()) do
             if e:IsA("ColorCorrectionEffect") or e:IsA("BlurEffect") or e:IsA("DepthOfFieldEffect") or e:IsA("SunRaysEffect") then e.Enabled=true end
         end
@@ -1053,7 +929,6 @@ local function SetFOV(v)
     fovValConn=RunService.Heartbeat:Connect(function() pcall(function() Camera.FieldOfView=S.FovValue end) end)
 end
 
--- HIDE GEN GUI
 local hideGuiConn
 local function SetHideGenGui(on)
     if hideGuiConn then hideGuiConn:Disconnect(); hideGuiConn=nil end; if not on then return end
@@ -1069,7 +944,6 @@ local function SetHideGenGui(on)
     hideGuiConn=LP.PlayerGui.ChildAdded:Connect(Kill)
 end
 
--- ANTI AFK
 local afkConn
 local function SetAntiAFK(on)
     if afkConn then afkConn:Disconnect(); afkConn=nil end; if not on then return end
@@ -1079,16 +953,13 @@ local function SetAntiAFK(on)
     end)
 end
 
--- FPS BOOST
 local fpsConns={}
 local function SetFPSBooster(on)
     for _,c in ipairs(fpsConns) do pcall(function() c:Disconnect() end) end; fpsConns={}
     if not on then pcall(function() Lighting.Technology=Enum.Technology.Future end); return end
     pcall(function() Lighting.Technology=Enum.Technology.Compatibility end)
     pcall(function() for _,v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
-            pcall(function() v.Enabled=false end)
-        end
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") then pcall(function() v.Enabled=false end) end
     end end)
     table.insert(fpsConns,workspace.DescendantAdded:Connect(function(d)
         if d:IsA("ParticleEmitter") or d:IsA("Trail") then
@@ -1097,7 +968,7 @@ local function SetFPSBooster(on)
     end))
 end
 
--- ESP SYSTEM
+-- ESP
 local espReg={}
 local function GetAnchor(obj)
     if obj:IsA("BasePart") then return obj end
@@ -1116,22 +987,19 @@ local function BuildESP(obj,color,label,maxDist)
     if anc then
         local bb=Instance.new("BillboardGui"); bb.Size=UDim2.fromOffset(200,58)
         bb.StudsOffset=Vector3.new(0,4,0); bb.AlwaysOnTop=true; bb.Enabled=false
-        bb.ResetOnSpawn=false; bb.LightInfluence=0; bb.MaxDistance=maxDist or 9999
-        bb.Adornee=anc; bb.Parent=anc
+        bb.ResetOnSpawn=false; bb.LightInfluence=0; bb.MaxDistance=maxDist or 9999; bb.Adornee=anc; bb.Parent=anc
         local hpL=Instance.new("TextLabel",bb); hpL.Size=UDim2.new(1,0,0.42,0)
         hpL.BackgroundTransparency=1; hpL.Font=Enum.Font.GothamBold; hpL.TextSize=14
-        hpL.TextColor3=Color3.fromRGB(100,255,100); hpL.TextStrokeTransparency=0.2
-        hpL.TextStrokeColor3=Color3.new(0,0,0); hpL.Visible=false
+        hpL.TextColor3=Color3.fromRGB(100,255,100); hpL.TextStrokeTransparency=0.2; hpL.TextStrokeColor3=Color3.new(); hpL.Visible=false
         local nmL=Instance.new("TextLabel",bb); nmL.Size=UDim2.new(1,0,0.58,0)
         nmL.Position=UDim2.fromScale(0,0.42); nmL.BackgroundTransparency=1; nmL.Text=label
-        nmL.TextColor3=color; nmL.Font=Enum.Font.GothamBold; nmL.TextSize=16
-        nmL.TextStrokeTransparency=0.2; nmL.TextStrokeColor3=Color3.new(0,0,0); nmL.Visible=false
+        nmL.TextColor3=color; nmL.Font=Enum.Font.GothamBold; nmL.TextSize=16; nmL.TextStrokeTransparency=0.2; nmL.TextStrokeColor3=Color3.new(); nmL.Visible=false
         d.BB=bb; d.HpL=hpL; d.Lbl=nmL
         local dotBB=Instance.new("BillboardGui"); dotBB.Size=UDim2.fromOffset(14,14)
         dotBB.StudsOffset=Vector3.new(0,3.2,0); dotBB.AlwaysOnTop=true; dotBB.ResetOnSpawn=false
         dotBB.LightInfluence=0; dotBB.MaxDistance=maxDist or 9999; dotBB.Adornee=anc; dotBB.Parent=anc; dotBB.Enabled=false
         local dot=Instance.new("Frame",dotBB); dot.Size=UDim2.fromScale(1,1); dot.BackgroundColor3=color; dot.BorderSizePixel=0
-        Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0); Instance.new("UIStroke",dot).Color=Color3.new(0,0,0)
+        Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0); Instance.new("UIStroke",dot).Color=Color3.new()
         d.DotBB=dotBB; d.DotFr=dot
     end
     local conn; conn=obj.AncestryChanged:Connect(function()
@@ -1176,8 +1044,7 @@ local function ApplyESP(obj,tcfg,label,maxDist,showHP,labelOverride)
                 local hp=math.floor(hum.Health+0.5); local mhp=math.max(math.floor(hum.MaxHealth+0.5),1)
                 local r=math.clamp(hum.Health/mhp,0,1)
                 d.HpL.Text=hp.."/"..mhp
-                d.HpL.TextColor3=Color3.fromRGB(math.floor((1-r)*255),math.floor(r*200+55),30)
-                d.HpL.Visible=true
+                d.HpL.TextColor3=Color3.fromRGB(math.floor((1-r)*255),math.floor(r*200+55),30); d.HpL.Visible=true
             else d.HpL.Visible=false end
         else d.HpL.Visible=false end
     end
@@ -1202,13 +1069,9 @@ task.spawn(function()
         pcall(function()
             local pf=workspace:FindFirstChild("PLAYERS")
             local kf=pf and pf:FindFirstChild("KILLER")
-            if kf then for _,m in ipairs(kf:GetChildren()) do
-                if m.Name~=LP.Name then ApplyESP(m,S.T.Killer,m.Name,nil,true) end
-            end end
+            if kf then for _,m in ipairs(kf:GetChildren()) do if m.Name~=LP.Name then ApplyESP(m,S.T.Killer,m.Name,nil,true) end end end
             local af=pf and pf:FindFirstChild("ALIVE")
-            if af then for _,m in ipairs(af:GetChildren()) do
-                if m.Name~=LP.Name then ApplyESP(m,S.T.Survivor,m.Name,nil,true) end
-            end end
+            if af then for _,m in ipairs(af:GetChildren()) do if m.Name~=LP.Name then ApplyESP(m,S.T.Survivor,m.Name,nil,true) end end end
             local mF=GetMap()
             if mF then
                 local genF=mF:FindFirstChild("Generators")
@@ -1225,16 +1088,14 @@ task.spawn(function()
             local ig=workspace:FindFirstChild("IGNORE")
             if ig then
                 for _,v in ipairs(ig:GetChildren()) do if v.Name=="Battery" then ApplyESP(v,S.T.Battery,"Battery",nil,false) end end
-                for _,v in ipairs(ig:GetChildren()) do
-                    if v.Name=="Minion" and (v:IsA("Model") or v:IsA("BasePart")) then ApplyESP(v,S.T.WireEye,"Wire Eye",40,false) end
-                end
+                for _,v in ipairs(ig:GetChildren()) do if v.Name=="Minion" then ApplyESP(v,S.T.WireEye,"Wire Eye",40,false) end end
                 ProcessFolder(ig:FindFirstChild("Trap"),"Trap","Trap",35)
             end
         end)
     end
 end)
 
--- CONFIG SYSTEM
+-- CONFIG
 local function ListCfgs()
     if not listfiles then return {} end
     local r={}; local ok,fs=pcall(listfiles,CFG_FOLDER); if not ok then return r end
@@ -1243,7 +1104,7 @@ local function ListCfgs()
 end
 local function SaveCfg(name)
     if not writefile then return false end
-    local function serColor(c) return {c.R,c.G,c.B} end
+    local function sc(c) return {c.R,c.G,c.B} end
     local data={name=name,LANG=LANG,ESPMode=S.ESPMode,ESPHealth=S.ESPHealth,ShowGenProgress=S.ShowGenProgress,
         FullBright=S.FullBright,NoFog=S.NoFog,NoShadow=S.NoShadow,NoBlind=S.NoBlind,FovValue=S.FovValue,
         HideGenGui=S.HideGenGui,InfStamina=S.InfStamina,NoClip=S.NoClip,AllowJump=S.AllowJump,
@@ -1253,13 +1114,12 @@ local function SaveCfg(name)
         InstantPrompt=S.InstantPrompt,InstantGen=S.InstantGen,GenDelay=S.GenDelay,
         AutoParry=S.AutoParry,ParryRange=S.ParryRange,ParryRangePull=S.ParryRangePull,
         ShowParryViz=S.ShowParryViz,ParryDynamic=S.ParryDynamic,ParryRainbow=S.ParryRainbow,
-        ParryAlpha=S.ParryAlpha,ParryColor=serColor(S.ParryColor),
+        ParryAlpha=S.ParryAlpha,ParryColor=sc(S.ParryColor),
         CamLockRotten=S.CamLockRotten,CamLockM1=S.CamLockM1,CamLockDoppelPull=S.CamLockDoppelPull,
         CamLockDoppelStab=S.CamLockDoppelStab,CamLockMimicGrab=S.CamLockMimicGrab,CamLockMimicJump=S.CamLockMimicJump,
-        CamFOV=S.CamFOV,ShowFOV=S.ShowFOV,FovAlpha=S.FovAlpha,FovColor=serColor(S.FovColor),
+        CamFOV=S.CamFOV,ShowFOV=S.ShowFOV,FovAlpha=S.FovAlpha,FovColor=sc(S.FovColor),
         AutoShakeWire=S.AutoShakeWire,ShakeSpeed=S.ShakeSpeed,
         AutoFarm=S.AutoFarm,FarmMode=S.FarmMode,FarmSpeed=S.FarmSpeed,FarmUnderground=S.FarmUnderground,
-        FarmAntiCheat=S.FarmAntiCheat,
         AntiAFK=S.AntiAFK,FPSBooster=S.FPSBooster,UIScale=S.UIScale,UIAlpha=S.UIAlpha,DebugHelpers=S.DebugHelpers,
         Targets={}}
     for k,v in pairs(S.T) do data.Targets[k]={On=v.On,CR=v.Color.R,CG=v.Color.G,CB=v.Color.B} end
@@ -1289,7 +1149,6 @@ local function LoadCfg(name)
     S.CamLockMimicGrab=g("CamLockMimicGrab",false); S.CamLockMimicJump=g("CamLockMimicJump",false)
     S.ShowFOV=g("ShowFOV",false); S.AutoShakeWire=g("AutoShakeWire",false)
     S.AutoFarm=g("AutoFarm",false); S.FarmUnderground=g("FarmUnderground",false)
-    S.FarmAntiCheat=g("FarmAntiCheat",false)
     S.AntiAFK=g("AntiAFK",false); S.FPSBooster=g("FPSBooster",false); S.DebugHelpers=g("DebugHelpers",false)
     if d.RunSpeed then S.RunSpeed=d.RunSpeed end; if d.FovValue then S.FovValue=d.FovValue end
     if d.AntiDieHP then S.AntiDieHP=d.AntiDieHP end; if d.CamFOV then S.CamFOV=d.CamFOV end
@@ -1312,12 +1171,9 @@ local function GetAutoLoad()
 end
 local function SetAutoLoad(n) pcall(writefile,AUTO_FILE,n or "") end
 
--- Load auto config
 local autoName=GetAutoLoad()
 if autoName then pcall(function() LoadCfg(autoName) end) end
-
--- Apply debug helpers state from loaded config
-S_Debug = S.DebugHelpers
+S_Debug=S.DebugHelpers
 
 local curFPS=60; local executor="Unknown"
 RunService.RenderStepped:Connect(function(dt) if dt>0 then curFPS=math.floor(1/dt) end end)
@@ -1331,28 +1187,26 @@ local WindUI=nil
 local function N(t,m,d,i) pcall(function() if WindUI then WindUI:Notify({Title=t,Content=m,Duration=d or 3,Icon=i or "bell"}) end end) end
 
 local function ApplyScale(v)
-    S.UIScale=v
-    pcall(function()
-        for _,guiName in ipairs({"PhantomHub","WindUI"}) do
+    S.UIScale=v; pcall(function()
+        for _,gn in ipairs({"PhantomHub","WindUI"}) do
             for _,parent in ipairs({LP.PlayerGui,game:GetService("CoreGui")}) do
-                local gui=parent:FindFirstChild(guiName)
+                local gui=parent:FindFirstChild(gn)
                 if gui then local sc=gui:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",gui); sc.Scale=v end
             end
         end
     end)
 end
 local function ApplyAlpha(v)
-    S.UIAlpha=v
-    pcall(function()
+    S.UIAlpha=v; pcall(function()
         if WindUI and WindUI.SetTransparency then WindUI:SetTransparency(v)
         elseif WindUI and WindUI.TransparencyValue~=nil then WindUI.TransparencyValue=v end
     end)
 end
 task.spawn(function()
     while task.wait(0.25) do pcall(function()
-        for _,guiName in ipairs({"PhantomHub","WindUI"}) do
+        for _,gn in ipairs({"PhantomHub","WindUI"}) do
             for _,parent in ipairs({LP.PlayerGui,game:GetService("CoreGui")}) do
-                local gui=parent:FindFirstChild(guiName)
+                local gui=parent:FindFirstChild(gn)
                 if gui then local sc=gui:FindFirstChildOfClass("UIScale"); if sc then sc.Scale=S.UIScale end end
             end
         end
@@ -1376,8 +1230,8 @@ local function ShowLangGUI(callback)
     local ok=pcall(function() sg.Parent=game:GetService("CoreGui") end)
     if not ok then sg.Parent=LP.PlayerGui end
     local blur=Instance.new("BlurEffect",Lighting); blur.Size=18
-    local overlay=Instance.new("Frame",sg); overlay.Size=UDim2.new(1,0,1,0)
-    overlay.BackgroundColor3=Color3.fromRGB(5,2,15); overlay.BackgroundTransparency=0.3; overlay.ZIndex=1
+    local ov=Instance.new("Frame",sg); ov.Size=UDim2.new(1,0,1,0)
+    ov.BackgroundColor3=Color3.fromRGB(5,2,15); ov.BackgroundTransparency=0.3; ov.ZIndex=1
     local panel=Instance.new("Frame",sg); panel.AnchorPoint=Vector2.new(0.5,0.5)
     panel.Position=UDim2.new(0.5,0,0.5,0); panel.Size=UDim2.fromOffset(340,270)
     panel.BackgroundColor3=Color3.fromRGB(12,6,28); panel.BorderSizePixel=0; panel.ZIndex=2
@@ -1456,9 +1310,8 @@ local function ShowLoadingScreen(callback)
             local from,to,dur,msg=st[1],st[2],st[3],st[4]; subL.Text=msg
             TweenService:Create(barFill,TweenInfo.new(dur,Enum.EasingStyle.Quad),{Size=UDim2.new(to/100,0,1,0)}):Play()
             local st2=tick()
-            while (tick()-st2)<dur do
-                local p=(tick()-st2)/dur; pcall(function() pctL.Text=math.floor(from+(to-from)*p).."%" end); task.wait(0.02)
-            end; pctL.Text=to.."%"
+            while (tick()-st2)<dur do pcall(function() pctL.Text=math.floor(from+(to-from)*((tick()-st2)/dur)).."%" end); task.wait(0.02) end
+            pctL.Text=to.."%"
         end
         subL.Text="Ready!"; barFill.BackgroundColor3=Color3.fromRGB(50,200,100); task.wait(2)
         TweenService:Create(card,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{BackgroundTransparency=1}):Play()
@@ -1467,7 +1320,7 @@ local function ShowLoadingScreen(callback)
     end)
 end
 
--- UI REFS for SyncUI
+-- UI REFS
 local uiRefs={}
 local function SyncUI()
     task.delay(0.15,function() pcall(function()
@@ -1485,7 +1338,7 @@ local function SyncUI()
         s("AntiAFK",S.AntiAFK); s("FPSBooster",S.FPSBooster); s("FullBright",S.FullBright)
         s("NoFog",S.NoFog); s("NoShadow",S.NoShadow); s("NoBlind",S.NoBlind)
         s("HideGenGui",S.HideGenGui); s("ESPHealth",S.ESPHealth); s("ShowGenProgress",S.ShowGenProgress)
-        s("FarmUnderground",S.FarmUnderground); s("FarmAntiCheat",S.FarmAntiCheat); s("DebugHelpers",S.DebugHelpers)
+        s("FarmUnderground",S.FarmUnderground); s("DebugHelpers",S.DebugHelpers)
         for k in pairs(S.T) do s("T."..k..".On",S.T[k].On) end
     end) end)
 end
@@ -1530,54 +1383,54 @@ function BuildWindow()
         end end)
         TbInfo:Paragraph({Title="",Desc="",Thumbnail="rbxassetid://93386553868675",ThumbnailSize=150})
         TbInfo:Paragraph({Title="What's New  v7.6 R4",
-            Desc="✅ Fixed can't move bug – WalkSpeed stuck at 0 after load\n✅ Anti Trap reworked: teleport to lobby, wait 8s, return to map\n✅ Farm Anti‑Cheat mode – randomized order, offsets & delays\n✅ WalkSpeed safeguard on spawn\n✅ Helper prints to Delta console"})
-        TbInfo:Paragraph({Title="Helper - How to use",
-            Desc="1. Settings → enable 'Debug Helpers'\n2. Open Delta console (⚙ icon)\n3. Walk into trap → console shows tag name\n4. Use Auto Farm → console shows generator info\n5. Screenshot console → share for feature updates\n\nVersion Kick: change version.txt to 77 → kicks all old users instantly"})
+            Desc="✅ Can't move: FIXED - never touch WalkSpeed on load\n✅ Anti Trap: teleport to LOBBY 8 seconds then return\n✅ Auto Run: clean, no connection to AntiStun\n✅ Anti Stun: separate, clears bypass_slow on disable\n✅ Auto Farm: random delays anti-cheat bypass\n✅ Helper: Debug Helpers → open Delta console\n\nHelper instructions:\n• Enable 'Debug Helpers' in Settings\n• Open Delta console (⚙️)\n• Walk into trap → console shows '[TRAP] Tag added: Trapped'\n• Enable Auto Farm → console shows gen info"})
     end
 
     -- MAIN
     do
         local R=uiRefs
-        R.InfStamina  =TbMain:Toggle({Title="Infinite Stamina",     Value=S.InfStamina,    Callback=function(v) S.InfStamina=v; ConnectStamina() end})
-        R.NoClip      =TbMain:Toggle({Title="NoClip",               Value=S.NoClip,        Callback=function(v) SetNoClip(v) end})
-        R.AllowJump   =TbMain:Toggle({Title="Enable Jump",           Value=S.AllowJump,     Callback=function(v) S.AllowJump=v; SetAllowJump(v) end})
+        R.InfStamina  =TbMain:Toggle({Title="Infinite Stamina",Value=S.InfStamina,Callback=function(v) S.InfStamina=v; ConnectStamina() end})
+        R.NoClip      =TbMain:Toggle({Title="NoClip",           Value=S.NoClip,   Callback=function(v) SetNoClip(v) end})
+        R.AllowJump   =TbMain:Toggle({Title="Enable Jump",       Value=S.AllowJump,Callback=function(v) S.AllowJump=v; SetAllowJump(v) end})
         TbMain:Divider()
-        TbMain:Slider({Title="Run Speed (always active)",Step=1,Value={Min=10,Max=50,Default=24},Callback=function(v) S.RunSpeed=v end})
-        R.AutoRun     =TbMain:Toggle({Title="Auto Run (force walk speed always)",Value=S.AutoRun,Callback=function(v) S.AutoRun=v; SetAutoRun(v) end})
+        -- Run Speed: works always when in game (no Auto Run toggle needed)
+        TbMain:Slider({Title="Run Speed (active when in game)",Step=1,Value={Min=10,Max=50,Default=24},Callback=function(v) S.RunSpeed=v end})
+        R.AutoRun=TbMain:Toggle({Title="Auto Run (boost speed while walking)",Value=S.AutoRun,Callback=function(v) S.AutoRun=v; SetAutoRun(v) end})
         TbMain:Divider()
-        R.AntiStun    =TbMain:Toggle({Title="Anti Stun + Clear Bypass Slow",Value=S.AntiStun,Callback=function(v) S.AntiStun=v; SetAntiStun(v) end})
-        R.AntiRagdoll =TbMain:Toggle({Title="Anti Ragdoll",          Value=S.AntiRagdoll,   Callback=function(v) S.AntiRagdoll=v; SetAntiRagdoll(v) end})
-        R.AntiConfusion=TbMain:Toggle({Title="Anti Confusion",       Value=S.AntiConfusion, Callback=function(v) S.AntiConfusion=v end})
-        R.AntiTrap    =TbMain:Toggle({Title="Anti Trap (Lobby teleport + escape)",Value=S.AntiTrap,  Callback=function(v) S.AntiTrap=v; SetAntiTrap(v) end})
+        R.AntiStun    =TbMain:Toggle({Title="Anti Stun + Clear bypass_slow",Value=S.AntiStun,    Callback=function(v) S.AntiStun=v; SetAntiStun(v) end})
+        R.AntiRagdoll =TbMain:Toggle({Title="Anti Ragdoll",              Value=S.AntiRagdoll,  Callback=function(v) S.AntiRagdoll=v; SetAntiRagdoll(v) end})
+        R.AntiConfusion=TbMain:Toggle({Title="Anti Confusion",           Value=S.AntiConfusion,Callback=function(v) S.AntiConfusion=v end})
+        R.AntiTrap    =TbMain:Toggle({Title="Anti Trap (→ Lobby 8s → Return)",Value=S.AntiTrap,Callback=function(v) S.AntiTrap=v; SetAntiTrap(v) end})
         TbMain:Divider()
-        R.AntiDie     =TbMain:Toggle({Title="Anti Die",              Value=S.AntiDie,       Callback=function(v) S.AntiDie=v end})
+        R.AntiDie     =TbMain:Toggle({Title="Anti Die",                  Value=S.AntiDie,      Callback=function(v) S.AntiDie=v end})
         TbMain:Slider({Title="HP Threshold",Step=1,Value={Min=1,Max=100,Default=30},Callback=function(v) S.AntiDieHP=v end})
         TbMain:Divider()
-        R.AutoBarricade=TbMain:Toggle({Title="Auto Barricade",       Value=S.AutoBarricade, Callback=function(v) SetBarricade(v) end})
-        R.AutoEscape  =TbMain:Toggle({Title="Auto Escape",           Value=S.AutoEscape,    Callback=function(v) S.AutoEscape=v; SetAutoEscape(v) end})
-        R.InstantPrompt=TbMain:Toggle({Title="Instant Prompt",       Value=S.InstantPrompt, Callback=function(v) S.InstantPrompt=v; SetInstantPrompt(v) end})
+        R.AutoBarricade=TbMain:Toggle({Title="Auto Barricade",           Value=S.AutoBarricade,Callback=function(v) SetBarricade(v) end})
+        R.AutoEscape  =TbMain:Toggle({Title="Auto Escape",               Value=S.AutoEscape,   Callback=function(v) S.AutoEscape=v; SetAutoEscape(v) end})
+        R.InstantPrompt=TbMain:Toggle({Title="Instant Prompt",           Value=S.InstantPrompt,Callback=function(v) S.InstantPrompt=v; SetInstantPrompt(v) end})
         TbMain:Divider()
-        R.InstantGen  =TbMain:Toggle({Title="Instant Generator",     Value=S.InstantGen,    Callback=function(v) S.InstantGen=v; if v then StartInstantGen() else StopInstantGen() end end})
+        R.InstantGen  =TbMain:Toggle({Title="Instant Generator",         Value=S.InstantGen,   Callback=function(v) S.InstantGen=v; if v then StartInstantGen() else StopInstantGen() end end})
         TbMain:Slider({Title="Gen Delay (sec)",Step=0.05,Value={Min=0.05,Max=3,Default=1},Callback=function(v) S.GenDelay=v end})
         TbMain:Button({Title="Complete Gen Now",Callback=function() InstantGenNow() end})
         TbMain:Divider()
-        R.DeleteDoor  =TbMain:Toggle({Title="Delete Door (destroys all 'door' objects)",Value=S.DeleteDoor,Callback=function(v)
-            S.DeleteDoor=v; if v then local n=SetDeleteDoor(true); N("Delete Door","Deleted "..tostring(n).." door(s)",3,"trash")
+        R.DeleteDoor  =TbMain:Toggle({Title="Delete Doors (any 'door' named object)",Value=S.DeleteDoor,Callback=function(v)
+            S.DeleteDoor=v
+            if v then local n=SetDeleteDoor(true); N("Delete Door","Deleted "..tostring(n).." door(s)",3)
             else SetDeleteDoor(false) end
         end})
-        R.SkipCutscene=TbMain:Toggle({Title="Skip Cutscene",         Value=S.SkipCutscene,  Callback=function(v) S.SkipCutscene=v; SetSkipCutscene(v) end})
+        R.SkipCutscene=TbMain:Toggle({Title="Skip Cutscene",             Value=S.SkipCutscene, Callback=function(v) S.SkipCutscene=v; SetSkipCutscene(v) end})
         TbMain:Divider()
-        R.AutoParry   =TbMain:Toggle({Title="Auto Parry",            Value=S.AutoParry,     Callback=function(v) S.AutoParry=v; SetAutoParry(v) end})
+        R.AutoParry   =TbMain:Toggle({Title="Auto Parry",                Value=S.AutoParry,    Callback=function(v) S.AutoParry=v; SetAutoParry(v) end})
         TbMain:Slider({Title="Parry Range",Step=1,Value={Min=5,Max=50,Default=15},Callback=function(v) S.ParryRange=v end})
         TbMain:Slider({Title="Pull Range", Step=1,Value={Min=5,Max=60,Default=40},Callback=function(v) S.ParryRangePull=v end})
         TbMain:Divider()
-        R.ShowParryViz=TbMain:Toggle({Title="Show 3D Parry Visualizer",Value=S.ShowParryViz,Callback=function(v) S.ShowParryViz=v end})
-        R.ParryDynamic=TbMain:Toggle({Title="Dynamic Size",          Value=S.ParryDynamic,  Callback=function(v) S.ParryDynamic=v end})
-        R.ParryRainbow=TbMain:Toggle({Title="Rainbow",               Value=S.ParryRainbow,  Callback=function(v) S.ParryRainbow=v end})
+        R.ShowParryViz=TbMain:Toggle({Title="Show 3D Parry Visualizer",  Value=S.ShowParryViz, Callback=function(v) S.ShowParryViz=v end})
+        R.ParryDynamic=TbMain:Toggle({Title="Dynamic Size",              Value=S.ParryDynamic, Callback=function(v) S.ParryDynamic=v end})
+        R.ParryRainbow=TbMain:Toggle({Title="Rainbow",                   Value=S.ParryRainbow, Callback=function(v) S.ParryRainbow=v end})
         TbMain:Colorpicker({Title="Visualizer Color",Default=S.ParryColor,Callback=function(c) S.ParryColor=c end})
-        TbMain:Slider({Title="Visualizer Transparency",Step=0.05,Value={Min=0,Max=0.95,Default=0.5},Callback=function(v) S.ParryAlpha=v end})
+        TbMain:Slider({Title="Transparency",Step=0.05,Value={Min=0,Max=0.95,Default=0.5},Callback=function(v) S.ParryAlpha=v end})
         TbMain:Divider()
-        R.AutoShakeWire=TbMain:Toggle({Title="Auto Shake Wire Eye",  Value=S.AutoShakeWire, Callback=function(v) S.AutoShakeWire=v; SetAutoShakeWire(v) end})
+        R.AutoShakeWire=TbMain:Toggle({Title="Auto Shake Wire Eye",      Value=S.AutoShakeWire,Callback=function(v) S.AutoShakeWire=v; SetAutoShakeWire(v) end})
         TbMain:Slider({Title="Shake Cooldown",Step=0.1,Value={Min=0.1,Max=3,Default=0.5},Callback=function(v) S.ShakeSpeed=v end})
     end
 
@@ -1585,8 +1438,8 @@ function BuildWindow()
     do
         local R=uiRefs
         TbVisual:Dropdown({Title="ESP Type",Values={"Highlight","Chams","Name","Dot"},Value=S.ESPMode,Multi=false,Callback=function(v) S.ESPMode=v end})
-        R.ESPHealth     =TbVisual:Toggle({Title="Health ESP (Killer+Survivor only)",Value=S.ESPHealth,Callback=function(v) S.ESPHealth=v end})
-        R.ShowGenProgress=TbVisual:Toggle({Title="Show Gen Progress %",Value=S.ShowGenProgress,Callback=function(v) S.ShowGenProgress=v end})
+        R.ESPHealth     =TbVisual:Toggle({Title="Health ESP (Killer+Survivor only)",Value=S.ESPHealth,     Callback=function(v) S.ESPHealth=v end})
+        R.ShowGenProgress=TbVisual:Toggle({Title="Show Gen Progress %",               Value=S.ShowGenProgress,Callback=function(v) S.ShowGenProgress=v end})
         TbVisual:Divider()
         for _,row in ipairs({{"Killer","Killer"},{"Survivor","Survivor"},{"Generator","Generator"},{"Battery","Battery"},{"Fuse","Fuse"},{"Trap","Trap"},{"WireEye","Wire Eye"}}) do
             local key,label=row[1],row[2]; local cfg=S.T[key]; if not cfg then continue end
@@ -1594,20 +1447,18 @@ function BuildWindow()
             TbVisual:Colorpicker({Title=label.." Color",Default=cfg.Color,Callback=function(c) cfg.Color=c end})
         end
         TbVisual:Divider()
-        R.FullBright=TbVisual:Toggle({Title="Full Bright",Value=S.FullBright,Callback=function(v) S.FullBright=v; SetFullBright(v) end})
-        R.NoBlind   =TbVisual:Toggle({Title="No Blindness",Value=S.NoBlind,  Callback=function(v) S.NoBlind=v; SetNoBlind(v) end})
-        R.NoFog     =TbVisual:Toggle({Title="No Fog",      Value=S.NoFog,    Callback=function(v) S.NoFog=v end})
-        R.NoShadow  =TbVisual:Toggle({Title="No Shadow",   Value=S.NoShadow, Callback=function(v) S.NoShadow=v end})
+        R.FullBright=TbVisual:Toggle({Title="Full Bright", Value=S.FullBright,Callback=function(v) S.FullBright=v; SetFullBright(v) end})
+        R.NoBlind   =TbVisual:Toggle({Title="No Blindness",Value=S.NoBlind,   Callback=function(v) S.NoBlind=v; SetNoBlind(v) end})
+        R.NoFog     =TbVisual:Toggle({Title="No Fog",      Value=S.NoFog,     Callback=function(v) S.NoFog=v end})
+        R.NoShadow  =TbVisual:Toggle({Title="No Shadow",   Value=S.NoShadow,  Callback=function(v) S.NoShadow=v end})
         TbVisual:Slider({Title="Field of View",Step=1,Value={Min=10,Max=100,Default=70},Callback=function(v) SetFOV(v) end})
         TbVisual:Divider()
         R.HideGenGui=TbVisual:Toggle({Title="Hide Generator GUI",Value=S.HideGenGui,Callback=function(v) S.HideGenGui=v; SetHideGenGui(v) end})
     end
 
-    -- CAM LOCK TAB
+    -- CAM LOCK
     do
         local R=uiRefs
-        TbKiller:Paragraph({Title="Cam Lock System",Desc="Locks camera on nearest target when killer animation plays. Smooth continuous tracking."})
-        TbKiller:Divider()
         R.CamLockRotten    =TbKiller:Toggle({Title="Cam Lock - Rotten Axe Charge",   Value=S.CamLockRotten,    Callback=function(v) S.CamLockRotten=v end})
         TbKiller:Divider()
         R.CamLockDoppelPull=TbKiller:Toggle({Title="Cam Lock - Doppelganger Pull",   Value=S.CamLockDoppelPull,Callback=function(v) S.CamLockDoppelPull=v end})
@@ -1622,16 +1473,16 @@ function BuildWindow()
         TbKiller:Colorpicker({Title="FOV Color",Default=S.FovColor,Callback=function(c)
             S.FovColor=c; local st=fovFrame and fovFrame:FindFirstChildOfClass("UIStroke"); if st then st.Color=c end
         end})
-        TbKiller:Slider({Title="FOV Radius",Step=5,Value={Min=30,Max=300,Default=120},Callback=function(v) S.CamFOV=v end})
-        TbKiller:Slider({Title="FOV Transparency",Step=0.05,Value={Min=0,Max=0.95,Default=0},Callback=function(v)
+        TbKiller:Slider({Title="FOV Radius",      Step=5,    Value={Min=30,Max=300,Default=120},Callback=function(v) S.CamFOV=v end})
+        TbKiller:Slider({Title="FOV Transparency", Step=0.05, Value={Min=0,Max=0.95,Default=0}, Callback=function(v)
             S.FovAlpha=v; local st=fovFrame and fovFrame:FindFirstChildOfClass("UIStroke"); if st then st.Transparency=v end
         end})
-        TbKiller:Button({Title="Lock Nearest Target",Callback=function()
+        TbKiller:Button({Title="Lock Nearest",   Callback=function()
             local t=FindBestTarget()
-            if t then camLockTarget=t; camLockActive=true; Camera.CameraType=Enum.CameraType.Scriptable; N("Cam Lock","Locked on "..tostring(t.Parent and t.Parent.Name),3)
+            if t then camLockTarget=t; camLockActive=true; Camera.CameraType=Enum.CameraType.Scriptable; N("Cam Lock","Locked: "..tostring(t.Parent and t.Parent.Name),3)
             else N("Cam Lock","No target in FOV",3) end
         end})
-        TbKiller:Button({Title="Release Lock",Callback=function() CamLockStop(); N("Cam Lock","Released",2) end})
+        TbKiller:Button({Title="Release Lock",   Callback=function() CamLockStop(); N("Cam Lock","Released",2) end})
     end
 
     -- FARM
@@ -1639,12 +1490,11 @@ function BuildWindow()
         local R=uiRefs
         TbFarm:Dropdown({Title="Move Mode",Values={"TP","Tween"},Value=S.FarmMode,Multi=false,Callback=function(v) S.FarmMode=v end})
         TbFarm:Slider({Title="Move Speed",Step=5,Value={Min=10,Max=100,Default=30},Callback=function(v) S.FarmSpeed=v end})
-        R.FarmUnderground=TbFarm:Toggle({Title="Underground Safe Mode (50 studs)",Value=S.FarmUnderground,Callback=function(v) S.FarmUnderground=v end})
-        R.FarmAntiCheat =TbFarm:Toggle({Title="Anti-Cheat Mode (random delays, offsets)",Value=S.FarmAntiCheat,Callback=function(v) S.FarmAntiCheat=v end})
+        R.FarmUnderground=TbFarm:Toggle({Title="Underground Safe Mode (anti-cheat)",Value=S.FarmUnderground,Callback=function(v) S.FarmUnderground=v end})
         TbFarm:Divider()
         TbFarm:Button({Title="Complete All Generators Now",Callback=function() N("Farm","Starting...",3,"wheat"); task.spawn(CompleteAllGenerators) end})
         TbFarm:Divider()
-        R.AutoFarm=TbFarm:Toggle({Title="Auto Farm (loop)",Value=S.AutoFarm,Callback=function(v) S.AutoFarm=v; SetAutoFarm(v) end})
+        R.AutoFarm=TbFarm:Toggle({Title="Auto Farm (loop + anti-cheat delays)",Value=S.AutoFarm,Callback=function(v) S.AutoFarm=v; SetAutoFarm(v) end})
     end
 
     -- CONFIG
@@ -1696,59 +1546,57 @@ function BuildWindow()
         R.FPSBooster=TbSettings:Toggle({Title="FPS Booster",Value=S.FPSBooster,Callback=function(v) S.FPSBooster=v; SetFPSBooster(v) end})
         TbSettings:Keybind({Title="Toggle UI",Value="RightControl",Callback=function(k) pcall(function() Window:SetToggleKey(Enum.KeyCode[k]) end) end})
         TbSettings:Divider()
-        R.DebugHelpers=TbSettings:Toggle({Title="Debug Helpers (prints to Delta console)",Value=S.DebugHelpers,Callback=function(v)
+        R.DebugHelpers=TbSettings:Toggle({Title="Debug Helpers (open Delta console)",Value=S.DebugHelpers,Callback=function(v)
             S.DebugHelpers=v; S_Debug=v
             if v then
-                print("[PH Helper] Debug ON - open Delta console")
-                print("[PH Helper] Anti Trap: walk into trap → tag name shows here")
-                print("[PH Helper] Auto Farm: enable → generator info shows here")
-                print("[PH Helper] Anti Stun: get stunned → cleared tags show here")
+                print("[PH Helper] Debug ON - open Delta console (⚙️ button)")
+                print("[PH Helper] Anti Trap: walk into trap → see '[TRAP] Tag added: Trapped'")
+                print("[PH Helper] Auto Farm: enable → see generator names and progress")
+                print("[PH Helper] Anti Stun: get stunned → see which tags are cleared")
             else print("[PH Helper] Debug OFF") end
         end})
         TbSettings:Divider()
-        TbSettings:Button({Title="Change Language",Callback=function()
-            LANG=LANG=="en" and "ar" or "en"
-            N("Language","Switched to "..LANG.." - re-execute for full effect",4,"globe")
+        TbSettings:Button({Title="Switch Language (EN/AR)",Callback=function()
+            LANG=LANG=="en" and "ar" or "en"; N("Language",LANG,3,"globe")
         end})
     end
 
-    -- INITIALIZE (SAFE: no WalkSpeed overrides unless toggle is ON)
-    -- FIX: force WalkSpeed to 16 if stuck at 0
-    if LPHum and LPHum.WalkSpeed < 1 then LPHum.WalkSpeed = 16 end
+    -- ============================================================
+    -- INITIALIZE (SAFE - no speed touches)
+    -- ============================================================
     ConnectStamina()
     SetAntiAFK(S.AntiAFK)
     SetAntiTrap(S.AntiTrap)
     SetAntiStun(S.AntiStun)
     SetAntiRagdoll(S.AntiRagdoll)
-    if S.AllowJump      then SetAllowJump(true)    end
-    if S.AutoRun        then SetAutoRun(true)       else SetAutoRun(false) end
-    if S.DeleteDoor     then SetDeleteDoor(true)    end
-    if S.SkipCutscene   then SetSkipCutscene(true)  end
-    if S.InstantGen     then StartInstantGen()      end
-    if S.FullBright     then SetFullBright(true)    end
-    if S.NoBlind        then SetNoBlind(true)       end
-    if S.HideGenGui     then SetHideGenGui(true)    end
-    if S.InstantPrompt  then SetInstantPrompt(true) end
-    if S.AutoBarricade  then SetBarricade(true)     end
-    if S.AutoEscape     then SetAutoEscape(true)    end
-    if S.AutoFarm       then SetAutoFarm(true)      end
-    if S.AutoParry      then SetAutoParry(true)     end
-    if S.AutoShakeWire  then SetAutoShakeWire(true) end
-    if S.FPSBooster     then SetFPSBooster(true)    end
-    if S.FovValue~=70   then SetFOV(S.FovValue)    end
+    if S.AllowJump     then SetAllowJump(true)    end
+    -- FIX: ONLY start AutoRun if it was explicitly saved as ON
+    -- DO NOT touch speed at all if AutoRun is OFF
+    if S.AutoRun       then SetAutoRun(true)       end
+    if S.DeleteDoor    then SetDeleteDoor(true)    end
+    if S.SkipCutscene  then SetSkipCutscene(true)  end
+    if S.InstantGen    then StartInstantGen()      end
+    if S.FullBright    then SetFullBright(true)    end
+    if S.NoBlind       then SetNoBlind(true)       end
+    if S.HideGenGui    then SetHideGenGui(true)    end
+    if S.InstantPrompt then SetInstantPrompt(true) end
+    if S.AutoBarricade then SetBarricade(true)     end
+    if S.AutoEscape    then SetAutoEscape(true)    end
+    if S.AutoFarm      then SetAutoFarm(true)      end
+    if S.AutoParry     then SetAutoParry(true)     end
+    if S.AutoShakeWire then SetAutoShakeWire(true) end
+    if S.FPSBooster    then SetFPSBooster(true)    end
+    if S.FovValue~=70  then SetFOV(S.FovValue)    end
     task.delay(0.9,function() ApplyScale(S.UIScale); ApplyAlpha(S.UIAlpha) end)
 
     LP.CharacterAdded:Connect(function()
         task.wait(1); RefreshChar(); ConnectStamina(); ConnectAntiDie()
-        -- Ensure WalkSpeed is not stuck at 0
-        if LPHum and LPHum.WalkSpeed < 1 then LPHum.WalkSpeed = 16 end
         if S.NoClip    then SetNoClip(true)    end
         if S.AllowJump then SetAllowJump(true) end
         if S.AutoRun   then SetAutoRun(true)   end
         if S.AutoParry then SetAutoParry(true) end
         if S.AntiTrap  then SetAntiTrap(true)  end
-        SetAntiStun(S.AntiStun)
-        SetAntiRagdoll(S.AntiRagdoll)
+        SetAntiStun(S.AntiStun); SetAntiRagdoll(S.AntiRagdoll)
         task.wait(1)
         pcall(function()
             local kf=workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
