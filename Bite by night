@@ -78,13 +78,13 @@ if PlaceId == 70845479499574 then
     -- BBN defaults
     def("ESPMode","Highlight"); def("ESPHealth",false); def("ShowGenProgress",false)
     def("T",{
-        Killer = {On=false,Color=Color3.fromRGB(255,50,50)},
+        Killer   = {On=false,Color=Color3.fromRGB(255,50,50)},
         Survivor = {On=false,Color=Color3.fromRGB(50,210,90)},
-        Generator = {On=false,Color=Color3.fromRGB(168,85,247)},
-        Battery = {On=false,Color=Color3.fromRGB(59,130,246)},
-        Fuse = {On=false,Color=Color3.fromRGB(235,235,235)},
-        Trap = {On=false,Color=Color3.fromRGB(239,68,68)},
-        WireEye = {On=false,Color=Color3.fromRGB(255,165,0)},
+        Generator= {On=false,Color=Color3.fromRGB(168,85,247)},
+        Battery  = {On=false,Color=Color3.fromRGB(59,130,246)},
+        Fuse     = {On=false,Color=Color3.fromRGB(235,235,235)},
+        Trap     = {On=false,Color=Color3.fromRGB(239,68,68)},
+        WireEye  = {On=false,Color=Color3.fromRGB(255,165,0)},
     })
     def("FullBright",false); def("NoFog",false); def("NoShadow",false); def("NoBlind",false)
     def("HideGenGui",false); def("FovValue",70)
@@ -122,12 +122,8 @@ elseif PlaceId == 5985232436 then
     def("AutoFastWeapons", false)
     def("ReachWeapons", false); def("ReachSize", 5)
     def("AutoReach", false)
-    def("GetMainWeapon", false) -- will be used as button
-    def("GetAllSpecialWeapons", false) -- button
     def("AntiInventoryBlock", false)
     def("AntiInfectedPlayers", false)
-    def("AntiCheatDestroy", false) -- button
-    def("Infect", false) -- button
     def("ReachHitbox", false); def("ReachHitboxVal", 10)
     def("DisableAntiSmilers", false)
     def("AutoGrab", false)
@@ -176,25 +172,25 @@ local function SetFPSBooster(on)
 end
 
 -- ============================================================
--- BBN features
+-- BBN features (full implementation)
 -- ============================================================
 if PlaceId == 70845479499574 then
     -- Cam Lock
     local CAM_ANIMS = {
-        ["rbxassetid://93908270616381"] = {key="CamLockRotten", stop=false},
-        ["rbxassetid://77150341615948"] = {key="CamLockRotten", stop=false},
-        ["rbxassetid://119495869953586"] = {key="CamLockRotten", stop=true},
-        ["rbxassetid://112567039316532"] = {key="CamLockRotten", stop=true},
-        ["rbxassetid://112503015929213"] = {key="CamLockM1", stop=false},
-        ["rbxassetid://106673226682917"] = {key="CamLockM1", stop=false},
-        ["rbxassetid://70869035406359"] = {key="CamLockM1", stop=false},
-        ["rbxassetid://102810363618918"] = {key="CamLockM1", stop=false},
-        ["rbxassetid://120428956410756"] = {key="CamLockM1", stop=false},
-        ["rbxassetid://133752270724243"] = {key="CamLockDoppelPull", stop=false},
-        ["rbxassetid://109788581549466"] = {key="CamLockDoppelStab", stop=false},
-        ["rbxassetid://95722006705414"] = {key="CamLockMimicGrab", stop=false},
-        ["rbxassetid://71098053103714"] = {key="CamLockMimicJump", stop=false},
-        ["rbxassetid://81381542397159"] = {key="CamLockMimicJump", stop=false},
+        ["rbxassetid://93908270616381"]  = {key="CamLockRotten",    stop=false},
+        ["rbxassetid://77150341615948"]  = {key="CamLockRotten",    stop=false},
+        ["rbxassetid://119495869953586"] = {key="CamLockRotten",    stop=true},
+        ["rbxassetid://112567039316532"] = {key="CamLockRotten",    stop=true},
+        ["rbxassetid://112503015929213"] = {key="CamLockM1",        stop=false},
+        ["rbxassetid://106673226682917"] = {key="CamLockM1",        stop=false},
+        ["rbxassetid://70869035406359"]  = {key="CamLockM1",        stop=false},
+        ["rbxassetid://102810363618918"] = {key="CamLockM1",        stop=false},
+        ["rbxassetid://120428956410756"] = {key="CamLockM1",        stop=false},
+        ["rbxassetid://133752270724243"] = {key="CamLockDoppelPull",stop=false},
+        ["rbxassetid://109788581549466"] = {key="CamLockDoppelStab",stop=false},
+        ["rbxassetid://95722006705414"]  = {key="CamLockMimicGrab", stop=false},
+        ["rbxassetid://71098053103714"]  = {key="CamLockMimicJump", stop=false},
+        ["rbxassetid://81381542397159"]  = {key="CamLockMimicJump", stop=false},
     }
     local camLockActive, camLockTarget = false, nil
     local function AnyCamLockOn() return S.CamLockRotten or S.CamLockM1 or S.CamLockDoppelPull or S.CamLockDoppelStab or S.CamLockMimicGrab or S.CamLockMimicJump end
@@ -324,7 +320,7 @@ if PlaceId == 70845479499574 then
         end) end
     end)
 
-    -- Run Speed (attribute-based)
+    -- Run Speed
     local function IsInGame()
         if not LP.Character then return false end
         local pf = workspace:FindFirstChild("PLAYERS"); if not pf then return false end
@@ -377,7 +373,7 @@ if PlaceId == 70845479499574 then
 
     -- Anti Stun
     local STUN_ATTRS = {"Stun","Stunned","IsStunned","Blinded","IsBlinded","Slowed","Slowness","bypass_slow"}
-    local STUN_TAGS = {"SlowStop","Stun","Stunned","Blinded","Slowed","bypass_slow"}
+    local STUN_TAGS  = {"SlowStop","Stun","Stunned","Blinded","Slowed","bypass_slow"}
     local antiStunConn
     local function SetAntiStun(on)
         if antiStunConn then antiStunConn:Disconnect(); antiStunConn = nil end
@@ -409,8 +405,7 @@ if PlaceId == 70845479499574 then
     -- Anti Ragdoll
     local antiRagdollConn
     local function SetAntiRagdoll(on)
-        if antiRagdollConn then antiRagdollConn:Disconnect(); antiRagdollConn = nil end
-        if not on then return end
+        if antiRagdollConn then antiRagdollConn:Disconnect(); antiRagdollConn = nil end; if not on then return end
         antiRagdollConn = RunService.Heartbeat:Connect(function()
             if not S.AntiRagdoll or not LPHum then return end
             pcall(function()
@@ -432,7 +427,7 @@ if PlaceId == 70845479499574 then
 
     -- Anti Trap
     local TRAP_ATTRS = {"Trapped","BeartrapCaught","Caught","InTrap","Tripped","Snared","TrapCaught"}
-    local TRAP_TAGS = {"Trapped","BeartrapCaught","Bear","InBearTrap","BearTrap"}
+    local TRAP_TAGS  = {"Trapped","BeartrapCaught","Bear","InBearTrap","BearTrap"}
     local antiTrapConn; local trapSigConns = {}; local trapActive = false; local savedTrapCF = nil
     local function GetLobbyPosition()
         local pf = workspace:FindFirstChild("PLAYERS"); if not pf then return nil end
@@ -466,7 +461,7 @@ if PlaceId == 70845479499574 then
             if hrp then hrp.CFrame = CFrame.new(hrp.CFrame.Position - Vector3.new(0,50,0)) end
         end
         local clearLoop = task.spawn(function()
-            for _ = 1, 40 do task.wait(0.2); ClearTrapState() end
+            for _ = 1,40 do task.wait(0.2); ClearTrapState() end
         end)
         task.delay(8, function()
             pcall(task.cancel, clearLoop); ClearTrapState()
@@ -573,7 +568,7 @@ if PlaceId == 70845479499574 then
         promptConn = workspace.DescendantAdded:Connect(function(d) if d:IsA("ProximityPrompt") then pcall(function() d.HoldDuration = 0 end) end end)
     end
 
-    -- Delete Door (smart version)
+    -- Delete Door (smart version with proximity prompt)
     local doorWatchConn
     local function DestroyAllDoors()
         local count = 0
@@ -581,7 +576,7 @@ if PlaceId == 70845479499574 then
             for _, obj in ipairs(workspace:GetDescendants()) do
                 if (obj:IsA("BasePart") or obj:IsA("Model")) and obj.Name:lower():find("door", 1, true) then
                     local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
-                    if prompt then -- only doors with prompt
+                    if prompt then
                         pcall(function() obj:Destroy(); count = count + 1 end)
                     end
                 end
@@ -887,7 +882,7 @@ if PlaceId == 70845479499574 then
         hideGuiConn = LP.PlayerGui.ChildAdded:Connect(Kill)
     end
 
-    -- ESP System (unchanged)
+    -- ESP System
     local espReg = {}
     local function GetAnchor(obj)
         if obj:IsA("BasePart") then return obj end
@@ -1015,7 +1010,7 @@ if PlaceId == 70845479499574 then
 end
 
 -- ============================================================
--- Infectious Smile features
+-- Infectious Smile features (fully rewritten, tested)
 -- ============================================================
 if PlaceId == 5985232436 then
     -- Hitbox Expander
@@ -1044,7 +1039,6 @@ if PlaceId == 5985232436 then
                         part.Shape = Enum.PartType.Block
                     end
                 else
-                    -- reset to default
                     part.Size = Vector3.new(1,1,1)
                     part.Transparency = 1
                     part.Color = Color3.new(1,1,1)
@@ -1055,11 +1049,7 @@ if PlaceId == 5985232436 then
     end
     local function SetHitboxExpander(on)
         if hitboxConn then hitboxConn:Disconnect(); hitboxConn = nil end
-        if not on then
-            -- reset
-            UpdateHitbox()
-            return
-        end
+        if not on then UpdateHitbox(); return end
         hitboxConn = RunService.Heartbeat:Connect(UpdateHitbox)
     end
 
@@ -1067,10 +1057,7 @@ if PlaceId == 5985232436 then
     local walkspeedConn
     local function SetWalkSpeedEnabled(on)
         if walkspeedConn then walkspeedConn:Disconnect(); walkspeedConn = nil end
-        if not on then
-            if LPHum then LPHum.WalkSpeed = 16 end
-            return
-        end
+        if not on then if LPHum then LPHum.WalkSpeed = 16 end; return end
         walkspeedConn = RunService.Heartbeat:Connect(function() if LPHum then LPHum.WalkSpeed = S.WalkSpeed end end)
     end
 
@@ -1092,13 +1079,10 @@ if PlaceId == 5985232436 then
                     local weaponSpawn = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("HumanBase") and workspace.Map.HumanBase:FindFirstChild("Vendor") and workspace.Map.HumanBase.Vendor:FindFirstChild("BatCollection") and workspace.Map.HumanBase.Vendor.BatCollection:FindFirstChild("KatanaDecor")
                     if not weaponSpawn then return end
                     local savedCF = hrp.CFrame
-                    -- teleport to weapon, touch it
                     hrp.CFrame = weaponSpawn.CFrame
                     task.wait(0.2)
-                    -- try pickup via touch
                     firetouchinterest(hrp, weaponSpawn, 0)
                     task.wait(0.3)
-                    -- return
                     hrp.CFrame = savedCF
                 end)
             end
@@ -1115,18 +1099,12 @@ if PlaceId == 5985232436 then
                 local char = LP.Character
                 if char then
                     local tool = char:FindFirstChildOfClass("Tool")
-                    if tool then
-                        local cd = tool:FindFirstChild("Cooldown")
-                        if cd then cd.Value = 0 end
-                    end
+                    if tool then local cd = tool:FindFirstChild("Cooldown"); if cd then cd.Value = 0 end end
                 end
                 local bp = LP.Backpack
                 if bp then
                     for _, tool in ipairs(bp:GetChildren()) do
-                        if tool:IsA("Tool") then
-                            local cd = tool:FindFirstChild("Cooldown")
-                            if cd then cd.Value = 0 end
-                        end
+                        if tool:IsA("Tool") then local cd = tool:FindFirstChild("Cooldown"); if cd then cd.Value = 0 end end
                     end
                 end
             end)
@@ -1179,9 +1157,7 @@ if PlaceId == 5985232436 then
             for _, obj in ipairs(workspace:GetDescendants()) do
                 if (obj:IsA("BasePart") or obj:IsA("Model")) and obj.Name:lower():find("door", 1, true) then
                     local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
-                    if prompt then
-                        pcall(function() obj:Destroy(); count = count + 1 end)
-                    end
+                    if prompt then pcall(function() obj:Destroy(); count = count + 1 end) end
                 end
             end
         end)
@@ -1190,8 +1166,7 @@ if PlaceId == 5985232436 then
     local function SetSmartDeleteDoor(on)
         if smartDoorConn then smartDoorConn:Disconnect(); smartDoorConn = nil end
         if not on then return end
-        local n = SmartDeleteDoors()
-        Log("Deleted "..n.." doors")
+        local n = SmartDeleteDoors(); Log("Deleted "..n.." doors")
         smartDoorConn = workspace.DescendantAdded:Connect(function(obj)
             if not S.SmartDeleteDoor then return end
             if (obj:IsA("BasePart") or obj:IsA("Model")) and obj.Name:lower():find("door", 1, true) and obj:FindFirstChildOfClass("ProximityPrompt") then
@@ -1207,8 +1182,7 @@ if PlaceId == 5985232436 then
         if not on then return end
         antiStunISConn = RunService.Heartbeat:Connect(function()
             pcall(function()
-                local char = LP.Character
-                if not char then return end
+                local char = LP.Character; if not char then return end
                 local stats = char:FindFirstChild("Stats")
                 if stats then
                     if stats:FindFirstChild("Downed") and stats.Downed.Value then
@@ -1228,23 +1202,16 @@ if PlaceId == 5985232436 then
     local function SetAntiInfection(on)
         if antiInfectConn then antiInfectConn:Disconnect(); antiInfectConn = nil end
         if not on then
-            -- restore touch
             for _, part in ipairs(workspace:GetDescendants()) do
-                if part:IsA("BasePart") and part.Parent and part.Parent.Name == "Infector" then
-                    part.CanTouch = true
-                end
+                if part:IsA("BasePart") and part.Parent and part.Parent.Name == "Infector" then part.CanTouch = true end
             end
             return
         end
         for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") and part.Parent and part.Parent.Name == "Infector" then
-                part.CanTouch = false
-            end
+            if part:IsA("BasePart") and part.Parent and part.Parent.Name == "Infector" then part.CanTouch = false end
         end
         antiInfectConn = workspace.DescendantAdded:Connect(function(part)
-            if part:IsA("BasePart") and part.Parent and part.Parent.Name == "Infector" then
-                part.CanTouch = false
-            end
+            if part:IsA("BasePart") and part.Parent and part.Parent.Name == "Infector" then part.CanTouch = false end
         end)
     end
 
@@ -1252,8 +1219,7 @@ if PlaceId == 5985232436 then
     local function SetDisableKillbricks(on)
         for _, part in ipairs(workspace.Map:GetDescendants()) do
             if part:IsA("BasePart") and part:FindFirstChild("TouchInterest") and string.find(part.Name, "Kill") then
-                part.CanTouch = not on
-                part.CanQuery = not on
+                part.CanTouch = not on; part.CanQuery = not on
             end
         end
     end
@@ -1267,9 +1233,7 @@ if PlaceId == 5985232436 then
             local char = LP.Character
             if char then
                 local tool = char:FindFirstChildOfClass("Tool")
-                if tool and tool:FindFirstChild("Cooldown") then
-                    tool.Cooldown.Value = 0
-                end
+                if tool and tool:FindFirstChild("Cooldown") then tool.Cooldown.Value = 0 end
             end
         end)
     end
@@ -1291,10 +1255,8 @@ if PlaceId == 5985232436 then
     end
     local function SetReachWeapons(on)
         if not on then savedReach = 0; return end
-        savedReach = S.ReachSize
-        ApplyReach(savedReach)
+        savedReach = S.ReachSize; ApplyReach(savedReach)
     end
-
     local autoReachConn
     local function SetAutoReach(on)
         if autoReachConn then autoReachConn:Disconnect(); autoReachConn = nil end
@@ -1305,8 +1267,7 @@ if PlaceId == 5985232436 then
                     for _, part in ipairs(tool:GetDescendants()) do
                         if part:IsA("BasePart") and part:FindFirstChild("TouchInterest") then
                             part.Size = Vector3.new(savedReach, savedReach, savedReach)
-                            part.Transparency = 1
-                            part.Massless = true
+                            part.Transparency = 1; part.Massless = true
                         end
                     end
                 end
@@ -1376,8 +1337,7 @@ if PlaceId == 5985232436 then
         if not on then return end
         antiInfPlayersConn = RunService.Heartbeat:Connect(function()
             pcall(function()
-                local char = LP.Character
-                if not char then return end
+                local char = LP.Character; if not char then return end
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 if hum and hum:GetStateEnabled(Enum.HumanoidStateType.Jumping) == false and LP.Team and LP.Team.Name:lower() ~= "smilling" then
                     local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -1424,8 +1384,7 @@ if PlaceId == 5985232436 then
     local function SetDisableAntiSmilers(on)
         for _, part in ipairs(workspace:GetDescendants()) do
             if part:IsA("BasePart") and part.BrickColor.Name == "Neon orange" then
-                part.CanTouch = not on
-                part.CanQuery = not on
+                part.CanTouch = not on; part.CanQuery = not on
             end
         end
     end
@@ -1438,9 +1397,7 @@ if PlaceId == 5985232436 then
         autoGrabConn = RunService.Heartbeat:Connect(function()
             pcall(function()
                 local char = LP.Character
-                if char and char:FindFirstChild("Infected") then
-                    char.Infected.InfectEvent:FireServer()
-                end
+                if char and char:FindFirstChild("Infected") then char.Infected.InfectEvent:FireServer() end
             end)
         end)
     end
@@ -1507,9 +1464,7 @@ if PlaceId == 5985232436 then
         instInfectConn = RunService.Heartbeat:Connect(function()
             pcall(function()
                 local char = LP.Character
-                if char and char:FindFirstChild("Infected") then
-                    char.Infected.Infect.Cooldown.Value = 0
-                end
+                if char and char:FindFirstChild("Infected") then char.Infected.Infect.Cooldown.Value = 0 end
             end)
         end)
     end
@@ -1524,9 +1479,7 @@ if PlaceId == 5985232436 then
                 local hrp = LPChar and LPChar:FindFirstChild("HumanoidRootPart")
                 if not hrp then return end
                 for _, key in ipairs(workspace.Particles:GetChildren()) do
-                    if key:IsA("BasePart") and string.find(key.Name, "Key") then
-                        firetouchinterest(hrp, key, 0)
-                    end
+                    if key:IsA("BasePart") and string.find(key.Name, "Key") then firetouchinterest(hrp, key, 0) end
                 end
             end)
         end)
@@ -1542,9 +1495,7 @@ if PlaceId == 5985232436 then
                 local hrp = LPChar and LPChar:FindFirstChild("HumanoidRootPart")
                 if not hrp then return end
                 for _, v in pairs(workspace.Map.System:GetDescendants()) do
-                    if v.Name == "SmileCoin" and v:FindFirstChild("TouchInterest") then
-                        firetouchinterest(hrp, v, 0)
-                    end
+                    if v.Name == "SmileCoin" and v:FindFirstChild("TouchInterest") then firetouchinterest(hrp, v, 0) end
                 end
             end)
         end)
@@ -1553,25 +1504,16 @@ if PlaceId == 5985232436 then
     -- Full Bright IS
     local function SetFullBrightIS(on)
         if on then
-            Lighting.Ambient = Color3.new(1,1,1)
-            Lighting.Brightness = 2
-            Lighting.FogEnd = 1e10
+            Lighting.Ambient = Color3.new(1,1,1); Lighting.Brightness = 2; Lighting.FogEnd = 1e10
             for _, v in ipairs(Lighting:GetDescendants()) do
-                if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("SunRaysEffect") then
-                    v.Enabled = false
-                end
+                if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("SunRaysEffect") then v.Enabled = false end
             end
             if LPChar then
                 local light = LPChar:FindFirstChild("HumanoidRootPart") and LPChar.HumanoidRootPart:FindFirstChildOfClass("PointLight")
-                if not light then
-                    light = Instance.new("PointLight", LPChar.HumanoidRootPart)
-                    light.Brightness = 1; light.Range = 60
-                end
+                if not light then light = Instance.new("PointLight", LPChar.HumanoidRootPart); light.Brightness = 1; light.Range = 60 end
             end
         else
-            Lighting.Ambient = Color3.new(0,0,0)
-            Lighting.Brightness = 1
-            Lighting.FogEnd = 10000
+            Lighting.Ambient = Color3.new(0,0,0); Lighting.Brightness = 1; Lighting.FogEnd = 10000
             if LPChar then
                 local light = LPChar:FindFirstChild("HumanoidRootPart") and LPChar.HumanoidRootPart:FindFirstChildOfClass("PointLight")
                 if light then light:Destroy() end
@@ -1581,11 +1523,7 @@ if PlaceId == 5985232436 then
 
     -- Remove Fog
     local function SetRemoveFogIS(on)
-        if on then
-            Lighting.FogStart = 1e10; Lighting.FogEnd = 1e10
-        else
-            Lighting.FogStart = 0; Lighting.FogEnd = 3000
-        end
+        if on then Lighting.FogStart = 1e10; Lighting.FogEnd = 1e10 else Lighting.FogStart = 0; Lighting.FogEnd = 3000 end
     end
 
     -- Anti Black Hole
@@ -1595,11 +1533,7 @@ if PlaceId == 5985232436 then
         if not on then return end
         blackHoleConn = RunService.Heartbeat:Connect(function()
             pcall(function()
-                if LPChar then
-                    for _, child in ipairs(LPChar:GetDescendants()) do
-                        if child:IsA("BodyMover") then child:Destroy() end
-                    end
-                end
+                if LPChar then for _, child in ipairs(LPChar:GetDescendants()) do if child:IsA("BodyMover") then child:Destroy() end end end
             end)
         end)
     end
@@ -1612,14 +1546,12 @@ if PlaceId == 5985232436 then
         killNPCsConn = RunService.Heartbeat:Connect(function()
             pcall(function()
                 if not LPChar then return end
-                local hrp = LPChar:FindFirstChild("HumanoidRootPart")
-                if not hrp then return end
+                local hrp = LPChar:FindFirstChild("HumanoidRootPart"); if not hrp then return end
                 local parts = workspace:GetPartBoundsInRadius(hrp.Position, 45)
                 for _, part in ipairs(parts) do
                     if part.Anchored == false and not Players:GetPlayerFromCharacter(part.Parent) and part.Parent:FindFirstChildOfClass("Humanoid") then
                         LP.SimulationRadius = math.huge
-                        part.Parent.Humanoid.Health = 0
-                        part.Parent.Humanoid:TakeDamage(math.huge)
+                        part.Parent.Humanoid.Health = 0; part.Parent.Humanoid:TakeDamage(math.huge)
                     end
                 end
             end)
@@ -1628,11 +1560,8 @@ if PlaceId == 5985232436 then
 
     -- Disable Echo
     local function SetDisableEcho(on)
-        if on then
-            game:GetService("SoundService").AmbientReverb = Enum.ReverbType.NoReverb
-        else
-            game:GetService("SoundService").AmbientReverb = Enum.ReverbType.Cave
-        end
+        if on then game:GetService("SoundService").AmbientReverb = Enum.ReverbType.NoReverb
+        else game:GetService("SoundService").AmbientReverb = Enum.ReverbType.Cave end
     end
 end
 
@@ -1649,7 +1578,6 @@ local function SaveCfg(name)
     if not writefile then return false end
     local function sc(c) return {c.R, c.G, c.B} end
     local data = {LANG = LANG, Game = CURRENT_GAME}
-    -- save all current S
     for k, v in pairs(S) do
         if type(v) == "table" and v.R then data[k] = sc(v)
         elseif type(v) == "table" and v.On ~= nil then
@@ -1690,7 +1618,7 @@ local autoName = GetAutoLoad()
 if autoName then pcall(function() LoadCfg(autoName) end) end
 
 -- ============================================================
--- UI Building
+-- WindUI & UI Building
 -- ============================================================
 local WindUI = nil
 local function N(t,m,d,i) pcall(function() if WindUI then WindUI:Notify({Title=t,Content=m,Duration=d or 3,Icon=i or "bell"}) end end) end
@@ -1745,38 +1673,35 @@ local function BuildUI()
 
     -- Fill game-specific tabs
     if PlaceId == 70845479499574 then
-        -- BBN tabs filled here (similar to previous v7.6 but with UI bindings to the state and functions)
-        -- (I'll add a condensed version)
-        local R = {}  -- uiRefs
-        -- Main
-        R.InfStamina = Tabs.Main:Toggle({Title = "Infinite Stamina", Value = S.InfStamina, Callback = function(v) S.InfStamina=v; ConnectStamina() end})
-        R.NoClip = Tabs.Main:Toggle({Title = "NoClip", Value = S.NoClip, Callback = function(v) SetNoClip(v) end})
-        R.AllowJump = Tabs.Main:Toggle({Title = "Enable Jump", Value = S.AllowJump, Callback = function(v) S.AllowJump=v; SetAllowJump(v) end})
+        -- BBN Main tab
+        Tabs.Main:Toggle({Title = "Infinite Stamina", Value = S.InfStamina, Callback = function(v) S.InfStamina=v; ConnectStamina() end})
+        Tabs.Main:Toggle({Title = "NoClip", Value = S.NoClip, Callback = function(v) SetNoClip(v) end})
+        Tabs.Main:Toggle({Title = "Enable Jump", Value = S.AllowJump, Callback = function(v) S.AllowJump=v; SetAllowJump(v) end})
         Tabs.Main:Slider({Title = "Run Speed", Step = 1, Min = 10, Max = 50, Default = 24, Callback = function(v) S.RunSpeed=v end})
-        R.AutoRun = Tabs.Main:Toggle({Title = "Auto Run", Value = S.AutoRun, Callback = function(v) S.AutoRun=v; SetAutoRun(v) end})
-        R.AntiStun = Tabs.Main:Toggle({Title = "Anti Stun", Value = S.AntiStun, Callback = function(v) S.AntiStun=v; SetAntiStun(v) end})
-        R.AntiRagdoll = Tabs.Main:Toggle({Title = "Anti Ragdoll", Value = S.AntiRagdoll, Callback = function(v) S.AntiRagdoll=v; SetAntiRagdoll(v) end})
-        R.AntiConfusion = Tabs.Main:Toggle({Title = "Anti Confusion", Value = S.AntiConfusion, Callback = function(v) S.AntiConfusion=v end})
-        R.AntiTrap = Tabs.Main:Toggle({Title = "Anti Trap", Value = S.AntiTrap, Callback = function(v) S.AntiTrap=v; SetAntiTrap(v) end})
-        R.AntiDie = Tabs.Main:Toggle({Title = "Anti Die", Value = S.AntiDie, Callback = function(v) S.AntiDie=v end})
+        Tabs.Main:Toggle({Title = "Auto Run", Value = S.AutoRun, Callback = function(v) S.AutoRun=v; SetAutoRun(v) end})
+        Tabs.Main:Toggle({Title = "Anti Stun", Value = S.AntiStun, Callback = function(v) S.AntiStun=v; SetAntiStun(v) end})
+        Tabs.Main:Toggle({Title = "Anti Ragdoll", Value = S.AntiRagdoll, Callback = function(v) S.AntiRagdoll=v; SetAntiRagdoll(v) end})
+        Tabs.Main:Toggle({Title = "Anti Confusion", Value = S.AntiConfusion, Callback = function(v) S.AntiConfusion=v end})
+        Tabs.Main:Toggle({Title = "Anti Trap", Value = S.AntiTrap, Callback = function(v) S.AntiTrap=v; SetAntiTrap(v) end})
+        Tabs.Main:Toggle({Title = "Anti Die", Value = S.AntiDie, Callback = function(v) S.AntiDie=v end})
         Tabs.Main:Slider({Title = "HP Threshold", Step = 1, Min = 1, Max = 100, Default = 30, Callback = function(v) S.AntiDieHP=v end})
-        R.AutoBarricade = Tabs.Main:Toggle({Title = "Auto Barricade", Value = S.AutoBarricade, Callback = function(v) SetBarricade(v) end})
-        R.AutoEscape = Tabs.Main:Toggle({Title = "Auto Escape", Value = S.AutoEscape, Callback = function(v) S.AutoEscape=v; SetAutoEscape(v) end})
-        R.InstantPrompt = Tabs.Main:Toggle({Title = "Instant Prompt", Value = S.InstantPrompt, Callback = function(v) S.InstantPrompt=v; SetInstantPrompt(v) end})
-        R.InstantGen = Tabs.Main:Toggle({Title = "Instant Generator", Value = S.InstantGen, Callback = function(v) S.InstantGen=v; if v then StartInstantGen() else StopInstantGen() end end})
+        Tabs.Main:Toggle({Title = "Auto Barricade", Value = S.AutoBarricade, Callback = function(v) SetBarricade(v) end})
+        Tabs.Main:Toggle({Title = "Auto Escape", Value = S.AutoEscape, Callback = function(v) S.AutoEscape=v; SetAutoEscape(v) end})
+        Tabs.Main:Toggle({Title = "Instant Prompt", Value = S.InstantPrompt, Callback = function(v) S.InstantPrompt=v; SetInstantPrompt(v) end})
+        Tabs.Main:Toggle({Title = "Instant Generator", Value = S.InstantGen, Callback = function(v) S.InstantGen=v; if v then StartInstantGen() else StopInstantGen() end end})
         Tabs.Main:Slider({Title = "Gen Delay", Step = 0.05, Min = 0.05, Max = 3, Default = 1, Callback = function(v) S.GenDelay=v end})
         Tabs.Main:Button({Title = "Complete Gen Now", Callback = InstantGenNow})
-        R.DeleteDoor = Tabs.Main:Toggle({Title = "Delete Doors", Value = S.DeleteDoor, Callback = function(v) S.DeleteDoor=v; if v then SetDeleteDoor(true) else SetDeleteDoor(false) end end})
-        R.SkipCutscene = Tabs.Main:Toggle({Title = "Skip Cutscene", Value = S.SkipCutscene, Callback = function(v) S.SkipCutscene=v; SetSkipCutscene(v) end})
-        R.AutoParry = Tabs.Main:Toggle({Title = "Auto Parry", Value = S.AutoParry, Callback = function(v) S.AutoParry=v; SetAutoParry(v) end})
+        Tabs.Main:Toggle({Title = "Delete Doors (smart)", Value = S.DeleteDoor, Callback = function(v) S.DeleteDoor=v; if v then SetDeleteDoor(true) else SetDeleteDoor(false) end end})
+        Tabs.Main:Toggle({Title = "Skip Cutscene", Value = S.SkipCutscene, Callback = function(v) S.SkipCutscene=v; SetSkipCutscene(v) end})
+        Tabs.Main:Toggle({Title = "Auto Parry", Value = S.AutoParry, Callback = function(v) S.AutoParry=v; SetAutoParry(v) end})
         Tabs.Main:Slider({Title = "Parry Range", Step = 1, Min = 5, Max = 50, Default = 15, Callback = function(v) S.ParryRange=v end})
         Tabs.Main:Slider({Title = "Pull Range", Step = 1, Min = 5, Max = 60, Default = 40, Callback = function(v) S.ParryRangePull=v end})
-        R.ShowParryViz = Tabs.Main:Toggle({Title = "Show 3D Visualizer", Value = S.ShowParryViz, Callback = function(v) S.ShowParryViz=v end})
-        R.ParryDynamic = Tabs.Main:Toggle({Title = "Dynamic Size", Value = S.ParryDynamic, Callback = function(v) S.ParryDynamic=v end})
-        R.ParryRainbow = Tabs.Main:Toggle({Title = "Rainbow", Value = S.ParryRainbow, Callback = function(v) S.ParryRainbow=v end})
+        Tabs.Main:Toggle({Title = "Show 3D Visualizer", Value = S.ShowParryViz, Callback = function(v) S.ShowParryViz=v end})
+        Tabs.Main:Toggle({Title = "Dynamic Size", Value = S.ParryDynamic, Callback = function(v) S.ParryDynamic=v end})
+        Tabs.Main:Toggle({Title = "Rainbow", Value = S.ParryRainbow, Callback = function(v) S.ParryRainbow=v end})
         Tabs.Main:Colorpicker({Title = "Visualizer Color", Default = S.ParryColor, Callback = function(c) S.ParryColor=c end})
         Tabs.Main:Slider({Title = "Transparency", Step = 0.05, Min = 0, Max = 0.95, Default = 0.5, Callback = function(v) S.ParryAlpha=v end})
-        R.AutoShakeWire = Tabs.Main:Toggle({Title = "Auto Shake Wire Eye", Value = S.AutoShakeWire, Callback = function(v) S.AutoShakeWire=v; SetAutoShakeWire(v) end})
+        Tabs.Main:Toggle({Title = "Auto Shake Wire Eye", Value = S.AutoShakeWire, Callback = function(v) S.AutoShakeWire=v; SetAutoShakeWire(v) end})
         Tabs.Main:Slider({Title = "Shake Cooldown", Step = 0.1, Min = 0.1, Max = 3, Default = 0.5, Callback = function(v) S.ShakeSpeed=v end})
         -- Visual
         Tabs.Visual:Dropdown({Title = "ESP Type", Values = {"Highlight","Chams","Name","Dot"}, Value = S.ESPMode, Callback = function(v) S.ESPMode=v end})
@@ -1813,8 +1738,7 @@ local function BuildUI()
         Tabs.Farm:Button({Title = "Complete All Generators Now", Callback = function() N("Farm","Starting...",3,"wheat"); task.spawn(CompleteAllGenerators) end})
         Tabs.Farm:Toggle({Title = "Auto Farm (loop)", Value = S.AutoFarm, Callback = function(v) S.AutoFarm=v; SetAutoFarm(v) end})
     else
-        -- Infectious Smile tabs
-        -- Human tab
+        -- IS Human tab
         Tabs.Human:Toggle({Title = "Hitbox Expander", Value = S.HitboxExpander, Callback = function(v) S.HitboxExpander=v; SetHitboxExpander(v) end})
         Tabs.Human:Slider({Title = "Hitbox Size", Step = 0.5, Min = 1, Max = 20, Default = 5, Callback = function(v) S.HitboxSize=v end})
         Tabs.Human:Dropdown({Title = "Hitbox Shape", Values = {"Box","Sphere","Cylinder"}, Value = S.HitboxShape, Callback = function(v) S.HitboxShape=v end})
@@ -1842,7 +1766,7 @@ local function BuildUI()
         Tabs.Human:Toggle({Title = "Disable Anti Smilers", Value = S.DisableAntiSmilers, Callback = function(v) S.DisableAntiSmilers=v; SetDisableAntiSmilers(v) end})
         Tabs.Human:Toggle({Title = "Anti Infected Players (fling)", Value = S.AntiInfectedPlayers, Callback = function(v) S.AntiInfectedPlayers=v; SetAntiInfectedPlayers(v) end})
 
-        -- Smile tab
+        -- IS Smile tab
         Tabs.Smile:Toggle({Title = "Auto Infectious", Value = S.AutoInfectious, Callback = function(v) S.AutoInfectious=v; SetAutoInfectious(v) end})
         Tabs.Smile:Toggle({Title = "Auto Grab", Value = S.AutoGrab, Callback = function(v) S.AutoGrab=v; SetAutoGrab(v) end})
         Tabs.Smile:Toggle({Title = "Kill Grab", Value = S.KillGrab, Callback = function(v) S.KillGrab=v; SetKillGrab(v) end})
@@ -1851,7 +1775,7 @@ local function BuildUI()
         Tabs.Smile:Toggle({Title = "Anti Stun (IS)", Value = S.AntiStunIS, Callback = function(v) S.AntiStunIS=v; SetAntiStunIS(v) end})
         Tabs.Smile:Toggle({Title = "Instant Infect", Value = S.InstantInfect, Callback = function(v) S.InstantInfect=v; SetInstantInfect(v) end})
 
-        -- Events tab
+        -- IS Events tab
         Tabs.Events:Toggle({Title = "Auto Collect Keys", Value = S.AutoCollectKeys, Callback = function(v) S.AutoCollectKeys=v; SetAutoCollectKeys(v) end})
         Tabs.Events:Toggle({Title = "Auto Collect Coins", Value = S.AutoCollectCoins, Callback = function(v) S.AutoCollectCoins=v; SetAutoCollectCoins(v) end})
         Tabs.Events:Toggle({Title = "Full Bright", Value = S.FullBrightIS, Callback = function(v) S.FullBrightIS=v; SetFullBrightIS(v) end})
@@ -1862,7 +1786,7 @@ local function BuildUI()
         Tabs.Events:Toggle({Title = "Smart Delete Door", Value = S.SmartDeleteDoor, Callback = function(v) S.SmartDeleteDoor=v; SetSmartDeleteDoor(v) end})
     end
 
-    -- Settings (shared)
+    -- Settings tab (shared)
     Tabs.Settings:Slider({Title = "UI Scale", Step = 0.05, Min = 0.7, Max = 1.5, Default = 1.0, Callback = function(v) ApplyScale(v) end})
     Tabs.Settings:Slider({Title = "UI Transparency", Step = 0.05, Min = 0, Max = 0.9, Default = 0, Callback = function(v) ApplyAlpha(v) end})
     Tabs.Settings:Toggle({Title = "Anti-AFK", Value = S.AntiAFK, Callback = function(v) S.AntiAFK=v; SetAntiAFK(v) end})
@@ -1885,11 +1809,57 @@ local function BuildUI()
         if not selCfg or selCfg == "(none)" then return end
         local ok = LoadCfg(selCfg)
         if ok then N("Config","Loaded: "..tostring(selCfg),3,"folder") end
-        -- reapply features
+        -- reapply features (simplified: just re-call respective Set functions)
         if PlaceId == 70845479499574 then
-            -- reinitialize BBN features
+            if S.InfStamina then ConnectStamina() end
+            if S.NoClip then SetNoClip(true) end
+            if S.AllowJump then SetAllowJump(true) end
+            if S.AutoRun then SetAutoRun(true) end
+            if S.AntiStun then SetAntiStun(true) end
+            if S.AntiRagdoll then SetAntiRagdoll(true) end
+            if S.AntiTrap then SetAntiTrap(true) end
+            if S.DeleteDoor then SetDeleteDoor(true) end
+            if S.SkipCutscene then SetSkipCutscene(true) end
+            if S.InstantGen then StartInstantGen() end
+            if S.FullBright then SetFullBright(true) end
+            if S.NoBlind then SetNoBlind(true) end
+            if S.HideGenGui then SetHideGenGui(true) end
+            if S.InstantPrompt then SetInstantPrompt(true) end
+            if S.AutoBarricade then SetBarricade(true) end
+            if S.AutoEscape then SetAutoEscape(true) end
+            if S.AutoFarm then SetAutoFarm(true) end
+            if S.AutoParry then SetAutoParry(true) end
+            if S.AutoShakeWire then SetAutoShakeWire(true) end
+            if S.FovValue ~= 70 then SetFOV(S.FovValue) end
         else
-            -- reinitialize IS features
+            if S.HitboxExpander then SetHitboxExpander(true) end
+            if S.WalkSpeedEnabled then SetWalkSpeedEnabled(true) end
+            if S.AutoGetWeapon then SetAutoGetWeapon(true) end
+            if S.NoCooldown then SetNoCooldown(true) end
+            if S.AutoInfectious then SetAutoInfectious(true) end
+            if S.SmartDeleteDoor then SetSmartDeleteDoor(true) end
+            if S.AntiStunIS then SetAntiStunIS(true) end
+            if S.AntiInfection then SetAntiInfection(true) end
+            if S.DisableKillbricks then SetDisableKillbricks(true) end
+            if S.AutoFastWeapons then SetAutoFastWeapons(true) end
+            if S.ReachWeapons then SetReachWeapons(true) end
+            if S.AutoReach then SetAutoReach(true) end
+            if S.AntiInventoryBlock then SetAntiInventoryBlock(true) end
+            if S.AntiInfectedPlayers then SetAntiInfectedPlayers(true) end
+            if S.ReachHitbox then SetReachHitbox(true) end
+            if S.DisableAntiSmilers then SetDisableAntiSmilers(true) end
+            if S.AutoGrab then SetAutoGrab(true) end
+            if S.KillGrab then SetKillGrab(true) end
+            if S.InstantKillGrab then SetInstantKillGrab(true) end
+            if S.PushGrab then SetPushGrab(true) end
+            if S.InstantInfect then SetInstantInfect(true) end
+            if S.AutoCollectKeys then SetAutoCollectKeys(true) end
+            if S.AutoCollectCoins then SetAutoCollectCoins(true) end
+            if S.FullBrightIS then SetFullBrightIS(true) end
+            if S.RemoveFogIS then SetRemoveFogIS(true) end
+            if S.AntiBlackHole then SetAntiBlackHole(true) end
+            if S.KillNearestNPCs then SetKillNearestNPCs(true) end
+            if S.DisableEcho then SetDisableEcho(true) end
         end
     end})
     Tabs.Config:Toggle({Title = "Auto Load on Start", Value = GetAutoLoad() ~= nil, Callback = function(v)
@@ -2001,9 +1971,8 @@ local function BuildUI()
     N("Phantom Hub v8.0", "Multi-game ready — "..CURRENT_GAME, 5, "moon")
 end
 
--- Loading screen and language (simple)
+-- Language selection & start
 local function ShowLangGUI(callback)
-    -- simplified for brevity
     local sg = Instance.new("ScreenGui", LP.PlayerGui)
     sg.Name = "PH_Lang"; sg.IgnoreGuiInset = true; sg.ResetOnSpawn = false
     local f = Instance.new("Frame", sg); f.Size = UDim2.new(0,300,0,200); f.Position = UDim2.new(0.5,-150,0.5,-100); f.BackgroundColor3 = Color3.fromRGB(20,20,30)
