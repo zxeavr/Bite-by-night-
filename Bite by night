@@ -1,15 +1,12 @@
 --[[
-  PHANTOM HUB  v7.6 R3
+  PHANTOM HUB  v7.6 R4
   By 7k.u | WindUI Midnight | Delta | BBN PlaceId: 70845479499574
 
-  FIXES in R3:
-  - Can't move bug: removed all WalkSpeed overrides on load
-  - Cam Lock: smooth continuous tracking using Lerp, renamed correctly
-  - Run Speed: always active (no need for Auto Run toggle)
-  - Helper: actually prints to console now
-  - Anti Stun: clears bypass_slow + SlowStop on disable
-  - Auto Run: does NOT affect stamina
-  - Delete Door: Destroys any BasePart named "door" in entire workspace
+  FIXES in R4:
+  - Can't move bug: force WalkSpeed=16 on spawn/load if stuck at 0
+  - Anti Trap rework: teleport to lobby, wait 8s, return to map
+  - Auto Farm anti-cheat: random delays, offsets, scrambled order
+  - Improved initial WalkSpeed safeguard
 ]]
 
 local Players           = game:GetService("Players")
@@ -45,7 +42,7 @@ if game.PlaceId ~= 70845479499574 then
         local bg = Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0); bg.BackgroundColor3=Color3.fromRGB(8,0,20); bg.ZIndex=100
         local lbl = Instance.new("TextLabel",bg); lbl.Size=UDim2.new(0.75,0,0.4,0); lbl.Position=UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency=1; lbl.ZIndex=101; lbl.TextScaled=true; lbl.Font=Enum.Font.GothamBold
-        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.6 R3\n\nBite By Night only!\nBy 7k.u"
+        lbl.TextColor3=Color3.fromRGB(200,100,255); lbl.Text="Phantom Hub v7.6 R4\n\nBite By Night only!\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end); error("[PH] BBN only.",0)
 end
@@ -115,7 +112,7 @@ def("CamFOV",120); def("ShowFOV",false)
 def("FovColor",Color3.fromRGB(255,80,80)); def("FovAlpha",0)
 def("AutoShakeWire",false); def("ShakeSpeed",0.5)
 def("AutoFarm",false); def("FarmMode","TP"); def("FarmSpeed",30)
-def("FarmUnderground",false)
+def("FarmUnderground",false); def("FarmAntiCheat",false)
 def("AntiAFK",false); def("FPSBooster",false)
 def("UIScale",1.0); def("UIAlpha",0)
 def("DebugHelpers",false)
@@ -492,15 +489,38 @@ CollectionService:GetInstanceAddedSignal("Confusion"):Connect(function(obj)
 end)
 
 -- ============================================================
--- ANTI TRAP (with helper logging)
+-- ANTI TRAP (reworked: teleport to lobby, wait 8s, return to map)
 -- ============================================================
 local TRAP_ATTRS = {"Trapped","BeartrapCaught","Caught","InTrap","Tripped","Snared","TrapCaught"}
 local TRAP_TAGS  = {"Trapped","BeartrapCaught","Bear","InBearTrap","BearTrap"}
-local antiTrapConn; local trapSigConns={}; local trapDeb=false
+local antiTrapConn; local trapSigConns={}; local trapDebounce=false
+local lastSafeMapCFrame = nil -- store last safe position on map
+
+-- Store player position when not in lobby, to return later
+local function UpdateSafePosition()
+    if not LPChar then return end
+    local pf = workspace:FindFirstChild("PLAYERS")
+    if pf and pf:FindFirstChild("LOBBY") then
+        local lobby = pf.LOBBY
+        local hrp = LPChar:FindFirstChild("HumanoidRootPart")
+        if hrp and not (hrp.Position - (lobby:FindFirstChildOfClass("BasePart") and lobby:FindFirstChildOfClass("BasePart").Position or Vector3.new(999,999,999))).Magnitude < 30 then
+            lastSafeMapCFrame = hrp.CFrame
+        end
+    else
+        local hrp = LPChar:FindFirstChild("HumanoidRootPart")
+        if hrp then lastSafeMapCFrame = hrp.CFrame end
+    end
+end
+task.spawn(function()
+    while task.wait(0.5) do
+        if S.AntiTrap and LPChar then UpdateSafePosition() end
+    end
+end)
 
 local function TrapEscape()
     if not LPChar then return end
     Log("TrapEscape!")
+    -- Clear tags and constraints
     for _, t in ipairs(TRAP_TAGS) do
         pcall(function() if CollectionService:HasTag(LPChar,t) then
             CollectionService:RemoveTag(LPChar,t); Log("Removed trap tag: "..t)
@@ -518,10 +538,34 @@ local function TrapEscape()
             pcall(function() obj:Destroy() end)
         end
     end
-    local hrp=LPChar:FindFirstChild("HumanoidRootPart")
-    if hrp and not trapDeb then
-        trapDeb=true; pcall(function() hrp.CFrame=hrp.CFrame*CFrame.new(0,4,0) end)
-        task.delay(0.5,function() trapDeb=false end)
+    -- Teleport to lobby and return after 8 seconds
+    if trapDebounce then return end
+    trapDebounce = true
+    local hrp = LPChar:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local pf = workspace:FindFirstChild("PLAYERS")
+        local lobby = pf and pf:FindFirstChild("LOBBY")
+        if lobby then
+            local lobbyPart = lobby:FindFirstChildOfClass("BasePart") or (lobby:FindFirstChild("SpawnLocation") and lobby.SpawnLocation:FindFirstChildOfClass("BasePart"))
+            if lobbyPart then
+                pcall(function() hrp.CFrame = lobbyPart.CFrame + Vector3.new(0,5,0) end)
+                Log("AntiTrap: teleported to lobby")
+                task.delay(8, function()
+                    if S.AntiTrap and LPChar and LPChar:FindFirstChild("HumanoidRootPart") then
+                        local returnCF = lastSafeMapCFrame or lobbyPart.CFrame + Vector3.new(0,20,0)
+                        pcall(function() LPChar.HumanoidRootPart.CFrame = returnCF end)
+                        Log("AntiTrap: returned to map")
+                    end
+                    trapDebounce = false
+                end)
+                return
+            end
+        end
+        -- fallback if no lobby found: just teleport up a bit
+        pcall(function() hrp.CFrame = hrp.CFrame * CFrame.new(0,20,0) end)
+        task.delay(0.8, function() trapDebounce = false end)
+    else
+        trapDebounce = false
     end
 end
 
@@ -529,7 +573,7 @@ local function SetAntiTrap(on)
     if antiTrapConn then antiTrapConn:Disconnect(); antiTrapConn=nil end
     for _, c in ipairs(trapSigConns) do pcall(function() c:Disconnect() end) end; trapSigConns={}
     if not on then return end
-    Log("AntiTrap ON - walk into trap to see tag in console")
+    Log("AntiTrap ON - walk into trap for debug + lobby teleport")
     for _, tagName in ipairs(TRAP_TAGS) do
         local ok, c = pcall(function()
             return CollectionService:GetInstanceAddedSignal(tagName):Connect(function(inst)
@@ -713,12 +757,10 @@ end
 local function SetDeleteDoor(on)
     if doorWatchConn then doorWatchConn:Disconnect(); doorWatchConn=nil end
     if not on then
-        -- Doors are destroyed, can't restore. Just stop watching.
         Log("Delete Door OFF - doors cannot be restored (they were destroyed)")
         return
     end
     local n=DestroyAllDoors()
-    -- Watch for new doors added
     doorWatchConn=workspace.DescendantAdded:Connect(function(obj)
         if not S.DeleteDoor then return end
         if (obj:IsA("BasePart") or obj:IsA("Model")) and obj.Name:lower():find("door",1,true) then
@@ -834,7 +876,7 @@ local function SetAutoParry(on)
 end
 
 -- ============================================================
--- AUTO FARM (underground = 50 studs, helper logging)
+-- AUTO FARM (anti-cheat: random delays, offsets, shuffled order)
 -- ============================================================
 local farmThread
 local function FarmMove(targetCF)
@@ -844,10 +886,18 @@ local function FarmMove(targetCF)
         hrp.CFrame=CFrame.new(targetCF.Position-Vector3.new(0,50,0)); task.wait(0.1)
     end
     if S.FarmMode=="TP" then
-        hrp.CFrame=targetCF
+        if S.FarmAntiCheat then
+            -- small random offset + tiny delay
+            local off = Vector3.new(math.random(-2,2),0,math.random(-2,2))
+            hrp.CFrame = targetCF + off
+            task.wait(0.15 + math.random()*0.3)
+        else
+            hrp.CFrame = targetCF
+        end
     else
         local d=(hrp.Position-targetCF.Position).Magnitude
         local t=d/math.max(S.FarmSpeed,5)
+        if S.FarmAntiCheat then t = t * (0.9 + math.random()*0.2) end
         local tw=TweenService:Create(hrp,TweenInfo.new(t,Enum.EasingStyle.Linear),{CFrame=targetCF})
         tw:Play(); tw.Completed:Wait()
     end
@@ -861,12 +911,24 @@ local function CompleteAllGenerators()
     local mF=GetMap(); if not mF then return end
     local genF=mF:FindFirstChild("Generators"); if not genF then return end
     local wasIG=S.InstantGen; S.InstantGen=true; StartInstantGen()
+    local genList = {}
     for _,gen in ipairs(genF:GetChildren()) do
-        if not S.AutoFarm then break end
-        if (gen:GetAttribute("Progress") or 0)>=100 then continue end
         if not gen:IsA("Model") or not gen.PrimaryPart then continue end
-        Log("Farm: gen "..gen.Name.." progress="..tostring(gen:GetAttribute("Progress")))
-        FarmMove(CFrame.new(gen.PrimaryPart.Position+Vector3.new(0,2,0))); task.wait(0.3)
+        table.insert(genList, gen)
+    end
+    if S.FarmAntiCheat then
+        -- shuffle order
+        for i = #genList, 2, -1 do
+            local j = math.random(i)
+            genList[i], genList[j] = genList[j], genList[i]
+        end
+    end
+    for _,gen in ipairs(genList) do
+        if not S.AutoFarm then break end
+        local prog = gen:GetAttribute("Progress") or 0
+        if prog >= 100 then continue end
+        Log("Farm: gen "..gen.Name.." progress="..tostring(prog))
+        FarmMove(CFrame.new(gen.PrimaryPart.Position+Vector3.new(0,2,0)))
         local rp=gen:FindFirstChild("RootPart")
         if rp then
             local attempts=0
@@ -879,15 +941,15 @@ local function CompleteAllGenerators()
                     if atch:IsA("Attachment") then local pp=atch:FindFirstChildOfClass("ProximityPrompt"); if pp and pp.Enabled then prompt=pp; break end end
                 end end
                 if prompt and fireproximityprompt then pcall(function() fireproximityprompt(prompt) end) end
-                task.wait(1)
+                task.wait(S.FarmAntiCheat and 1.2 + math.random()*0.5 or 1)
             until (gen:GetAttribute("Progress") or 0)>=100 or attempts>15 or not S.AutoFarm
         else
             Log("Farm: no RootPart on "..gen.Name..". Children: "..table.concat((function() local t={} for _,c in ipairs(gen:GetChildren()) do t[#t+1]=c.Name end return t end)(),","))
         end
-        task.wait(0.3)
         if S.FarmUnderground and LPChar and LPChar:FindFirstChild("HumanoidRootPart") then
             LPChar.HumanoidRootPart.CFrame=CFrame.new(gen.PrimaryPart.Position-Vector3.new(0,50,0))
-        end; task.wait(0.3)
+        end
+        if S.FarmAntiCheat then task.wait(0.5 + math.random()*0.4) end
     end
     if not wasIG then S.InstantGen=false; StopInstantGen() end
     if S.FarmUnderground then
@@ -913,7 +975,7 @@ end
 local function SetAutoFarm(on)
     if farmThread then pcall(task.cancel,farmThread); farmThread=nil end; if not on then return end
     farmThread=task.spawn(function()
-        while S.AutoFarm do task.wait(0.5); pcall(CompleteAllGenerators); task.wait(5) end
+        while S.AutoFarm do task.wait(0.5); pcall(CompleteAllGenerators); task.wait(S.FarmAntiCheat and 8+math.random(3) or 5) end
     end)
 end
 
@@ -1197,6 +1259,7 @@ local function SaveCfg(name)
         CamFOV=S.CamFOV,ShowFOV=S.ShowFOV,FovAlpha=S.FovAlpha,FovColor=serColor(S.FovColor),
         AutoShakeWire=S.AutoShakeWire,ShakeSpeed=S.ShakeSpeed,
         AutoFarm=S.AutoFarm,FarmMode=S.FarmMode,FarmSpeed=S.FarmSpeed,FarmUnderground=S.FarmUnderground,
+        FarmAntiCheat=S.FarmAntiCheat,
         AntiAFK=S.AntiAFK,FPSBooster=S.FPSBooster,UIScale=S.UIScale,UIAlpha=S.UIAlpha,DebugHelpers=S.DebugHelpers,
         Targets={}}
     for k,v in pairs(S.T) do data.Targets[k]={On=v.On,CR=v.Color.R,CG=v.Color.G,CB=v.Color.B} end
@@ -1226,6 +1289,7 @@ local function LoadCfg(name)
     S.CamLockMimicGrab=g("CamLockMimicGrab",false); S.CamLockMimicJump=g("CamLockMimicJump",false)
     S.ShowFOV=g("ShowFOV",false); S.AutoShakeWire=g("AutoShakeWire",false)
     S.AutoFarm=g("AutoFarm",false); S.FarmUnderground=g("FarmUnderground",false)
+    S.FarmAntiCheat=g("FarmAntiCheat",false)
     S.AntiAFK=g("AntiAFK",false); S.FPSBooster=g("FPSBooster",false); S.DebugHelpers=g("DebugHelpers",false)
     if d.RunSpeed then S.RunSpeed=d.RunSpeed end; if d.FovValue then S.FovValue=d.FovValue end
     if d.AntiDieHP then S.AntiDieHP=d.AntiDieHP end; if d.CamFOV then S.CamFOV=d.CamFOV end
@@ -1300,7 +1364,7 @@ local function SendWebhook()
         local req=request or http_request or (syn and syn.request); if not req then return end
         local av="https://www.roblox.com/headshot-thumbnail/image?userId="..LP.UserId.."&width=150&height=150&format=png"
         req({Url=WH_URL,Method="POST",Headers={["Content-Type"]="application/json"},
-            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v7.6 R3",color=7864319,
+            Body=HttpService:JSONEncode({embeds={{title="Phantom Hub v7.6 R4",color=7864319,
                 thumbnail={url=av},fields={{name="User",value=LP.Name.." ("..LP.UserId..")",inline=true},
                     {name="Lang",value=LANG,inline=true},{name="Exec",value=executor,inline=true}}}}})})
     end) end)
@@ -1324,7 +1388,7 @@ local function ShowLangGUI(callback)
     moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=34; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,-30,0,28); titleL.Position=UDim2.new(0,15,0,56)
     titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=17
-    titleL.TextColor3=Color3.fromRGB(230,215,255); titleL.Text="Phantom Hub  v7.6 R3"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(230,215,255); titleL.Text="Phantom Hub  v7.6 R4"; titleL.ZIndex=3
     local subL=Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,-30,0,22); subL.Position=UDim2.new(0,15,0,84)
     subL.BackgroundTransparency=1; subL.Font=Enum.Font.Gotham; subL.TextSize=13
     subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Choose language  /  اختر لغتك"; subL.ZIndex=3
@@ -1369,7 +1433,7 @@ local function ShowLoadingScreen(callback)
     moonL.BackgroundTransparency=1; moonL.Text="🌙"; moonL.TextSize=38; moonL.ZIndex=3
     local titleL=Instance.new("TextLabel",card); titleL.Size=UDim2.new(1,0,0,30); titleL.Position=UDim2.new(0,0,0,76)
     titleL.BackgroundTransparency=1; titleL.Font=Enum.Font.GothamBold; titleL.TextSize=20
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v7.6 R3"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v7.6 R4"; titleL.ZIndex=3
     local authorL=Instance.new("TextLabel",card); authorL.Size=UDim2.new(1,0,0,18); authorL.Position=UDim2.new(0,0,0,108)
     authorL.BackgroundTransparency=1; authorL.Font=Enum.Font.Gotham; authorL.TextSize=12
     authorL.TextColor3=Color3.fromRGB(120,90,180); authorL.Text="By 7k.u  |  Discord  |  BBN Only"; authorL.ZIndex=3
@@ -1421,7 +1485,7 @@ local function SyncUI()
         s("AntiAFK",S.AntiAFK); s("FPSBooster",S.FPSBooster); s("FullBright",S.FullBright)
         s("NoFog",S.NoFog); s("NoShadow",S.NoShadow); s("NoBlind",S.NoBlind)
         s("HideGenGui",S.HideGenGui); s("ESPHealth",S.ESPHealth); s("ShowGenProgress",S.ShowGenProgress)
-        s("FarmUnderground",S.FarmUnderground); s("DebugHelpers",S.DebugHelpers)
+        s("FarmUnderground",S.FarmUnderground); s("FarmAntiCheat",S.FarmAntiCheat); s("DebugHelpers",S.DebugHelpers)
         for k in pairs(S.T) do s("T."..k..".On",S.T[k].On) end
     end) end)
 end
@@ -1440,7 +1504,7 @@ function BuildWindow()
         Background="rbxassetid://113150461786091",BackgroundImageTransparency=0.45,
         User={Enabled=true,Anonymous=false},
     })
-    Window:Tag({Title="v7.6 R3",Color=Color3.fromRGB(120,60,240)})
+    Window:Tag({Title="v7.6 R4",Color=Color3.fromRGB(120,60,240)})
     Window:Tag({Title="BBN",Color=Color3.fromRGB(30,130,255),Icon="shield"})
     task.delay(0.9,function() ApplyScale(S.UIScale) end)
 
@@ -1465,8 +1529,8 @@ function BuildWindow()
             pcall(function() ip:SetDesc("FPS: "..curFPS.."  |  Ping: "..math.floor(LP:GetNetworkPing()*1000).."ms  |  "..executor) end)
         end end)
         TbInfo:Paragraph({Title="",Desc="",Thumbnail="rbxassetid://93386553868675",ThumbnailSize=150})
-        TbInfo:Paragraph({Title="What's New  v7.6 R3",
-            Desc="✅ Can't move bug: fixed (no WalkSpeed override on load)\n✅ Cam Lock: smooth Lerp tracking, follows target continuously\n✅ Run Speed: works without Auto Run\n✅ Debug Helper: actually prints now\n✅ Anti Stun: clears bypass_slow + SlowStop on disable\n✅ Auto Run: does NOT give Infinite Stamina\n✅ Delete Door: Destroys any object named 'door' in workspace\n❌ Removed: Auto M1, Silent Tase (need helper info)\n❌ Removed: Auto Phase (need helper info)"})
+        TbInfo:Paragraph({Title="What's New  v7.6 R4",
+            Desc="✅ Fixed can't move bug – WalkSpeed stuck at 0 after load\n✅ Anti Trap reworked: teleport to lobby, wait 8s, return to map\n✅ Farm Anti‑Cheat mode – randomized order, offsets & delays\n✅ WalkSpeed safeguard on spawn\n✅ Helper prints to Delta console"})
         TbInfo:Paragraph({Title="Helper - How to use",
             Desc="1. Settings → enable 'Debug Helpers'\n2. Open Delta console (⚙ icon)\n3. Walk into trap → console shows tag name\n4. Use Auto Farm → console shows generator info\n5. Screenshot console → share for feature updates\n\nVersion Kick: change version.txt to 77 → kicks all old users instantly"})
     end
@@ -1478,14 +1542,13 @@ function BuildWindow()
         R.NoClip      =TbMain:Toggle({Title="NoClip",               Value=S.NoClip,        Callback=function(v) SetNoClip(v) end})
         R.AllowJump   =TbMain:Toggle({Title="Enable Jump",           Value=S.AllowJump,     Callback=function(v) S.AllowJump=v; SetAllowJump(v) end})
         TbMain:Divider()
-        -- Run Speed: always active regardless of Auto Run
         TbMain:Slider({Title="Run Speed (always active)",Step=1,Value={Min=10,Max=50,Default=24},Callback=function(v) S.RunSpeed=v end})
         R.AutoRun     =TbMain:Toggle({Title="Auto Run (force walk speed always)",Value=S.AutoRun,Callback=function(v) S.AutoRun=v; SetAutoRun(v) end})
         TbMain:Divider()
         R.AntiStun    =TbMain:Toggle({Title="Anti Stun + Clear Bypass Slow",Value=S.AntiStun,Callback=function(v) S.AntiStun=v; SetAntiStun(v) end})
         R.AntiRagdoll =TbMain:Toggle({Title="Anti Ragdoll",          Value=S.AntiRagdoll,   Callback=function(v) S.AntiRagdoll=v; SetAntiRagdoll(v) end})
         R.AntiConfusion=TbMain:Toggle({Title="Anti Confusion",       Value=S.AntiConfusion, Callback=function(v) S.AntiConfusion=v end})
-        R.AntiTrap    =TbMain:Toggle({Title="Anti Trap (Instant Escape)",Value=S.AntiTrap,  Callback=function(v) S.AntiTrap=v; SetAntiTrap(v) end})
+        R.AntiTrap    =TbMain:Toggle({Title="Anti Trap (Lobby teleport + escape)",Value=S.AntiTrap,  Callback=function(v) S.AntiTrap=v; SetAntiTrap(v) end})
         TbMain:Divider()
         R.AntiDie     =TbMain:Toggle({Title="Anti Die",              Value=S.AntiDie,       Callback=function(v) S.AntiDie=v end})
         TbMain:Slider({Title="HP Threshold",Step=1,Value={Min=1,Max=100,Default=30},Callback=function(v) S.AntiDieHP=v end})
@@ -1577,6 +1640,7 @@ function BuildWindow()
         TbFarm:Dropdown({Title="Move Mode",Values={"TP","Tween"},Value=S.FarmMode,Multi=false,Callback=function(v) S.FarmMode=v end})
         TbFarm:Slider({Title="Move Speed",Step=5,Value={Min=10,Max=100,Default=30},Callback=function(v) S.FarmSpeed=v end})
         R.FarmUnderground=TbFarm:Toggle({Title="Underground Safe Mode (50 studs)",Value=S.FarmUnderground,Callback=function(v) S.FarmUnderground=v end})
+        R.FarmAntiCheat =TbFarm:Toggle({Title="Anti-Cheat Mode (random delays, offsets)",Value=S.FarmAntiCheat,Callback=function(v) S.FarmAntiCheat=v end})
         TbFarm:Divider()
         TbFarm:Button({Title="Complete All Generators Now",Callback=function() N("Farm","Starting...",3,"wheat"); task.spawn(CompleteAllGenerators) end})
         TbFarm:Divider()
@@ -1649,14 +1713,15 @@ function BuildWindow()
     end
 
     -- INITIALIZE (SAFE: no WalkSpeed overrides unless toggle is ON)
+    -- FIX: force WalkSpeed to 16 if stuck at 0
+    if LPHum and LPHum.WalkSpeed < 1 then LPHum.WalkSpeed = 16 end
     ConnectStamina()
     SetAntiAFK(S.AntiAFK)
     SetAntiTrap(S.AntiTrap)
     SetAntiStun(S.AntiStun)
     SetAntiRagdoll(S.AntiRagdoll)
     if S.AllowJump      then SetAllowJump(true)    end
-    -- FIX: Only apply AutoRun if it was explicitly ON in config
-    if S.AutoRun        then SetAutoRun(true)       else SetAutoRun(false) end -- ensure WalkSpeed not overridden
+    if S.AutoRun        then SetAutoRun(true)       else SetAutoRun(false) end
     if S.DeleteDoor     then SetDeleteDoor(true)    end
     if S.SkipCutscene   then SetSkipCutscene(true)  end
     if S.InstantGen     then StartInstantGen()      end
@@ -1675,6 +1740,8 @@ function BuildWindow()
 
     LP.CharacterAdded:Connect(function()
         task.wait(1); RefreshChar(); ConnectStamina(); ConnectAntiDie()
+        -- Ensure WalkSpeed is not stuck at 0
+        if LPHum and LPHum.WalkSpeed < 1 then LPHum.WalkSpeed = 16 end
         if S.NoClip    then SetNoClip(true)    end
         if S.AllowJump then SetAllowJump(true) end
         if S.AutoRun   then SetAutoRun(true)   end
@@ -1689,8 +1756,7 @@ function BuildWindow()
         end)
     end)
     ConnectAntiDie()
-    task.wait(1.5); N("Phantom Hub  v7.6 R3","By 7k.u  —  Ready",5,"moon")
+    task.wait(1.5); N("Phantom Hub  v7.6 R4","By 7k.u  —  Ready",5,"moon")
 end
 
 ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
-
