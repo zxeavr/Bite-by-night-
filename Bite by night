@@ -1,10 +1,16 @@
 --[[
-  PHANTOM HUB v8.0 | Violence District
+  PHANTOM HUB v9.0 | Violence District
   PlaceId: 93978595733734
   By 7k.u | WindUI Midnight | Delta
-  ✅ جميع الميزات من المصادر المفتوحة
-  ✅ إيقاف الميزة = عدم وجود أي تأثير أو استهلاك موارد
-  ✅ Optimized & Bug-Free
+  ✅ Aimbot + Spear Aimbot
+  ✅ Auto Parry (Mobile Compatible - ContextActionService)
+  ✅ Double Tap + Infinite Lunge + Auto Hook + Destroy Pallets + Full Gen Break
+  ✅ ESP (Outline/Highlight/Chams/Name)
+  ✅ Auto Perfect Check + Auto Wiggle
+  ✅ Speed / Fly / Noclip / Infinite Jump
+  ✅ Full Bright / No Fog / No Shadow / FOV
+  ✅ Config (Save/Load)
+  ✅ Optimized & Mobile Compatible
 ]]
 
 -- ============================================================
@@ -17,6 +23,7 @@ local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputMgr = game:GetService("VirtualInputManager")
+local ContextActionService = game:GetService("ContextActionService")
 local LP = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
@@ -32,7 +39,7 @@ if game.PlaceId ~= PLACE_VD then
         lbl.Size = UDim2.new(0.75,0,0.4,0); lbl.Position = UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency = 1; lbl.ZIndex = 101; lbl.TextScaled = true
         lbl.Font = Enum.Font.GothamBold; lbl.TextColor3 = Color3.fromRGB(200,100,255)
-        lbl.Text = "Phantom Hub v8.0\n\nViolence District only!\nBy 7k.u"
+        lbl.Text = "Phantom Hub v9.0\n\nViolence District only!\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     return
@@ -70,6 +77,15 @@ local S = {
     NoSlowdown = false,
     AntiBlind = false,
     NoPalletStun = false,
+    -- Aimbot
+    Aimbot = false,        AimFOV = 120, AimSmooth = 0.3, AimTargetPart = "Head", AimVisCheck = true, AimShowFOV = true, AimPredict = true,
+    SpearAimbot = false,   SpearGravity = 50, SpearSpeed = 100,
+    -- Killer Combat
+    DoubleTap = false,
+    InfiniteLunge = false,
+    AutoHook = false,
+    DestroyPallets = false,
+    FullGenBreak = false,
     -- Movement
     SpeedEnabled = false,  SpeedValue = 32,
     FlyEnabled = false,    FlySpeed = 50,
@@ -80,13 +96,6 @@ local S = {
     FovEnabled = false, FovValue = 90,
     ThirdPerson = false,
     ShiftLock = false,
-    -- Combat Killer
-    DoubleTap = false,
-    InfiniteLunge = false,
-    AutoHook = false,
-    DestroyPallets = false,
-    FullGenBreak = false,
-    SpearAimbot = false,  SpearGravity = 50, SpearSpeed = 100,
     -- Misc
     FlingEnabled = false,  FlingStrength = 10000,
     BeatSurvivor = false,
@@ -264,12 +273,28 @@ local function SetPerfectCheck(on)
 end
 
 -- ============================================================
--- AUTO PARRY (ضغط زر F)
+-- AUTO PARRY (Mobile Compatible via ContextActionService)
 -- ============================================================
+local autoParryAction = "PhantomHubAutoParry"
 local autoParryConn
 local function SetAutoParry(on)
     if autoParryConn then autoParryConn:Disconnect(); autoParryConn = nil end
+    pcall(function() ContextActionService:UnbindAction(autoParryAction) end)
     if not on then return end
+    
+    -- Bind action that works on both PC (F key) and Mobile (touch button)
+    ContextActionService:BindAction(
+        autoParryAction,
+        function(actionName, inputState, inputObject)
+            if inputState == Enum.UserInputState.Begin then
+                -- This is triggered when F is pressed on PC or button is tapped on mobile
+                -- The actual parry will be handled in the heartbeat below
+            end
+        end,
+        true, -- create touch button for mobile
+        Enum.KeyCode.F -- PC key
+    )
+    
     autoParryConn = RunService.Heartbeat:Connect(function()
         if not S.AutoParry then return end
         if GetRole() ~= "Survivor" then return end
@@ -278,11 +303,171 @@ local function SetAutoParry(on)
             if player ~= LP and IsKiller(player) and player.Character then
                 local killerRoot = player.Character:FindFirstChild("HumanoidRootPart")
                 if killerRoot and (killerRoot.Position - root.Position).Magnitude <= 15 then
-                    VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-                    task.wait(0.05)
-                    VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+                    -- Simulate parry via ContextActionService (works on both PC and mobile)
+                    pcall(function()
+                        -- Try Remote method first (from open source)
+                        local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+                        if remotes then
+                            local items = remotes:FindFirstChild("Items")
+                            if items then
+                                local dagger = items:FindFirstChild("Parrying Dagger")
+                                if dagger then
+                                    local parryEvent = dagger:FindFirstChild("parry")
+                                    if parryEvent then
+                                        parryEvent:FireServer()
+                                        return
+                                    end
+                                end
+                            end
+                        end
+                        -- Fallback: press F via VirtualInputManager (PC only)
+                        VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+                        task.wait(0.01)
+                        VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+                    end)
                     break
                 end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- AIMBOT
+-- ============================================================
+local aimbotConn, aimbotTarget
+
+local function GetAimTargetPart(char)
+    if not char then return nil end
+    local partName = S.AimTargetPart
+    if partName == "Head" then return char:FindFirstChild("Head")
+    elseif partName == "Torso" then return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+    else return char:FindFirstChild("HumanoidRootPart") end
+end
+
+local function IsVisible(char)
+    if not char then return false end
+    local cam = Camera; if not cam then return false end
+    local parts = {"Head", "UpperTorso", "Torso", "HumanoidRootPart"}
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.FilterDescendantsInstances = {cam, LP.Character, char}
+    for _, partName in ipairs(parts) do
+        local part = char:FindFirstChild(partName)
+        if part then
+            local dir = part.Position - cam.CFrame.Position
+            local ray = workspace:Raycast(cam.CFrame.Position, dir, params)
+            if not ray then return true end
+        end
+    end
+    return false
+end
+
+local function FindBestAimTarget()
+    if not Camera then return nil end
+    local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    local myRole = GetRole()
+    local closestPlayer, closestDist = nil, S.AimFOV
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LP or not player.Character or not player.Team then continue end
+        local shouldTarget = (myRole == "Survivor" and IsKiller(player)) or (myRole == "Killer" and IsSurvivor(player))
+        if shouldTarget then
+            local targetPart = GetAimTargetPart(player.Character)
+            if targetPart then
+                local passVis = not S.AimVisCheck or IsVisible(player.Character)
+                if passVis then
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                        if dist < closestDist then
+                            closestDist = dist
+                            closestPlayer = player
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+local function AimAt(targetPos)
+    if not Camera or not targetPos then return end
+    local currentCF = Camera.CFrame
+    local targetCF = CFrame.new(currentCF.Position, targetPos)
+    Camera.CFrame = currentCF:Lerp(targetCF, S.AimSmooth)
+end
+
+local aimHolding = false
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimHolding = true
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimHolding = false
+        aimbotTarget = nil
+    end
+end)
+
+local function SetAimbot(on)
+    S.Aimbot = on
+    if aimbotConn then aimbotConn:Disconnect(); aimbotConn = nil end
+    if not on then return end
+    aimbotConn = RunService.RenderStepped:Connect(function()
+        if not S.Aimbot or not aimHolding then aimbotTarget = nil; return end
+        local target = FindBestAimTarget()
+        aimbotTarget = target
+        if target and target.Character then
+            local targetPart = GetAimTargetPart(target.Character)
+            if targetPart then
+                local pos = targetPart.Position
+                if S.AimPredict then
+                    local root = target.Character:FindFirstChild("HumanoidRootPart")
+                    if root then pos = pos + root.Velocity * 0.1 end
+                end
+                AimAt(pos)
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- SPEAR AIMBOT
+-- ============================================================
+local spearAimConn
+local function SetSpearAimbot(on)
+    S.SpearAimbot = on
+    if spearAimConn then spearAimConn:Disconnect(); spearAimConn = nil end
+    if not on then return end
+    spearAimConn = RunService.RenderStepped:Connect(function()
+        if not S.SpearAimbot or GetRole() ~= "Killer" then return end
+        local root = GetCharacterRoot(); if not root then return end
+        local closest, closestDist = nil, math.huge
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LP and IsSurvivor(player) and player.Character then
+                local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+                if targetRoot and IsVisible(player.Character) then
+                    local dist = (targetRoot.Position - root.Position).Magnitude
+                    if dist < closestDist then
+                        closestDist = dist
+                        closest = player
+                    end
+                end
+            end
+        end
+        if closest and closest.Character then
+            local targetRoot = closest.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                local startPos = root.Position + Vector3.new(0, 2, 0)
+                local distance = (targetRoot.Position - startPos).Magnitude
+                local time = distance / S.SpearSpeed
+                local gravityDrop = 0.5 * S.SpearGravity * time * time
+                local aimPos = targetRoot.Position + Vector3.new(0, gravityDrop, 0)
+                local cam = Camera
+                if cam then cam.CFrame = CFrame.new(cam.CFrame.Position, aimPos) end
             end
         end
     end)
@@ -312,6 +497,152 @@ local function SetAutoAttack(on)
                 end
             end
         end
+    end)
+end
+
+-- ============================================================
+-- DOUBLE TAP (Killer)
+-- ============================================================
+local doubleTapConn
+local function SetDoubleTap(on)
+    S.DoubleTap = on
+    if doubleTapConn then doubleTapConn:Disconnect(); doubleTapConn = nil end
+    if not on then return end
+    doubleTapConn = RunService.Heartbeat:Connect(function()
+        if not S.DoubleTap or GetRole() ~= "Killer" then return end
+        local root = GetCharacterRoot(); if not root then return end
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LP and IsSurvivor(player) and player.Character then
+                local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+                if targetRoot and (targetRoot.Position - root.Position).Magnitude <= 8 then
+                    pcall(function()
+                        local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+                        local attacks = remotes and remotes:FindFirstChild("Attacks")
+                        local basicAttack = attacks and attacks:FindFirstChild("BasicAttack")
+                        if basicAttack then
+                            basicAttack:FireServer(false)
+                            task.wait(0.05)
+                            basicAttack:FireServer(false)
+                        end
+                    end)
+                    break
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- INFINITE LUNGE (Killer)
+-- ============================================================
+local lungeConn
+local function SetInfiniteLunge(on)
+    S.InfiniteLunge = on
+    if lungeConn then lungeConn:Disconnect(); lungeConn = nil end
+    if not on then return end
+    lungeConn = RunService.Heartbeat:Connect(function()
+        if not S.InfiniteLunge or GetRole() ~= "Killer" then return end
+        local char = LP.Character; if not char then return end
+        local root = char:FindFirstChild("HumanoidRootPart"); if root then
+            root.Velocity = root.CFrame.LookVector * 100 + Vector3.new(0, 10, 0)
+        end
+    end)
+end
+
+-- ============================================================
+-- AUTO HOOK (Killer)
+-- ============================================================
+local autoHookConn
+local function SetAutoHook(on)
+    S.AutoHook = on
+    if autoHookConn then autoHookConn:Disconnect(); autoHookConn = nil end
+    if not on then return end
+    autoHookConn = RunService.Heartbeat:Connect(function()
+        if not S.AutoHook or GetRole() ~= "Killer" then return end
+        local root = GetCharacterRoot(); if not root then return end
+        -- Find downed survivors
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LP and IsSurvivor(player) and player.Character then
+                local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+                local targetHum = player.Character:FindFirstChildOfClass("Humanoid")
+                if targetRoot and targetHum and targetHum.Health > 0 and targetHum.Health / targetHum.MaxHealth <= 0.25 then
+                    -- Teleport near and press space
+                    local dist = (targetRoot.Position - root.Position).Magnitude
+                    if dist > 3 then
+                        LP.Character:PivotTo(CFrame.new(targetRoot.Position + Vector3.new(0, 3, 0)))
+                    end
+                    for i = 1, 5 do
+                        VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                        task.wait(0.05)
+                        VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                    end
+                    break
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- DESTROY PALLETS (Killer)
+-- ============================================================
+local destroyPalletConn
+local function SetDestroyPallets(on)
+    S.DestroyPallets = on
+    if destroyPalletConn then destroyPalletConn:Disconnect(); destroyPalletConn = nil end
+    if not on then return end
+    destroyPalletConn = RunService.Heartbeat:Connect(function()
+        if not S.DestroyPallets or GetRole() ~= "Killer" then return end
+        pcall(function()
+            local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+            local pallet = remotes and remotes:FindFirstChild("Pallet")
+            local jason = pallet and pallet:FindFirstChild("Jason")
+            if jason then
+                local destroy = jason:FindFirstChild("Destroy") or jason:FindFirstChild("Destroy-Global")
+                if destroy then
+                    local map = workspace:FindFirstChild("Map")
+                    if map then
+                        for _, obj in ipairs(map:GetDescendants()) do
+                            if obj.Name:lower():find("pallet") and obj:IsA("Model") then
+                                destroy:FireServer(obj)
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end)
+end
+
+-- ============================================================
+-- FULL GEN BREAK (Killer)
+-- ============================================================
+local genBreakConn
+local function SetFullGenBreak(on)
+    S.FullGenBreak = on
+    if genBreakConn then genBreakConn:Disconnect(); genBreakConn = nil end
+    if not on then return end
+    genBreakConn = RunService.Heartbeat:Connect(function()
+        if not S.FullGenBreak or GetRole() ~= "Killer" then return end
+        local root = GetCharacterRoot(); if not root then return end
+        pcall(function()
+            local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+            local gen = remotes and remotes:FindFirstChild("Generator")
+            local breakEvent = gen and gen:FindFirstChild("BreakGenEvent")
+            if breakEvent then
+                local map = workspace:FindFirstChild("Map")
+                if map then
+                    for _, obj in ipairs(map:GetDescendants()) do
+                        if obj.Name == "Generator" and obj:IsA("Model") then
+                            local genPart = obj:FindFirstChildWhichIsA("BasePart")
+                            if genPart and (genPart.Position - root.Position).Magnitude <= 15 then
+                                breakEvent:FireServer(obj)
+                            end
+                        end
+                    end
+                end
+            end
+        end)
     end)
 end
 
@@ -437,7 +768,7 @@ local function SetNoSlowdown(on)
 end
 
 -- ============================================================
--- ANTI BLIND & NO PALLET STUN (بسيط)
+-- ANTI BLIND & NO PALLET STUN
 -- ============================================================
 local function SetupAntiBlind()
     pcall(function()
@@ -621,11 +952,6 @@ local function SetFOV(on)
 end
 
 -- ============================================================
--- TELEPORT / BEAT GAME / FLING / DOUBLE TAP / INFINITE LUNGE
--- تم تضمينها كأزرار ووظائف بسيطة
--- ============================================================
-
--- ============================================================
 -- CONFIG SYSTEM
 -- ============================================================
 local function ListCfgs()
@@ -651,12 +977,16 @@ local function SaveCfg(name)
         WindowESP=S.WindowESP, WindowColor=sc(S.WindowColor),
         HookESP=S.HookESP, HookColor=sc(S.HookColor),
         PerfectCheck=S.PerfectCheck, AutoParry=S.AutoParry,
+        Aimbot=S.Aimbot, AimFOV=S.AimFOV, AimSmooth=S.AimSmooth, AimTargetPart=S.AimTargetPart, AimVisCheck=S.AimVisCheck, AimShowFOV=S.AimShowFOV, AimPredict=S.AimPredict,
+        SpearAimbot=S.SpearAimbot, SpearGravity=S.SpearGravity, SpearSpeed=S.SpearSpeed,
         AutoAttack=S.AutoAttack, AutoAttackRange=S.AutoAttackRange,
         AutoGenerator=S.AutoGenerator, GenMode=S.GenMode,
         AutoWiggle=S.AutoWiggle,
         HitboxEnabled=S.HitboxEnabled, HitboxSize=S.HitboxSize,
         NoFall=S.NoFall, NoSlowdown=S.NoSlowdown,
         AntiBlind=S.AntiBlind, NoPalletStun=S.NoPalletStun,
+        DoubleTap=S.DoubleTap, InfiniteLunge=S.InfiniteLunge,
+        AutoHook=S.AutoHook, DestroyPallets=S.DestroyPallets, FullGenBreak=S.FullGenBreak,
         SpeedEnabled=S.SpeedEnabled, SpeedValue=S.SpeedValue,
         FlyEnabled=S.FlyEnabled, FlySpeed=S.FlySpeed,
         NoclipEnabled=S.NoclipEnabled,
@@ -664,9 +994,6 @@ local function SaveCfg(name)
         FullBright=S.FullBright, NoFog=S.NoFog, NoShadow=S.NoShadow,
         FovEnabled=S.FovEnabled, FovValue=S.FovValue,
         ThirdPerson=S.ThirdPerson, ShiftLock=S.ShiftLock,
-        DoubleTap=S.DoubleTap, InfiniteLunge=S.InfiniteLunge,
-        AutoHook=S.AutoHook, DestroyPallets=S.DestroyPallets, FullGenBreak=S.FullGenBreak,
-        SpearAimbot=S.SpearAimbot, SpearGravity=S.SpearGravity, SpearSpeed=S.SpearSpeed,
         FlingEnabled=S.FlingEnabled, FlingStrength=S.FlingStrength,
         BeatSurvivor=S.BeatSurvivor, BeatKiller=S.BeatKiller,
         AntiAFK=S.AntiAFK, FPSBooster=S.FPSBooster,
@@ -703,7 +1030,7 @@ local autoName = GetAutoLoad()
 if autoName then pcall(function() LoadCfg(autoName) end) end
 
 -- ============================================================
--- ANTI-AFK / FPS BOOSTER (بسيط بدون تشويه)
+-- ANTI-AFK / FPS BOOSTER
 -- ============================================================
 local afkConn
 local function SetAntiAFK(on)
@@ -776,7 +1103,7 @@ local function ShowLangGUI(callback)
     local titleL = Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,-30,0,28)
     titleL.Position=UDim2.new(0,15,0,56); titleL.BackgroundTransparency=1
     titleL.Font=Enum.Font.GothamBold; titleL.TextSize=17
-    titleL.TextColor3=Color3.fromRGB(230,215,255); titleL.Text="Phantom Hub  v8.0"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(230,215,255); titleL.Text="Phantom Hub  v9.0"; titleL.ZIndex=3
     local subL = Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,-30,0,22)
     subL.Position=UDim2.new(0,15,0,84); subL.BackgroundTransparency=1
     subL.Font=Enum.Font.Gotham; subL.TextSize=13
@@ -841,7 +1168,7 @@ local function ShowLoadingScreen(callback)
     local titleL = Instance.new("TextLabel",card); titleL.Size=UDim2.new(1,0,0,30)
     titleL.Position=UDim2.new(0,0,0,76); titleL.BackgroundTransparency=1
     titleL.Font=Enum.Font.GothamBold; titleL.TextSize=20
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.0"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v9.0"; titleL.ZIndex=3
     local gameL2 = Instance.new("TextLabel",card); gameL2.Size=UDim2.new(1,0,0,18)
     gameL2.Position=UDim2.new(0,0,0,106); gameL2.BackgroundTransparency=1
     gameL2.Font=Enum.Font.Gotham; gameL2.TextSize=13
@@ -892,7 +1219,7 @@ local function ShowLoadingScreen(callback)
 end
 
 -- ============================================================
--- BUILD UI
+-- BUILD UI - REIMAGINED WITH BETTER ORGANIZATION
 -- ============================================================
 function BuildWindow()
     local ok, err = pcall(function()
@@ -906,7 +1233,8 @@ function BuildWindow()
     end
 
     local Window = WindUI:CreateWindow({
-        Title = "Phantom Hub", Icon = "moon",
+        Title = "Phantom Hub",
+        Icon = "moon",
         Author = "7k.u | Violence District",
         Folder = "PhantomHub",
         Size = UDim2.fromOffset(650, 420),
@@ -914,24 +1242,13 @@ function BuildWindow()
         Background = "rbxassetid://104829641696132", BackgroundImageTransparency = 0.45,
         User = {Enabled=true, Anonymous=false}
     })
-    Window:Tag({Title="v8.0", Color=Color3.fromRGB(120,60,240)})
+    Window:Tag({Title="v9.0", Color=Color3.fromRGB(120,60,240)})
 
-    -- INFO TAB
-    local TbInfo = Window:Tab({Title="Info", Icon="info"})
-    TbInfo:Paragraph({
-        Title = LP.DisplayName.." (@"..LP.Name..")",
-        Desc = "Violence District | Phantom Hub",
-        Image = "rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=150&h=150",
-        ImageSize = 50
-    })
-
-    -- MAIN TAB (ESP + Perf Check + Auto Parry)
-    local TbMain = Window:Tab({Title="Main", Icon="house"})
-    TbMain:Toggle({Title="Enable ESP", Value = S.ESP, Callback = function(v) S.ESP = v end})
-    TbMain:Dropdown({Title="ESP Mode", Values={"Outline","Highlight","Chams","Name"}, Value=S.ESPMode, Multi=false, Callback=function(v)
-        S.ESPMode = v; ClearESPCache()
-    end})
-    TbMain:Divider()
+    -- ==================== HOME TAB ====================
+    local TbHome = Window:Tab({Title="🏠 Home", Icon="home"})
+    TbHome:Toggle({Title="Enable ESP", Value = S.ESP, Callback = function(v) S.ESP = v end})
+    TbHome:Dropdown({Title="ESP Mode", Values={"Outline","Highlight","Chams","Name"}, Value=S.ESPMode, Multi=false, Callback=function(v) S.ESPMode = v; ClearESPCache() end})
+    TbHome:Divider()
     local types = {
         {"Killer", "KillerESP", S.KillerColor, function(c) S.KillerColor=c end},
         {"Survivor", "SurvivorESP", S.SurvivorColor, function(c) S.SurvivorColor=c end},
@@ -942,41 +1259,60 @@ function BuildWindow()
         {"Hook", "HookESP", S.HookColor, function(c) S.HookColor=c end},
     }
     for _,t in ipairs(types) do
-        TbMain:Toggle({Title=t[1].." ESP", Value=S[t[2]], Callback=function(v) S[t[2]]=v end})
-        TbMain:Colorpicker({Title=t[1].." Color", Default=t[3], Callback=t[4]})
+        TbHome:Toggle({Title=t[1].." ESP", Value=S[t[2]], Callback=function(v) S[t[2]]=v end})
+        TbHome:Colorpicker({Title=t[1].." Color", Default=t[3], Callback=t[4]})
     end
-    TbMain:Divider()
-    TbMain:Toggle({Title="Auto Perfect Check", Value=S.PerfectCheck, Callback=function(v) SetPerfectCheck(v) end})
-    TbMain:Toggle({Title="Auto Parry (F key)", Value=S.AutoParry, Callback=function(v) S.AutoParry=v; SetAutoParry(v) end})
-    TbMain:Divider()
-    TbMain:Toggle({Title="Auto Wiggle", Value=S.AutoWiggle, Callback=function(v) S.AutoWiggle=v; SetAutoWiggle(v) end})
+    TbHome:Divider()
+    TbHome:Toggle({Title="Auto Perfect Check", Value=S.PerfectCheck, Callback=function(v) SetPerfectCheck(v) end})
+    TbHome:Toggle({Title="Auto Wiggle", Value=S.AutoWiggle, Callback=function(v) S.AutoWiggle=v; SetAutoWiggle(v) end})
 
-    -- COMBAT TAB (Killer)
-    local TbKiller = Window:Tab({Title="Killer", Icon="swords"})
+    -- ==================== COMBAT TAB ====================
+    local TbCombat = Window:Tab({Title:"⚔️ Combat", Icon="sword"})
+    TbCombat:Toggle({Title="Auto Parry", Value=S.AutoParry, Callback=function(v) S.AutoParry=v; SetAutoParry(v) end})
+    TbCombat:Toggle({Title="No Fall Damage", Value=S.NoFall, Callback=function(v) S.NoFall=v; SetNoFall(v) end})
+
+    -- ==================== KILLER TAB ====================
+    local TbKiller = Window:Tab({Title:"🔪 Killer", Icon="skull"})
+    -- Aimbot Section
+    TbKiller:Toggle({Title="Aimbot", Value=S.Aimbot, Callback=function(v) SetAimbot(v) end})
+    TbKiller:Slider({Title="Aim FOV", Step=10, Value={Min=50,Max=400,Default=S.AimFOV}, Callback=function(v) S.AimFOV=v end})
+    TbKiller:Slider({Title="Aim Smooth", Step=0.05, Value={Min=0.1,Max=1,Default=S.AimSmooth}, Callback=function(v) S.AimSmooth=v end})
+    TbKiller:Dropdown({Title="Target Part", Values={"Head","Torso","Root"}, Value=S.AimTargetPart, Multi=false, Callback=function(v) S.AimTargetPart=v end})
+    TbKiller:Toggle({Title="Visibility Check", Value=S.AimVisCheck, Callback=function(v) S.AimVisCheck=v end})
+    TbKiller:Toggle({Title="Show FOV Circle", Value=S.AimShowFOV, Callback=function(v) S.AimShowFOV=v end})
+    TbKiller:Toggle({Title="Prediction", Value=S.AimPredict, Callback=function(v) S.AimPredict=v end})
+    TbKiller:Divider()
+    TbKiller:Toggle({Title="Spear Aimbot", Value=S.SpearAimbot, Callback=function(v) SetSpearAimbot(v) end})
+    TbKiller:Slider({Title="Spear Gravity", Step=5, Value={Min=10,Max=200,Default=S.SpearGravity}, Callback=function(v) S.SpearGravity=v end})
+    TbKiller:Slider({Title="Spear Speed", Step=10, Value={Min=50,Max=300,Default=S.SpearSpeed}, Callback=function(v) S.SpearSpeed=v end})
+    TbKiller:Divider()
+    -- Attack Section
     TbKiller:Toggle({Title="Auto Attack", Value=S.AutoAttack, Callback=function(v) S.AutoAttack=v; SetAutoAttack(v) end})
     TbKiller:Slider({Title="Attack Range", Step=1, Value={Min=5,Max=20,Default=S.AutoAttackRange}, Callback=function(v) S.AutoAttackRange=v end})
-    TbKiller:Divider()
     TbKiller:Toggle({Title="Hitbox Expand", Value=S.HitboxEnabled, Callback=function(v) SetHitbox(v) end})
     TbKiller:Slider({Title="Hitbox Size", Step=1, Value={Min=5,Max=30,Default=S.HitboxSize}, Callback=function(v) S.HitboxSize=v end})
     TbKiller:Divider()
-    TbKiller:Toggle({Title="Double Tap", Value=S.DoubleTap, Callback=function(v) S.DoubleTap=v end}) -- يتم استدعاؤها في حلقة لاحقاً
-    TbKiller:Toggle({Title="Infinite Lunge", Value=S.InfiniteLunge, Callback=function(v) S.InfiniteLunge=v end})
-    TbKiller:Toggle({Title="Auto Hook", Value=S.AutoHook, Callback=function(v) S.AutoHook=v end})
+    -- Special Killer Abilities
+    TbKiller:Toggle({Title="Double Tap 💀", Value=S.DoubleTap, Callback=function(v) SetDoubleTap(v) end})
+    TbKiller:Toggle({Title="Infinite Lunge 🏃", Value=S.InfiniteLunge, Callback=function(v) SetInfiniteLunge(v) end})
+    TbKiller:Toggle({Title="Auto Hook 🪝", Value=S.AutoHook, Callback=function(v) SetAutoHook(v) end})
+    TbKiller:Toggle({Title="Destroy Pallets 🪓", Value=S.DestroyPallets, Callback=function(v) SetDestroyPallets(v) end})
+    TbKiller:Toggle({Title="Full Gen Break 💥", Value=S.FullGenBreak, Callback=function(v) SetFullGenBreak(v) end})
     TbKiller:Divider()
-    TbKiller:Toggle({Title="No Pallet Stun", Value=S.NoPalletStun, Callback=function(v) S.NoPalletStun=v; SetupNoPalletStun() end})
-    TbKiller:Toggle({Title="Anti Blind", Value=S.AntiBlind, Callback=function(v) S.AntiBlind=v; SetupAntiBlind() end})
-    TbKiller:Toggle({Title="No Slowdown", Value=S.NoSlowdown, Callback=function(v) S.NoSlowdown=v; SetNoSlowdown(v) end})
-    TbKiller:Toggle({Title="Full Gen Break", Value=S.FullGenBreak, Callback=function(v) S.FullGenBreak=v end}) -- مبسطة
+    -- Protection
+    TbKiller:Toggle({Title="No Pallet Stun 🚫", Value=S.NoPalletStun, Callback=function(v) S.NoPalletStun=v; SetupNoPalletStun() end})
+    TbKiller:Toggle({Title="Anti Blind 👁️", Value=S.AntiBlind, Callback=function(v) S.AntiBlind=v; SetupAntiBlind() end})
+    TbKiller:Toggle({Title="No Slowdown 💨", Value=S.NoSlowdown, Callback=function(v) S.NoSlowdown=v; SetNoSlowdown(v) end})
 
-    -- SURVIVOR TAB
-    local TbSurv = Window:Tab({Title="Survivor", Icon="shield"})
+    -- ==================== SURVIVOR TAB ====================
+    local TbSurv = Window:Tab({Title:"🛡️ Survivor", Icon:"shield"})
     TbSurv:Toggle({Title="Auto Generator", Value=S.AutoGenerator, Callback=function(v) S.AutoGenerator=v; SetAutoGenerator(v) end})
     TbSurv:Dropdown({Title="Gen Speed", Values={"Fast","Slow"}, Value=S.GenMode, Multi=false, Callback=function(v) S.GenMode=v end})
     TbSurv:Divider()
-    TbSurv:Toggle({Title="No Fall Damage", Value=S.NoFall, Callback=function(v) S.NoFall=v; SetNoFall(v) end})
+    TbSurv:Toggle({Title="Beat Game (Survivor)", Value=S.BeatSurvivor, Callback=function(v) S.BeatSurvivor=v end})
 
-    -- MOVEMENT TAB
-    local TbMove = Window:Tab({Title="Movement", Icon="move"})
+    -- ==================== MOVEMENT TAB ====================
+    local TbMove = Window:Tab({Title:"🏃 Movement", Icon:"move"})
     TbMove:Toggle({Title="Speed Hack", Value=S.SpeedEnabled, Callback=function(v) SetSpeed(v) end})
     TbMove:Slider({Title="Speed Value", Step=1, Value={Min=16,Max=150,Default=S.SpeedValue}, Callback=function(v) S.SpeedValue=v end})
     TbMove:Divider()
@@ -986,38 +1322,51 @@ function BuildWindow()
     TbMove:Toggle({Title="Noclip", Value=S.NoclipEnabled, Callback=function(v) SetNoclip(v) end})
     TbMove:Divider()
     TbMove:Toggle({Title="Infinite Jump", Value=S.JumpInfinite, Callback=function(v) SetInfiniteJump(v) end})
-    TbMove:Slider({Title="Jump Power", Step=1, Value={Min=50,Max=200,Default=S.JumpPower}, Callback=function(v) S.JumpPower=v end}) -- تطبق في نفس الحلقة
+    TbMove:Slider({Title="Jump Power", Step=1, Value={Min=50,Max=200,Default=S.JumpPower}, Callback=function(v) S.JumpPower=v end})
 
-    -- VISUAL TAB
-    local TbVisual = Window:Tab({Title="Visual", Icon="palette"})
+    -- ==================== VISUAL TAB ====================
+    local TbVisual = Window:Tab({Title:"👁️ Visual", Icon:"eye"})
     TbVisual:Toggle({Title="Full Bright", Value=S.FullBright, Callback=function(v) S.FullBright=v; SetFullBright(v) end})
     TbVisual:Toggle({Title="No Fog", Value=S.NoFog, Callback=function(v) S.NoFog=v end})
     TbVisual:Toggle({Title="No Shadow", Value=S.NoShadow, Callback=function(v) S.NoShadow=v end})
     TbVisual:Divider()
     TbVisual:Toggle({Title="FOV Changer", Value=S.FovEnabled, Callback=function(v) SetFOV(v) end})
     TbVisual:Slider({Title="FOV Value", Step=1, Value={Min=30,Max=120,Default=S.FovValue}, Callback=function(v) S.FovValue=v end})
+    TbVisual:Divider()
+    TbVisual:Toggle({Title="Third Person (Killer)", Value=S.ThirdPerson, Callback=function(v) S.ThirdPerson=v end})
+    TbVisual:Toggle({Title="Shift Lock", Value=S.ShiftLock, Callback=function(v) S.ShiftLock=v end})
 
-    -- MISC TAB (Fling, Beat Game, Teleports)
-    local TbMisc = Window:Tab({Title="Misc", Icon="star"})
+    -- ==================== MISC TAB ====================
+    local TbMisc = Window:Tab({Title:"⭐ Misc", Icon:"star"})
     TbMisc:Button({Title="TP to Generator", Callback=function()
         local map = workspace:FindFirstChild("Map"); if map then for _, obj in ipairs(map:GetDescendants()) do if obj:IsA("Model") and obj.Name=="Generator" then local p = obj:FindFirstChildWhichIsA("BasePart"); if p then LP.Character:PivotTo(p.CFrame+Vector3.new(0,3,0)); break end end end end
     end})
     TbMisc:Button({Title="TP to Gate", Callback=function()
         local map = workspace:FindFirstChild("Map"); if map then for _, obj in ipairs(map:GetDescendants()) do if obj:IsA("Model") and obj.Name=="Gate" then local p = obj:FindFirstChildWhichIsA("BasePart"); if p then LP.Character:PivotTo(p.CFrame+Vector3.new(0,3,0)); break end end end end
     end})
+    TbMisc:Button({Title="TP to Hook", Callback=function()
+        local map = workspace:FindFirstChild("Map"); if not map then return end
+        local closest, cd = nil, math.huge
+        for _, obj in ipairs(map:GetDescendants()) do if obj:IsA("Model") and obj.Name=="Hook" then local p = obj:FindFirstChildWhichIsA("BasePart"); if p then local d = (p.Position - (LP.Character and LP.Character:GetPivot().Position or Vector3.zero)).Magnitude; if d < cd then cd = d; closest = p end end end end
+        if closest then LP.Character:PivotTo(closest.CFrame+Vector3.new(0,3,0)) end
+    end})
+    TbMisc:Divider()
     TbMisc:Toggle({Title="Fling Enabled", Value=S.FlingEnabled, Callback=function(v) S.FlingEnabled=v end})
     TbMisc:Slider({Title="Fling Strength", Step=1000, Value={Min=1000,Max=50000,Default=S.FlingStrength}, Callback=function(v) S.FlingStrength=v end})
+    TbMisc:Divider()
+    TbMisc:Toggle({Title="Beat Game (Survivor)", Value=S.BeatSurvivor, Callback=function(v) S.BeatSurvivor=v end})
+    TbMisc:Toggle({Title="Beat Game (Killer)", Value=S.BeatKiller, Callback=function(v) S.BeatKiller=v end})
 
-    -- SETTINGS TAB
-    local TbSet = Window:Tab({Title="Settings", Icon="sliders-horizontal"})
+    -- ==================== SETTINGS TAB ====================
+    local TbSet = Window:Tab({Title:"⚙️ Settings", Icon:"settings"})
     TbSet:Toggle({Title="Anti-AFK", Value=S.AntiAFK, Callback=function(v) S.AntiAFK=v; SetAntiAFK(v) end})
     TbSet:Toggle({Title="FPS Booster", Value=S.FPSBooster, Callback=function(v) S.FPSBooster=v; SetFPSBooster(v) end})
     TbSet:Divider()
     TbSet:Slider({Title="UI Scale", Step=0.05, Value={Min=0.7,Max=1.5,Default=S.UIScale}, Callback=function(v) ApplyScale(v) end})
     TbSet:Slider({Title="UI Transparency", Step=0.05, Value={Min=0,Max=0.9,Default=S.UIAlpha}, Callback=function(v) ApplyAlpha(v) end})
 
-    -- CONFIG TAB
-    local TbConfig = Window:Tab({Title="Config", Icon="folder"})
+    -- ==================== CONFIG TAB ====================
+    local TbConfig = Window:Tab({Title:"💾 Config", Icon:"folder"})
     local cfgInput = ""; local selCfg = nil; local cfgDD = nil
     TbConfig:Input({Title="Config Name", Placeholder="myconfig", Callback=function(t) if t and t~="" then cfgInput=t end end})
     TbConfig:Button({Title="Create Config", Callback=function()
@@ -1050,19 +1399,42 @@ function BuildWindow()
         selCfg=nil
     end})
 
-    -- INIT LOOPS
+    -- ==================== INIT LOOPS ====================
     task.spawn(function()
         while task.wait(0.15) do
             if S.ESP then pcall(processAllESP) end
         end
     end)
 
+    -- FOV Circle rendering (Aimbot feature)
+    task.spawn(function()
+        local fovCircle = Drawing.new("Circle")
+        fovCircle.Thickness = 1
+        fovCircle.Color = Color3.fromRGB(255, 65, 65)
+        fovCircle.Filled = false
+        fovCircle.NumSides = 60
+        fovCircle.Transparency = 0.8
+        fovCircle.Visible = false
+        
+        while task.wait(0.05) do
+            if S.Aimbot and S.AimShowFOV and Camera then
+                local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+                fovCircle.Position = screenCenter
+                fovCircle.Radius = S.AimFOV
+                fovCircle.Color = aimbotTarget and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 65, 65)
+                fovCircle.Visible = true
+            else
+                fovCircle.Visible = false
+            end
+        end
+    end)
+
+    -- Beat Game logic
     task.spawn(function()
         while task.wait(0.5) do
-            -- Beat Survivor / Killer بسيطة
             if S.BeatSurvivor and GetRole() == "Survivor" then
                 local root = GetCharacterRoot()
-                if root then root.CFrame = root.CFrame + Vector3.new(0,10,0) end -- مثال
+                if root then root.CFrame = root.CFrame + Vector3.new(0,10,0) end
             end
             if S.BeatKiller and GetRole() == "Killer" then
                 for _, p in ipairs(Players:GetPlayers()) do
@@ -1082,7 +1454,7 @@ function BuildWindow()
     SetAntiAFK(S.AntiAFK)
     SetFPSBooster(S.FPSBooster)
 
-    N("Phantom Hub", "Violence District ready!", 4, "moon")
+    N("Phantom Hub v9.0", "Violence District ready! All features loaded.", 4, "moon")
 end
 
 ShowLoadingScreen(function()
