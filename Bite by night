@@ -2,6 +2,11 @@
   PHANTOM HUB v8.0 | Violence District
   PlaceId: 93978595733734
   By 7k.u | WindUI Midnight | Delta
+  ✅ Auto Perfect Check
+  ✅ ESP (Highlight / Chams / Name / Dot) لكل الأنواع
+  ✅ WalkSpeed Slider
+  ✅ Full Bright / No Fog / No Shadow
+  ✅ Config (حفظ وتحميل)
 ]]
 
 -- ============================================================
@@ -35,10 +40,19 @@ if game.PlaceId ~= PLACE_VD then
 end
 
 -- ============================================================
+-- FOLDERS
+-- ============================================================
+local CFG_FOLDER = "PhantomHub"
+local AUTO_FILE = CFG_FOLDER .. "/_autoload_vd.txt"
+pcall(function() if not isfolder(CFG_FOLDER) then makefolder(CFG_FOLDER) end end)
+
+-- ============================================================
 -- STATE
 -- ============================================================
 local S = {
-    ESP = true, ESPMode = "Highlight",
+    -- ESP
+    ESP = true,
+    ESPMode = "Highlight",
     KillerESP = true, KillerColor = Color3.fromRGB(255,93,108),
     SurvivorESP = true, SurvivorColor = Color3.fromRGB(64,224,255),
     GeneratorESP = true, GeneratorColor = Color3.fromRGB(210,87,255),
@@ -46,9 +60,13 @@ local S = {
     PalletESP = true, PalletColor = Color3.fromRGB(74,255,181),
     WindowESP = true, WindowColor = Color3.fromRGB(74,255,181),
     HookESP = true, HookColor = Color3.fromRGB(132,255,169),
+    -- Game
     PerfectCheck = false,
     WalkSpeed = 16,
-    FullBright = false, NoFog = false, NoShadow = false, FovValue = 70,
+    -- Visual
+    FullBright = false, NoFog = false, NoShadow = false,
+    FovValue = 70,
+    -- Shared
     AntiAFK = false, FPSBooster = false,
     UIScale = 1.0, UIAlpha = 0
 }
@@ -68,8 +86,7 @@ local function lineInGoal()
     local gr = goal.Rotation % 360
     local gs = (gr + 104) % 360
     local ge = (gr + 114) % 360
-    if gs > ge then return lr >= gs or lr <= ge
-    else return lr >= gs and lr <= ge end
+    return (gs > ge) and (lr >= gs or lr <= ge) or (lr >= gs and lr <= ge)
 end
 
 local perfectCheckConn
@@ -208,16 +225,20 @@ local function SetFullBright(on)
     Lighting.Brightness = on and 2 or origBr
 end
 
+local function SetFog(on)
+    Lighting.FogStart = on and 1e9 or origFogS
+    Lighting.FogEnd   = on and 1e9 or origFogE
+end
+
 task.spawn(function()
     while task.wait(0.3) do
-        Lighting.FogEnd = S.NoFog and 1e9 or origFogE
-        Lighting.FogStart = S.NoFog and 1e9 or origFogS
         Lighting.GlobalShadows = not S.NoShadow
+        SetFog(S.NoFog)
     end
 end)
 
 -- ============================================================
--- FOV / WALKSPEED
+-- FOV / WALKSPEED / ANTI-AFK / FPS BOOSTER
 -- ============================================================
 local fovConn
 local function SetFOV(v)
@@ -234,7 +255,6 @@ task.spawn(function()
     end
 end)
 
--- ANTI AFK
 local afkConn
 local function SetAntiAFK(on)
     if afkConn then afkConn:Disconnect(); afkConn = nil end
@@ -246,7 +266,6 @@ local function SetAntiAFK(on)
     end)
 end
 
--- FPS BOOSTER
 local fpsParts = {}
 local function SetFPSBooster(on)
     if not on then
@@ -254,57 +273,281 @@ local function SetFPSBooster(on)
         return
     end
     for _,v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("ParticleEmitter") or v:IsA("Trail") then pcall(function() v.Enabled = false; table.insert(fpsParts,v) end) end
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+            pcall(function() v.Enabled = false; table.insert(fpsParts,v) end)
+        end
     end
 end
 
 -- ============================================================
--- UI HELPERS
+-- CONFIG SYSTEM
 -- ============================================================
+local function ListCfgs()
+    if not listfiles then return {} end
+    local r = {}; local ok,fs = pcall(listfiles,CFG_FOLDER); if not ok then return r end
+    for _,f in ipairs(fs) do
+        local n = f:match("([^/\\]+)%.json$")
+        if n and n:sub(1,3) == "VD_" then table.insert(r, n:sub(4)) end
+    end
+    return r
+end
+
+local function SaveCfg(name)
+    if not writefile then return false end
+    local data = {
+        ESP=S.ESP, ESPMode=S.ESPMode,
+        KillerESP=S.KillerESP, KillerColor={S.KillerColor.R,S.KillerColor.G,S.KillerColor.B},
+        SurvivorESP=S.SurvivorESP, SurvivorColor={S.SurvivorColor.R,S.SurvivorColor.G,S.SurvivorColor.B},
+        GeneratorESP=S.GeneratorESP, GeneratorColor={S.GeneratorColor.R,S.GeneratorColor.G,S.GeneratorColor.B},
+        GateESP=S.GateESP, GateColor={S.GateColor.R,S.GateColor.G,S.GateColor.B},
+        PalletESP=S.PalletESP, PalletColor={S.PalletColor.R,S.PalletColor.G,S.PalletColor.B},
+        WindowESP=S.WindowESP, WindowColor={S.WindowColor.R,S.WindowColor.G,S.WindowColor.B},
+        HookESP=S.HookESP, HookColor={S.HookColor.R,S.HookColor.G,S.HookColor.B},
+        PerfectCheck=S.PerfectCheck, WalkSpeed=S.WalkSpeed,
+        FullBright=S.FullBright, NoFog=S.NoFog, NoShadow=S.NoShadow,
+        FovValue=S.FovValue, AntiAFK=S.AntiAFK, FPSBooster=S.FPSBooster,
+        UIScale=S.UIScale, UIAlpha=S.UIAlpha
+    }
+    return pcall(writefile, CFG_FOLDER.."/VD_"..name..".json", HttpService:JSONEncode(data))
+end
+
+local function LoadCfg(name)
+    if not readfile or not isfile then return nil end
+    local path = CFG_FOLDER.."/VD_"..name..".json"
+    if not isfile(path) then return nil end
+    local ok,d = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
+    if not ok or not d then return nil end
+    for k,v in pairs(d) do
+        if k:find("Color") then
+            S[k] = Color3.new(v[1] or 1, v[2] or 1, v[3] or 1)
+        else
+            S[k] = v
+        end
+    end
+    return name
+end
+
+local function GetAutoLoad()
+    if not isfile or not readfile or not isfile(AUTO_FILE) then return nil end
+    local ok,v = pcall(readfile,AUTO_FILE)
+    return (ok and v and v~="") and v or nil
+end
+local function SetAutoLoad(n) pcall(writefile,AUTO_FILE,n or "") end
+
+local autoName = GetAutoLoad()
+if autoName then pcall(function() LoadCfg(autoName) end) end
+
+-- ============================================================
+-- WINDUI LOAD
+-- ============================================================
+local WindUI = nil
+local function N(t,m,d,i)
+    pcall(function() if WindUI then WindUI:Notify({Title=t,Content=m,Duration=d or 3,Icon=i or "bell"}) end end)
+end
+
 local function ApplyScale(v)
     S.UIScale = v
     for _,parent in ipairs({LP.PlayerGui, game:GetService("CoreGui")}) do
         local gui = parent:FindFirstChild("PhantomHub")
-        if gui then gui:FindFirstChildOfClass("UIScale").Scale = v end
+        if gui then
+            local sc = gui:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",gui)
+            sc.Scale = v
+        end
     end
 end
-
--- ============================================================
--- LOAD WindUI
--- ============================================================
-local WindUI = pcall(function()
-    return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-end)
-
-if not WindUI then
-    local msg = Instance.new("Message", LP:WaitForChild("PlayerGui"))
-    msg.Text = "❌ WindUI failed to load. Use Delta or Wave executor."
-    task.wait(5); msg:Destroy()
-    return
+local function ApplyAlpha(v)
+    S.UIAlpha = v
+    pcall(function()
+        if WindUI and WindUI.SetTransparency then WindUI:SetTransparency(v) end
+    end)
 end
 
 -- ============================================================
--- BUILD UI
+-- LANGUAGE SELECTION
 -- ============================================================
-local Window = WindUI:CreateWindow({
-    Title = "Phantom Hub", Icon = "moon", Author = "7k.u | Violence District",
-    Folder = "PhantomHub", Size = UDim2.fromOffset(650,420),
-    Transparent = true, Theme = "Midnight", Resizable = false,
-    Background = "rbxassetid://104829641696132", BackgroundImageTransparency = 0.4,
-    User = {Enabled=true, Anonymous=false}
-})
-Window:Tag({Title="v8.0", Color=Color3.fromRGB(120,60,240)})
+local LANG = "en"
+local function ShowLangGUI(callback)
+    local sg = Instance.new("ScreenGui"); sg.Name="PH_Lang"; sg.IgnoreGuiInset=true; sg.ResetOnSpawn=false
+    local ok = pcall(function() sg.Parent=game:GetService("CoreGui") end)
+    if not ok then sg.Parent=LP.PlayerGui end
+    local blur = Instance.new("BlurEffect",Lighting); blur.Size=18
+    local ov = Instance.new("Frame",sg); ov.Size=UDim2.new(1,0,1,0)
+    ov.BackgroundColor3=Color3.fromRGB(5,2,15); ov.BackgroundTransparency=0.3; ov.ZIndex=1
+    local panel = Instance.new("Frame",sg); panel.AnchorPoint=Vector2.new(0.5,0.5)
+    panel.Position=UDim2.new(0.5,0,0.5,0); panel.Size=UDim2.fromOffset(340,290)
+    panel.BackgroundColor3=Color3.fromRGB(12,6,28); panel.BorderSizePixel=0; panel.ZIndex=2
+    Instance.new("UICorner",panel).CornerRadius=UDim.new(0,18)
+    Instance.new("UIStroke",panel).Color=Color3.fromRGB(100,50,220)
+    Instance.new("UIGradient",panel).Color=ColorSequence.new({
+        ColorSequenceKeypoint.new(0,Color3.fromRGB(18,8,40)),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(8,4,20))
+    })
+    local moonL = Instance.new("TextLabel",panel); moonL.Size=UDim2.fromOffset(44,44)
+    moonL.Position=UDim2.new(0.5,-22,0,10); moonL.BackgroundTransparency=1
+    moonL.Text="🌙"; moonL.TextSize=34; moonL.ZIndex=3
+    local titleL = Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,-30,0,28)
+    titleL.Position=UDim2.new(0,15,0,56); titleL.BackgroundTransparency=1
+    titleL.Font=Enum.Font.GothamBold; titleL.TextSize=17
+    titleL.TextColor3=Color3.fromRGB(230,215,255); titleL.Text="Phantom Hub  v8.0"; titleL.ZIndex=3
+    local subL = Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,-30,0,22)
+    subL.Position=UDim2.new(0,15,0,84); subL.BackgroundTransparency=1
+    subL.Font=Enum.Font.Gotham; subL.TextSize=13
+    subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Choose language  /  اختر لغتك"; subL.ZIndex=3
+    local div = Instance.new("Frame",panel); div.Size=UDim2.new(1,-30,0,1)
+    div.Position=UDim2.new(0,15,0,112); div.BackgroundColor3=Color3.fromRGB(80,40,160)
+    div.BackgroundTransparency=0.5; div.BorderSizePixel=0; div.ZIndex=3
+    local function MakeBtn(text,x,c1,c2)
+        local btn = Instance.new("TextButton",panel); btn.Size=UDim2.fromOffset(135,52)
+        btn.Position=UDim2.new(0,x,0,128); btn.BackgroundColor3=c1; btn.BorderSizePixel=0
+        btn.Font=Enum.Font.GothamBold; btn.TextSize=15; btn.TextColor3=Color3.new(1,1,1)
+        btn.Text=text; btn.ZIndex=3
+        Instance.new("UICorner",btn).CornerRadius=UDim.new(0,12)
+        Instance.new("UIGradient",btn).Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0,c1), ColorSequenceKeypoint.new(1,c2)
+        })
+        return btn
+    end
+    local enBtn = MakeBtn("[EN]  English",14,Color3.fromRGB(50,80,200),Color3.fromRGB(30,50,150))
+    local arBtn = MakeBtn("[AR]  العربية",191,Color3.fromRGB(120,50,200),Color3.fromRGB(80,30,160))
+    local credit = Instance.new("TextLabel",panel); credit.Size=UDim2.new(1,-20,0,20)
+    credit.Position=UDim2.new(0,10,0,210); credit.BackgroundTransparency=1
+    credit.Font=Enum.Font.Gotham; credit.TextSize=11
+    credit.TextColor3=Color3.fromRGB(80,60,120)
+    credit.Text="By 7k.u  -  Violence District"; credit.ZIndex=3
+    local chosen = false
+    local function Choose(lang)
+        if chosen then return end; chosen=true; LANG=lang
+        pcall(function() if blur and blur.Parent then blur:Destroy() end end)
+        sg:Destroy(); callback()
+    end
+    enBtn.Activated:Connect(function() Choose("en") end)
+    arBtn.Activated:Connect(function() Choose("ar") end)
+end
 
-local TbInfo = Window:Tab({Title="Info", Icon="info"})
-TbInfo:Paragraph({
-    Title = LP.DisplayName.." (@"..LP.Name..")",
-    Desc = "Violence District ESP & Tools",
-    Image = "rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=150&h=150",
-    ImageSize = 50
-})
+-- ============================================================
+-- LOADING SCREEN
+-- ============================================================
+local function ShowLoadingScreen(callback)
+    local sg = Instance.new("ScreenGui"); sg.Name="PH_Loading"; sg.IgnoreGuiInset=true; sg.ResetOnSpawn=false
+    local ok2 = pcall(function() sg.Parent=game:GetService("CoreGui") end)
+    if not ok2 then sg.Parent=LP.PlayerGui end
+    local bg = Instance.new("Frame",sg); bg.Size=UDim2.new(1,0,1,0)
+    bg.BackgroundColor3=Color3.fromRGB(8,4,20); bg.BackgroundTransparency=0.1; bg.ZIndex=1
+    Instance.new("UIGradient",bg).Color=ColorSequence.new({
+        ColorSequenceKeypoint.new(0,Color3.fromRGB(20,8,45)),
+        ColorSequenceKeypoint.new(0.5,Color3.fromRGB(8,4,20)),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(15,5,35))
+    })
+    local card = Instance.new("Frame",sg); card.AnchorPoint=Vector2.new(0.5,0.5)
+    card.Position=UDim2.new(0.5,0,0.5,0); card.Size=UDim2.fromOffset(340,280)
+    card.BackgroundColor3=Color3.fromRGB(14,7,32); card.BorderSizePixel=0; card.ZIndex=2
+    Instance.new("UICorner",card).CornerRadius=UDim.new(0,20)
+    Instance.new("UIStroke",card).Color=Color3.fromRGB(120,60,240)
+    Instance.new("UIGradient",card).Color=ColorSequence.new({
+        ColorSequenceKeypoint.new(0,Color3.fromRGB(22,10,48)),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(10,5,24))
+    })
+    local moonL = Instance.new("TextLabel",card); moonL.Size=UDim2.fromOffset(50,50)
+    moonL.Position=UDim2.new(0.5,-25,0,22); moonL.BackgroundTransparency=1
+    moonL.Text="🌙"; moonL.TextSize=38; moonL.ZIndex=3
+    local titleL = Instance.new("TextLabel",card); titleL.Size=UDim2.new(1,0,0,30)
+    titleL.Position=UDim2.new(0,0,0,76); titleL.BackgroundTransparency=1
+    titleL.Font=Enum.Font.GothamBold; titleL.TextSize=20
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v8.0"; titleL.ZIndex=3
+    local gameL2 = Instance.new("TextLabel",card); gameL2.Size=UDim2.new(1,0,0,18)
+    gameL2.Position=UDim2.new(0,0,0,106); gameL2.BackgroundTransparency=1
+    gameL2.Font=Enum.Font.Gotham; gameL2.TextSize=13
+    gameL2.TextColor3=Color3.fromRGB(100,180,255); gameL2.Text="🎮 Violence District"; gameL2.ZIndex=3
+    local authorL = Instance.new("TextLabel",card); authorL.Size=UDim2.new(1,0,0,18)
+    authorL.Position=UDim2.new(0,0,0,124); authorL.BackgroundTransparency=1
+    authorL.Font=Enum.Font.Gotham; authorL.TextSize=12
+    authorL.TextColor3=Color3.fromRGB(120,90,180); authorL.Text="By 7k.u  |  Discord"; authorL.ZIndex=3
+    local subL = Instance.new("TextLabel",card); subL.Size=UDim2.new(1,0,0,18)
+    subL.Position=UDim2.new(0,0,0,145); subL.BackgroundTransparency=1
+    subL.Font=Enum.Font.Gotham; subL.TextSize=13
+    subL.TextColor3=Color3.fromRGB(140,110,200); subL.Text="Loading..."; subL.ZIndex=3
+    local barBG = Instance.new("Frame",card); barBG.Size=UDim2.new(1,-40,0,8)
+    barBG.Position=UDim2.new(0,20,0,175); barBG.BackgroundColor3=Color3.fromRGB(25,12,55)
+    barBG.BorderSizePixel=0; barBG.ZIndex=3
+    Instance.new("UICorner",barBG).CornerRadius=UDim.new(1,0)
+    local barFill = Instance.new("Frame",barBG); barFill.Size=UDim2.new(0,0,1,0)
+    barFill.BackgroundColor3=Color3.fromRGB(140,60,255); barFill.BorderSizePixel=0; barFill.ZIndex=4
+    Instance.new("UICorner",barFill).CornerRadius=UDim.new(1,0)
+    local pctL = Instance.new("TextLabel",card); pctL.Size=UDim2.new(1,0,0,18)
+    pctL.Position=UDim2.new(0,0,0,188); pctL.BackgroundTransparency=1
+    pctL.Font=Enum.Font.Gotham; pctL.TextSize=12
+    pctL.TextColor3=Color3.fromRGB(140,110,200); pctL.Text="0%"; pctL.ZIndex=3
+    task.spawn(function()
+        task.wait(0.1)
+        local steps = {
+            {0,40,0.3,"Loading WindUI..."},
+            {40,80,0.3,"Loading features..."},
+            {80,100,0.3,"Ready!"}
+        }
+        for _,st in ipairs(steps) do
+            local from,to,dur,msg = st[1],st[2],st[3],st[4]; subL.Text=msg
+            TweenService:Create(barFill,TweenInfo.new(dur,Enum.EasingStyle.Quad),
+                {Size=UDim2.new(to/100,0,1,0)}):Play()
+            local st2 = tick()
+            while (tick()-st2) < dur do
+                pcall(function()
+                    pctL.Text = math.floor(from+(to-from)*((tick()-st2)/dur)).."%"
+                end)
+                task.wait(0.02)
+            end
+            pctL.Text = to.."%"
+        end
+        subL.Text = "Ready!"
+        barFill.BackgroundColor3 = Color3.fromRGB(50,200,100)
+        task.wait(2)
+        TweenService:Create(card,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{BackgroundTransparency=1}):Play()
+        TweenService:Create(bg,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{BackgroundTransparency=1}):Play()
+        task.wait(0.5); sg:Destroy(); callback()
+    end)
+end
 
-local TbMain = Window:Tab({Title="Main", Icon="house"})
-do
+-- ============================================================
+-- BUILD WINDOW
+-- ============================================================
+function BuildWindow()
+    local ok, err = pcall(function()
+        WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+    end)
+    if not ok or not WindUI then
+        local msg = Instance.new("Message", LP:WaitForChild("PlayerGui"))
+        msg.Text = "❌ WindUI failed. Use Delta or Wave executor."
+        task.wait(5); msg:Destroy()
+        return
+    end
+
+    local Window = WindUI:CreateWindow({
+        Title = "Phantom Hub",
+        Icon = "moon",
+        Author = "7k.u | Violence District",
+        Folder = "PhantomHub",
+        Size = UDim2.fromOffset(650,420),
+        Transparent = true,
+        Theme = "Midnight",
+        Resizable = false,
+        Background = "rbxassetid://104829641696132",
+        BackgroundImageTransparency = 0.45,
+        User = {Enabled=true, Anonymous=false}
+    })
+    Window:Tag({Title="v8.0", Color=Color3.fromRGB(120,60,240)})
+
+    -- ================ INFO TAB ================
+    local TbInfo = Window:Tab({Title="Info", Icon="info"})
+    TbInfo:Paragraph({
+        Title = LP.DisplayName.." (@"..LP.Name..")",
+        Desc = "Violence District | Phantom Hub",
+        Image = "rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=150&h=150",
+        ImageSize = 50
+    })
+    TbInfo:Paragraph({Title="Features",
+        Desc="✅ ESP (Highlight/Chams/Name/Dot)\n✅ Auto Perfect Check\n✅ WalkSpeed Slider\n✅ Full Bright / No Fog / No Shadow\n✅ Config save/load"})
+
+    -- ================ MAIN TAB ================
+    local TbMain = Window:Tab({Title="Main", Icon="house"})
     TbMain:Toggle({Title="ESP Master", Value = S.ESP, Callback = function(v) S.ESP = v end})
     TbMain:Dropdown({Title="ESP Mode", Values={"Highlight","Chams","Name","Dot"}, Value=S.ESPMode, Multi=false, Callback=function(v) S.ESPMode=v end})
     TbMain:Divider()
@@ -327,46 +570,70 @@ do
     TbMain:Toggle({Title="Auto Perfect Check", Value=S.PerfectCheck, Callback=function(v) S.PerfectCheck=v; SetPerfectCheck(v) end})
     TbMain:Divider()
     TbMain:Slider({Title="Walk Speed", Step=1, Value={Min=10,Max=50,Default=S.WalkSpeed}, Callback=function(v) S.WalkSpeed=v end})
-end
 
-local TbVisual = Window:Tab({Title="Visual", Icon="palette"})
-do
+    -- ================ VISUAL TAB ================
+    local TbVisual = Window:Tab({Title="Visual", Icon="palette"})
     TbVisual:Toggle({Title="Full Bright", Value=S.FullBright, Callback=function(v) S.FullBright=v; SetFullBright(v) end})
     TbVisual:Toggle({Title="No Fog", Value=S.NoFog, Callback=function(v) S.NoFog=v end})
     TbVisual:Toggle({Title="No Shadow", Value=S.NoShadow, Callback=function(v) S.NoShadow=v end})
     TbVisual:Slider({Title="Field of View", Step=1, Value={Min=10,Max=100,Default=S.FovValue}, Callback=function(v) SetFOV(v) end})
     TbVisual:Divider()
     TbVisual:Slider({Title="UI Scale", Step=0.05, Value={Min=0.7,Max=1.5,Default=S.UIScale}, Callback=function(v) ApplyScale(v) end})
-    TbVisual:Slider({Title="UI Transparency", Step=0.05, Value={Min=0,Max=0.9,Default=S.UIAlpha}, Callback=function(v) WindUI:SetTransparency(v) end})
-end
+    TbVisual:Slider({Title="UI Transparency", Step=0.05, Value={Min=0,Max=0.9,Default=S.UIAlpha}, Callback=function(v) ApplyAlpha(v) end})
 
-local TbSet = Window:Tab({Title="Settings", Icon="sliders-horizontal"})
-do
+    -- ================ SETTINGS TAB ================
+    local TbSet = Window:Tab({Title="Settings", Icon="sliders-horizontal"})
     TbSet:Toggle({Title="Anti-AFK", Value=S.AntiAFK, Callback=function(v) S.AntiAFK=v; SetAntiAFK(v) end})
     TbSet:Toggle({Title="FPS Booster", Value=S.FPSBooster, Callback=function(v) S.FPSBooster=v; SetFPSBooster(v) end})
+
+    -- ================ CONFIG TAB ================
+    local TbConfig = Window:Tab({Title="Config", Icon="folder"})
+    local cfgInput = ""; local selCfg = nil; local cfgDD = nil
+    TbConfig:Input({Title="Config Name", Placeholder="myconfig", Callback=function(t) if t and t~="" then cfgInput=t end end})
+    TbConfig:Button({Title="Create Config", Callback=function()
+        if cfgInput=="" then return end
+        if SaveCfg(cfgInput) then
+            local l = ListCfgs()
+            if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end
+            N("Config","Saved: "..cfgInput,3,"check")
+        end
+    end})
+    local iL = ListCfgs()
+    cfgDD = TbConfig:Dropdown({Title="Select Config", Values=#iL>0 and iL or {"(none)"}, Value=iL[1] or nil, Multi=false, AllowNone=true, Callback=function(v) selCfg=v end})
+    if #iL>0 then selCfg=iL[1] end
+    TbConfig:Button({Title="Load Config", Callback=function()
+        if not selCfg or selCfg=="(none)" then return end
+        local n = LoadCfg(selCfg)
+        if not n then return end
+        -- refresh UI
+        N("Config","Loaded: "..n,3,"folder")
+    end})
+    TbConfig:Divider()
+    local cA = GetAutoLoad()
+    TbConfig:Toggle({Title="Auto Load on Start", Value=cA~=nil, Callback=function(v)
+        if v then if selCfg and selCfg~="(none)" then SetAutoLoad(selCfg) end else SetAutoLoad("") end
+    end})
+    TbConfig:Button({Title="Delete Selected", Callback=function()
+        if not selCfg or selCfg=="(none)" then return end
+        pcall(function() if delfile then delfile(CFG_FOLDER.."/VD_"..selCfg..".json") end end)
+        local l = ListCfgs()
+        if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end
+        selCfg=nil
+    end})
+
+    -- ================ INIT ================
+    SetFullBright(S.FullBright)
+    SetFOV(S.FovValue)
+    SetAntiAFK(S.AntiAFK)
+    SetFPSBooster(S.FPSBooster)
+    SetPerfectCheck(S.PerfectCheck)
+
+    N("Phantom Hub", "Violence District ready!", 4, "moon")
 end
 
--- ============================================================
--- LOOPS
--- ============================================================
-task.spawn(function()
-    while task.wait(0.15) do
-        if S.ESP then pcall(processAllESP) end
-    end
+-- ================ START ================
+ShowLoadingScreen(function()
+    ShowLangGUI(function()
+        BuildWindow()
+    end)
 end)
-
-task.spawn(function()
-    while task.wait(0.4) do
-        if not S.ESP then
-            for k,_ in pairs(espCache) do clearESP(k) end
-        end
-    end
-end)
-
--- INIT
-SetFullBright(S.FullBright)
-SetFOV(S.FovValue)
-SetAntiAFK(S.AntiAFK)
-SetFPSBooster(S.FPSBooster)
-
-WindUI:Notify({Title="Phantom Hub", Content="Violence District ready!", Duration=4, Icon="moon"})
