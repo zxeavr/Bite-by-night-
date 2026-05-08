@@ -2,10 +2,10 @@
   PHANTOM HUB v8.0 | Violence District
   PlaceId: 93978595733734
   By 7k.u | WindUI Midnight | Delta
-  ✅ Auto Perfect Check
-  ✅ ESP (Highlight / Chams / Name / Dot) لكل الأنواع
-  ✅ WalkSpeed Slider
-  ✅ Full Bright / No Fog / No Shadow
+  ✅ ESP (Highlight/Chams/Name/Dot) – كود مفتوح المصدر
+  ✅ Auto Perfect Check – كود مفتوح المصدر
+  ✅ WalkSpeed Slider (الافتراضي 16)
+  ✅ Full Bright / No Fog / No Shadow / FOV
   ✅ Config (حفظ وتحميل)
 ]]
 
@@ -72,142 +72,177 @@ local S = {
 }
 
 -- ============================================================
--- AUTO PERFECT CHECK
+-- AUTO PERFECT CHECK (الكود الأصلي)
 -- ============================================================
-local function lineInGoal()
-    local gui = LP.PlayerGui:FindFirstChild("SkillCheckPromptGui")
-    if not gui then return false end
-    local check = gui:FindFirstChild("Check")
-    if not check then return false end
-    local line = check:FindFirstChild("Line")
-    local goal = check:FindFirstChild("Goal")
-    if not line or not goal then return false end
-    local lr = line.Rotation % 360
-    local gr = goal.Rotation % 360
-    local gs = (gr + 104) % 360
-    local ge = (gr + 114) % 360
-    return (gs > ge) and (lr >= gs or lr <= ge) or (lr >= gs and lr <= ge)
-end
+local perfConn, perfCheckConn = nil, nil
+local function SetupPerfectCheck()
+    if perfConn then return end
+    local PG = LP:WaitForChild("PlayerGui")
+    local CheckGui = PG:WaitForChild("SkillCheckPromptGui")
+    local Check = CheckGui:WaitForChild("Check")
+    local Line = Check:WaitForChild("Line")
+    local Goal = Check:WaitForChild("Goal")
 
-local perfectCheckConn
-local function SetPerfectCheck(on)
-    if perfectCheckConn then perfectCheckConn:Disconnect(); perfectCheckConn = nil end
-    if not on then return end
-    perfectCheckConn = RunService.Heartbeat:Connect(function()
-        if S.PerfectCheck and LP.Team and LP.Team.Name == "Survivors" then
-            if lineInGoal() then
-                VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                task.wait(0.01)
-                VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+    local function PressSpace()
+        VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+        task.wait(0.01)
+        VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+    end
+
+    local function LineInGoal()
+        local lr = Line.Rotation % 360
+        local gr = Goal.Rotation % 360
+        local gs = (gr + 104) % 360
+        local ge = (gr + 114) % 360
+        if gs > ge then return lr >= gs or lr <= ge
+        else return lr >= gs and lr <= ge end
+    end
+
+    local function HeartbeatCheck()
+        if not S.PerfectCheck then
+            if perfCheckConn then perfCheckConn:Disconnect(); perfCheckConn = nil end
+            return
+        end
+        if LP.Team and LP.Team.Name == "Survivors" then
+            if LineInGoal() then
+                PressSpace()
+                if perfCheckConn then perfCheckConn:Disconnect(); perfCheckConn = nil end
             end
+        elseif perfCheckConn then
+            perfCheckConn:Disconnect()
+            perfCheckConn = nil
+        end
+    end
+
+    Check:GetPropertyChangedSignal("Visible"):Connect(function()
+        if not S.PerfectCheck then return end
+        if LP.Team and LP.Team.Name == "Survivors" then
+            if Check.Visible then
+                if perfCheckConn then perfCheckConn:Disconnect() end
+                perfCheckConn = RunService.Heartbeat:Connect(HeartbeatCheck)
+            elseif perfCheckConn then
+                perfCheckConn:Disconnect()
+                perfCheckConn = nil
+            end
+        elseif perfCheckConn then
+            perfCheckConn:Disconnect()
+            perfCheckConn = nil
         end
     end)
+    perfConn = true
 end
 
--- ============================================================
--- ESP SYSTEM (OPTIMIZED)
--- ============================================================
-local espCache = {}
-local function clearESP(model)
-    if espCache[model] then
-        pcall(function() espCache[model]:Destroy() end)
-        espCache[model] = nil
+local function SetPerfectCheck(on)
+    S.PerfectCheck = on
+    if on then
+        SetupPerfectCheck()
+    else
+        if perfCheckConn then perfCheckConn:Disconnect(); perfCheckConn = nil end
     end
 end
 
-local function updateESP(model, color, label, on)
-    if not model or not model.Parent or not on then clearESP(model); return end
+-- ============================================================
+-- ESP SYSTEM (مطابق للمصدر المفتوح)
+-- ============================================================
+local espCache = {}
+local function clearESP(obj)
+    if espCache[obj] then pcall(function() espCache[obj]:Destroy() end); espCache[obj] = nil end
+end
+
+local function ESP(obj, color, name)
+    if not obj or not obj.Parent then clearESP(obj); return end
     local mode = S.ESPMode
     if mode == "Highlight" or mode == "Chams" then
-        local hl = espCache[model]
-        if hl and hl:IsA("Highlight") then
-            hl.FillColor = color; hl.OutlineColor = color
+        local h = espCache[obj]
+        if h and h:IsA("Highlight") then
+            h.FillColor = color; h.OutlineColor = color
         else
-            if hl then pcall(function() hl:Destroy() end) end
-            hl = Instance.new("Highlight")
-            hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            hl.FillTransparency = mode == "Highlight" and 0.55 or 0.2
-            hl.OutlineTransparency = 0.3
-            hl.FillColor = color; hl.OutlineColor = color
-            hl.Adornee = model; hl.Parent = model
-            espCache[model] = hl
+            if h then pcall(function() h:Destroy() end) end
+            h = Instance.new("Highlight")
+            h.Adornee = obj
+            h.FillColor = color
+            h.OutlineColor = color
+            h.FillTransparency = mode == "Highlight" and 0.8 or 0.2
+            h.OutlineTransparency = 0.3
+            h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            h.Parent = obj
+            espCache[obj] = h
         end
     elseif mode == "Name" then
-        local bb = espCache[model]
+        local bb = espCache[obj]
         if bb and bb:IsA("BillboardGui") and bb:FindFirstChild("NameTag") then
-            bb.NameTag.Text = label or model.Name
+            bb.NameTag.Text = name or obj.Name
             bb.NameTag.TextColor3 = color
         else
             if bb then pcall(function() bb:Destroy() end) end
             bb = Instance.new("BillboardGui")
-            bb.AlwaysOnTop = true; bb.Size = UDim2.new(0,200,0,20)
-            bb.StudsOffset = Vector3.new(0,2.5,0); bb.Parent = model
-            local txt = Instance.new("TextLabel", bb)
+            bb.AlwaysOnTop = true; bb.Size = UDim2.new(0,120,0,30)
+            bb.StudsOffset = Vector3.new(0,0,0); bb.Parent = obj
+            local txt = Instance.new("TextLabel",bb)
             txt.Name = "NameTag"; txt.Size = UDim2.new(1,0,1,0)
-            txt.BackgroundTransparency = 1; txt.Font = Enum.Font.GothamBold
-            txt.TextSize = 12; txt.TextColor3 = color
-            txt.TextStrokeTransparency = 0.5
-            txt.Text = label or model.Name
-            espCache[model] = bb
+            txt.BackgroundTransparency = 1; txt.Text = name or obj.Name
+            txt.TextColor3 = color; txt.Font = Enum.Font.GothamBold
+            txt.TextSize = 10; txt.TextStrokeTransparency = 0
+            txt.TextStrokeColor3 = Color3.new(0,0,0)
+            espCache[obj] = bb
         end
     elseif mode == "Dot" then
-        local dot = espCache[model]
+        local dot = espCache[obj]
         if dot and dot:IsA("BillboardGui") and dot:FindFirstChild("Dot") then
             dot.Dot.BackgroundColor3 = color
         else
             if dot then pcall(function() dot:Destroy() end) end
             dot = Instance.new("BillboardGui")
             dot.AlwaysOnTop = true; dot.Size = UDim2.new(0,10,0,10)
-            dot.StudsOffset = Vector3.new(0,2,0); dot.Parent = model
-            local frame = Instance.new("Frame", dot)
+            dot.StudsOffset = Vector3.new(0,2,0); dot.Parent = obj
+            local frame = Instance.new("Frame",dot)
             frame.Name = "Dot"; frame.Size = UDim2.new(1,0,1,0)
             frame.BackgroundColor3 = color; frame.BorderSizePixel = 0
             Instance.new("UICorner",frame).CornerRadius = UDim.new(1,0)
-            espCache[model] = dot
+            espCache[obj] = dot
         end
     end
 end
 
 local function processAllESP()
+    -- اللاعبون
     for _, player in ipairs(Players:GetPlayers()) do
-        if player == LP then continue end
-        local char = player.Character
-        if not char then continue end
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if not hum then continue end
-        local isKiller = player.Team and player.Team.Name:lower() == "killer"
-        local on = isKiller and S.KillerESP or S.SurvivorESP
-        local color = isKiller and S.KillerColor or S.SurvivorColor
-        updateESP(char, color, player.Name, on)
+        if player == LP or not player.Character or not player.Team then continue end
+        local on, color, name = false, nil, player.Name
+        if player.Team.Name == "Killer" then
+            on = S.KillerESP; color = S.KillerColor
+        elseif player.Team.Name == "Survivors" then
+            on = S.SurvivorESP; color = S.SurvivorColor
+        end
+        if on then ESP(player.Character, color, name) else clearESP(player.Character) end
     end
 
+    -- الأشياء (Map)
     pcall(function()
         local map = workspace:FindFirstChild("Map")
         if not map then return end
         for _, obj in ipairs(map:GetDescendants()) do
-            local cfgOn, cfgCol, label = nil, nil, nil
-            if obj.Name == "Generator" then
-                cfgOn, cfgCol, label = S.GeneratorESP, S.GeneratorColor, "Gen"
-            elseif obj.Name == "Gate" then
-                cfgOn, cfgCol, label = S.GateESP, S.GateColor, "Gate"
-            elseif obj.Name == "Palletwrong" then
-                cfgOn, cfgCol, label = S.PalletESP, S.PalletColor, "Pallet"
-            elseif obj.Name == "Window" then
-                cfgOn, cfgCol, label = S.WindowESP, S.WindowColor, "Window"
-            elseif obj.Name == "Hook" then
+            if obj.Name == "Hook" then
                 if obj:FindFirstChild("Model") then
                     for _, part in ipairs(obj.Model:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            updateESP(part, S.HookColor, "Hook", S.HookESP)
+                        if part:IsA("MeshPart") then
+                            if S.HookESP then ESP(part, S.HookColor, "Hook") else clearESP(part) end
                         end
                     end
                 end
                 if obj:FindFirstChild("Cartoony Blood Puddle") then
-                    updateESP(obj["Cartoony Blood Puddle"], S.HookColor, "Hook", S.HookESP)
+                    local bp = obj["Cartoony Blood Puddle"]
+                    if S.HookESP then ESP(bp, S.HookColor, "Hook") else clearESP(bp) end
                 end
-                continue
+            elseif obj.Name == "Generator" then
+                if S.GeneratorESP then ESP(obj, S.GeneratorColor, "Gen") else clearESP(obj) end
+            elseif obj.Name == "Gate" then
+                if S.GateESP then ESP(obj, S.GateColor, "Gate") else clearESP(obj) end
+            elseif obj.Name == "Palletwrong" then
+                if S.PalletESP then ESP(obj, S.PalletColor, "Pallet") else clearESP(obj) end
+            elseif obj.Name == "Window" then
+                if S.WindowESP then ESP(obj, S.WindowColor, "Window") else clearESP(obj) end
             end
-            if cfgOn then updateESP(obj, cfgCol, label, cfgOn) end
         end
     end)
 end
@@ -227,13 +262,13 @@ end
 
 local function SetFog(on)
     Lighting.FogStart = on and 1e9 or origFogS
-    Lighting.FogEnd   = on and 1e9 or origFogE
+    Lighting.FogEnd = on and 1e9 or origFogE
 end
 
 task.spawn(function()
     while task.wait(0.3) do
-        Lighting.GlobalShadows = not S.NoShadow
         SetFog(S.NoFog)
+        Lighting.GlobalShadows = not S.NoShadow
     end
 end)
 
@@ -294,15 +329,16 @@ end
 
 local function SaveCfg(name)
     if not writefile then return false end
+    local function sc(c) return {c.R,c.G,c.B} end
     local data = {
         ESP=S.ESP, ESPMode=S.ESPMode,
-        KillerESP=S.KillerESP, KillerColor={S.KillerColor.R,S.KillerColor.G,S.KillerColor.B},
-        SurvivorESP=S.SurvivorESP, SurvivorColor={S.SurvivorColor.R,S.SurvivorColor.G,S.SurvivorColor.B},
-        GeneratorESP=S.GeneratorESP, GeneratorColor={S.GeneratorColor.R,S.GeneratorColor.G,S.GeneratorColor.B},
-        GateESP=S.GateESP, GateColor={S.GateColor.R,S.GateColor.G,S.GateColor.B},
-        PalletESP=S.PalletESP, PalletColor={S.PalletColor.R,S.PalletColor.G,S.PalletColor.B},
-        WindowESP=S.WindowESP, WindowColor={S.WindowColor.R,S.WindowColor.G,S.WindowColor.B},
-        HookESP=S.HookESP, HookColor={S.HookColor.R,S.HookColor.G,S.HookColor.B},
+        KillerESP=S.KillerESP, KillerColor=sc(S.KillerColor),
+        SurvivorESP=S.SurvivorESP, SurvivorColor=sc(S.SurvivorColor),
+        GeneratorESP=S.GeneratorESP, GeneratorColor=sc(S.GeneratorColor),
+        GateESP=S.GateESP, GateColor=sc(S.GateColor),
+        PalletESP=S.PalletESP, PalletColor=sc(S.PalletColor),
+        WindowESP=S.WindowESP, WindowColor=sc(S.WindowColor),
+        HookESP=S.HookESP, HookColor=sc(S.HookColor),
         PerfectCheck=S.PerfectCheck, WalkSpeed=S.WalkSpeed,
         FullBright=S.FullBright, NoFog=S.NoFog, NoShadow=S.NoShadow,
         FovValue=S.FovValue, AntiAFK=S.AntiAFK, FPSBooster=S.FPSBooster,
@@ -324,6 +360,14 @@ local function LoadCfg(name)
             S[k] = v
         end
     end
+    -- apply settings
+    SetFullBright(S.FullBright)
+    SetFOV(S.FovValue)
+    SetAntiAFK(S.AntiAFK)
+    SetFPSBooster(S.FPSBooster)
+    SetPerfectCheck(S.PerfectCheck)
+    ApplyScale(S.UIScale)
+    ApplyAlpha(S.UIAlpha)
     return name
 end
 
@@ -338,14 +382,12 @@ local autoName = GetAutoLoad()
 if autoName then pcall(function() LoadCfg(autoName) end) end
 
 -- ============================================================
--- WINDUI LOAD
+-- WINDUI HELPERS
 -- ============================================================
 local WindUI = nil
-local function N(t,m,d,i)
-    pcall(function() if WindUI then WindUI:Notify({Title=t,Content=m,Duration=d or 3,Icon=i or "bell"}) end end)
-end
+local function N(t,m,d,i) pcall(function() if WindUI then WindUI:Notify({Title=t,Content=m,Duration=d or 3,Icon=i or "bell"}) end end) end
 
-local function ApplyScale(v)
+function ApplyScale(v)
     S.UIScale = v
     for _,parent in ipairs({LP.PlayerGui, game:GetService("CoreGui")}) do
         local gui = parent:FindFirstChild("PhantomHub")
@@ -355,11 +397,9 @@ local function ApplyScale(v)
         end
     end
 end
-local function ApplyAlpha(v)
+function ApplyAlpha(v)
     S.UIAlpha = v
-    pcall(function()
-        if WindUI and WindUI.SetTransparency then WindUI:SetTransparency(v) end
-    end)
+    pcall(function() if WindUI and WindUI.SetTransparency then WindUI:SetTransparency(v) end end)
 end
 
 -- ============================================================
@@ -490,15 +530,12 @@ local function ShowLoadingScreen(callback)
                 {Size=UDim2.new(to/100,0,1,0)}):Play()
             local st2 = tick()
             while (tick()-st2) < dur do
-                pcall(function()
-                    pctL.Text = math.floor(from+(to-from)*((tick()-st2)/dur)).."%"
-                end)
+                pcall(function() pctL.Text = math.floor(from+(to-from)*((tick()-st2)/dur)).."%" end)
                 task.wait(0.02)
             end
             pctL.Text = to.."%"
         end
-        subL.Text = "Ready!"
-        barFill.BackgroundColor3 = Color3.fromRGB(50,200,100)
+        subL.Text = "Ready!"; barFill.BackgroundColor3 = Color3.fromRGB(50,200,100)
         task.wait(2)
         TweenService:Create(card,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{BackgroundTransparency=1}):Play()
         TweenService:Create(bg,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{BackgroundTransparency=1}):Play()
@@ -507,7 +544,7 @@ local function ShowLoadingScreen(callback)
 end
 
 -- ============================================================
--- BUILD WINDOW
+-- BUILD UI
 -- ============================================================
 function BuildWindow()
     local ok, err = pcall(function()
@@ -521,21 +558,17 @@ function BuildWindow()
     end
 
     local Window = WindUI:CreateWindow({
-        Title = "Phantom Hub",
-        Icon = "moon",
+        Title = "Phantom Hub", Icon = "moon",
         Author = "7k.u | Violence District",
         Folder = "PhantomHub",
-        Size = UDim2.fromOffset(650,420),
-        Transparent = true,
-        Theme = "Midnight",
-        Resizable = false,
-        Background = "rbxassetid://104829641696132",
-        BackgroundImageTransparency = 0.45,
+        Size = UDim2.fromOffset(650, 420),  -- الأبعاد المطلوبة
+        Transparent = true, Theme = "Midnight", Resizable = false,
+        Background = "rbxassetid://104829641696132", BackgroundImageTransparency = 0.45,
         User = {Enabled=true, Anonymous=false}
     })
     Window:Tag({Title="v8.0", Color=Color3.fromRGB(120,60,240)})
 
-    -- ================ INFO TAB ================
+    -- INFO TAB
     local TbInfo = Window:Tab({Title="Info", Icon="info"})
     TbInfo:Paragraph({
         Title = LP.DisplayName.." (@"..LP.Name..")",
@@ -543,10 +576,8 @@ function BuildWindow()
         Image = "rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=150&h=150",
         ImageSize = 50
     })
-    TbInfo:Paragraph({Title="Features",
-        Desc="✅ ESP (Highlight/Chams/Name/Dot)\n✅ Auto Perfect Check\n✅ WalkSpeed Slider\n✅ Full Bright / No Fog / No Shadow\n✅ Config save/load"})
 
-    -- ================ MAIN TAB ================
+    -- MAIN TAB
     local TbMain = Window:Tab({Title="Main", Icon="house"})
     TbMain:Toggle({Title="ESP Master", Value = S.ESP, Callback = function(v) S.ESP = v end})
     TbMain:Dropdown({Title="ESP Mode", Values={"Highlight","Chams","Name","Dot"}, Value=S.ESPMode, Multi=false, Callback=function(v) S.ESPMode=v end})
@@ -567,11 +598,11 @@ function BuildWindow()
     end
     TbMain:Divider()
 
-    TbMain:Toggle({Title="Auto Perfect Check", Value=S.PerfectCheck, Callback=function(v) S.PerfectCheck=v; SetPerfectCheck(v) end})
+    TbMain:Toggle({Title="Auto Perfect Check", Value=S.PerfectCheck, Callback=function(v) SetPerfectCheck(v) end})
     TbMain:Divider()
     TbMain:Slider({Title="Walk Speed", Step=1, Value={Min=10,Max=50,Default=S.WalkSpeed}, Callback=function(v) S.WalkSpeed=v end})
 
-    -- ================ VISUAL TAB ================
+    -- VISUAL TAB
     local TbVisual = Window:Tab({Title="Visual", Icon="palette"})
     TbVisual:Toggle({Title="Full Bright", Value=S.FullBright, Callback=function(v) S.FullBright=v; SetFullBright(v) end})
     TbVisual:Toggle({Title="No Fog", Value=S.NoFog, Callback=function(v) S.NoFog=v end})
@@ -581,12 +612,12 @@ function BuildWindow()
     TbVisual:Slider({Title="UI Scale", Step=0.05, Value={Min=0.7,Max=1.5,Default=S.UIScale}, Callback=function(v) ApplyScale(v) end})
     TbVisual:Slider({Title="UI Transparency", Step=0.05, Value={Min=0,Max=0.9,Default=S.UIAlpha}, Callback=function(v) ApplyAlpha(v) end})
 
-    -- ================ SETTINGS TAB ================
+    -- SETTINGS TAB
     local TbSet = Window:Tab({Title="Settings", Icon="sliders-horizontal"})
     TbSet:Toggle({Title="Anti-AFK", Value=S.AntiAFK, Callback=function(v) S.AntiAFK=v; SetAntiAFK(v) end})
     TbSet:Toggle({Title="FPS Booster", Value=S.FPSBooster, Callback=function(v) S.FPSBooster=v; SetFPSBooster(v) end})
 
-    -- ================ CONFIG TAB ================
+    -- CONFIG TAB
     local TbConfig = Window:Tab({Title="Config", Icon="folder"})
     local cfgInput = ""; local selCfg = nil; local cfgDD = nil
     TbConfig:Input({Title="Config Name", Placeholder="myconfig", Callback=function(t) if t and t~="" then cfgInput=t end end})
@@ -605,7 +636,6 @@ function BuildWindow()
         if not selCfg or selCfg=="(none)" then return end
         local n = LoadCfg(selCfg)
         if not n then return end
-        -- refresh UI
         N("Config","Loaded: "..n,3,"folder")
     end})
     TbConfig:Divider()
@@ -621,12 +651,19 @@ function BuildWindow()
         selCfg=nil
     end})
 
-    -- ================ INIT ================
+    -- INIT
     SetFullBright(S.FullBright)
     SetFOV(S.FovValue)
     SetAntiAFK(S.AntiAFK)
     SetFPSBooster(S.FPSBooster)
     SetPerfectCheck(S.PerfectCheck)
+
+    -- بدء حلقات ESP
+    task.spawn(function()
+        while task.wait(0.15) do
+            if S.ESP then pcall(processAllESP) end
+        end
+    end)
 
     N("Phantom Hub", "Violence District ready!", 4, "moon")
 end
