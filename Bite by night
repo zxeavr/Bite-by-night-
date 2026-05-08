@@ -1,49 +1,23 @@
 --[[
-  PHANTOM HUB v8.0  (Multi-Game)
+  PHANTOM HUB v8.0 | Violence District
+  PlaceId: 93978595733734
   By 7k.u | WindUI Midnight | Delta
-  PlaceId BBN:   70845479499574
-  PlaceId SMILE: 5985232436
-  PlaceId VD:    93978595733734  🆕
-
-  v8.0 CHANGES:
-  ✅ Infectious Smile: جميع المميزات من open source
-  ✅ Cam Lock Taser: AnimID 138208219199182
-  ✅ Auto Run: RunSpeed attribute فقط لا يلمس WalkSpeed
-  ✅ جميع مميزات BBN الأصلية محفوظة
-  ✅ 🆕 Violence District: ESP, Auto Perfect Check, WalkSpeed
-  ✅ Multi-Game detection تلقائي
-  ✅ Dividers بين أقسام كل tab
-  ✅ خلفية جديدة 104829641696132
 ]]
 
 -- ============================================================
 -- SERVICES
 -- ============================================================
-local Players            = game:GetService("Players")
-local RunService         = game:GetService("RunService")
-local Lighting           = game:GetService("Lighting")
-local HttpService        = game:GetService("HttpService")
-local RS                 = game:GetService("ReplicatedStorage")
-local TweenService       = game:GetService("TweenService")
-local VirtualUser        = game:GetService("VirtualUser")
-local VirtualInputMgr    = game:GetService("VirtualInputManager")
-local CollectionService  = game:GetService("CollectionService")
-local SoundService       = game:GetService("SoundService")
-local LP                 = Players.LocalPlayer
-local Camera             = workspace.CurrentCamera
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local VirtualInputMgr = game:GetService("VirtualInputManager")
+local LP = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
--- ============================================================
--- GAME DETECTION
--- ============================================================
-local PLACE_BBN   = 70845479499574
-local PLACE_SMILE = 5985232436
-local PLACE_VD    = 93978595733734  -- 🆕 Violence District
-local IS_BBN      = game.PlaceId == PLACE_BBN
-local IS_SMILE    = game.PlaceId == PLACE_SMILE
-local IS_VD       = game.PlaceId == PLACE_VD
-local GAME_NAME   = IS_BBN and "Bite By Night" or IS_SMILE and "Infectious Smile" or IS_VD and "Violence District" or "Unknown"
-
-if not IS_BBN and not IS_SMILE and not IS_VD then
+local PLACE_VD = 93978595733734
+if game.PlaceId ~= PLACE_VD then
     pcall(function()
         local sg = Instance.new("ScreenGui"); sg.IgnoreGuiInset = true; sg.ResetOnSpawn = false
         local ok = pcall(function() sg.Parent = game:GetService("CoreGui") end)
@@ -54,309 +28,345 @@ if not IS_BBN and not IS_SMILE and not IS_VD then
         lbl.Size = UDim2.new(0.75,0,0.4,0); lbl.Position = UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency = 1; lbl.ZIndex = 101; lbl.TextScaled = true
         lbl.Font = Enum.Font.GothamBold; lbl.TextColor3 = Color3.fromRGB(200,100,255)
-        lbl.Text = "Phantom Hub v8.0\n\nSupported Games:\n• Bite By Night\n• Infectious Smile\n• Violence District\n\nUnsupported Game!"
+        lbl.Text = "Phantom Hub v8.0\n\nViolence District only!\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
-    error("[PH] Unsupported game.", 0)
+    return
 end
 
--- VERSION KICK (BBN)
-local WH_URL = "https://discord.com/api/webhooks/1463189590377500705/Mbi_4ejZMvjWMXctMrY7f6vWDbhqIc41lhPYs0Ya9Dr8yPeUlTHExFr1XRR7nuQS_xvb"
-if IS_BBN then
-    local SCRIPT_VERSION = 80
-    local VERSION_URL = "https://raw.githubusercontent.com/zxeavr/Bite-by-night-/main/version.txt"
-    task.spawn(function() pcall(function()
-        local ok,res = pcall(function() return game:HttpGet(VERSION_URL) end)
-        if ok and res then
-            local latest = tonumber(res:match("%d+"))
-            if latest and latest > SCRIPT_VERSION then
-                LP:Kick("\n🌙 Phantom Hub\n\nUpdating... Re-execute!\nBy 7k.u")
+-- ============================================================
+-- STATE
+-- ============================================================
+local S = {
+    ESP = true, ESPMode = "Highlight",
+    KillerESP = true, KillerColor = Color3.fromRGB(255,93,108),
+    SurvivorESP = true, SurvivorColor = Color3.fromRGB(64,224,255),
+    GeneratorESP = true, GeneratorColor = Color3.fromRGB(210,87,255),
+    GateESP = true, GateColor = Color3.fromRGB(255,255,255),
+    PalletESP = true, PalletColor = Color3.fromRGB(74,255,181),
+    WindowESP = true, WindowColor = Color3.fromRGB(74,255,181),
+    HookESP = true, HookColor = Color3.fromRGB(132,255,169),
+    PerfectCheck = false,
+    WalkSpeed = 16,
+    FullBright = false, NoFog = false, NoShadow = false, FovValue = 70,
+    AntiAFK = false, FPSBooster = false,
+    UIScale = 1.0, UIAlpha = 0
+}
+
+-- ============================================================
+-- AUTO PERFECT CHECK
+-- ============================================================
+local function lineInGoal()
+    local gui = LP.PlayerGui:FindFirstChild("SkillCheckPromptGui")
+    if not gui then return false end
+    local check = gui:FindFirstChild("Check")
+    if not check then return false end
+    local line = check:FindFirstChild("Line")
+    local goal = check:FindFirstChild("Goal")
+    if not line or not goal then return false end
+    local lr = line.Rotation % 360
+    local gr = goal.Rotation % 360
+    local gs = (gr + 104) % 360
+    local ge = (gr + 114) % 360
+    if gs > ge then return lr >= gs or lr <= ge
+    else return lr >= gs and lr <= ge end
+end
+
+local perfectCheckConn
+local function SetPerfectCheck(on)
+    if perfectCheckConn then perfectCheckConn:Disconnect(); perfectCheckConn = nil end
+    if not on then return end
+    perfectCheckConn = RunService.Heartbeat:Connect(function()
+        if S.PerfectCheck and LP.Team and LP.Team.Name == "Survivors" then
+            if lineInGoal() then
+                VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                task.wait(0.01)
+                VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
             end
         end
-    end) end)
-end
-
--- ============================================================
--- CHAR REFS
--- ============================================================
-local LPChar, LPRoot, LPHum
-local function RefreshChar()
-    LPChar = LP.Character; if not LPChar then return end
-    LPRoot = LPChar:FindFirstChild("HumanoidRootPart")
-    LPHum  = LPChar:FindFirstChildOfClass("Humanoid")
-end
-RefreshChar()
-
-local CFG_FOLDER = "PhantomHub"; local AUTO_FILE = CFG_FOLDER.."/_autoload.txt"
-pcall(function() if not isfolder(CFG_FOLDER) then makefolder(CFG_FOLDER) end end)
-local LANG = "en"
-
--- DEBUG
-local S_Debug = false
-local function Log(...)
-    if not S_Debug then return end
-    local parts = {}; for _,v in ipairs({...}) do parts[#parts+1] = tostring(v) end
-    print("[PH] " .. table.concat(parts," "))
-end
-
--- ============================================================
--- GLOBAL STATE
--- ============================================================
-local G = getgenv(); G.PH = G.PH or {}; local S = G.PH
-local function def(k,v) if S[k]==nil then S[k]=v end end
-
--- Shared
-def("FullBright",false); def("NoFog",false); def("NoShadow",false); def("FovValue",70)
-def("AntiAFK",false); def("FPSBooster",false); def("NoClip",false); def("AllowJump",false)
-def("InfStamina",false); def("UIScale",1.0); def("UIAlpha",0); def("DebugHelpers",false)
-
--- BBN
-def("ESPMode","Highlight"); def("ESPHealth",false); def("ShowGenProgress",false)
-def("T",{
-    Killer   ={On=false,Color=Color3.fromRGB(255,50,50)},
-    Survivor ={On=false,Color=Color3.fromRGB(50,210,90)},
-    Generator={On=false,Color=Color3.fromRGB(168,85,247)},
-    Battery  ={On=false,Color=Color3.fromRGB(59,130,246)},
-    Fuse     ={On=false,Color=Color3.fromRGB(235,235,235)},
-    Trap     ={On=false,Color=Color3.fromRGB(239,68,68)},
-    WireEye  ={On=false,Color=Color3.fromRGB(255,165,0)},
-})
-def("NoBlind",false); def("HideGenGui",false)
-def("AutoRun",false); def("RunSpeed",24)
-def("AntiStun",false); def("AntiRagdoll",false); def("AntiConfusion",false)
-def("AntiTrap",false); def("AntiDie",false); def("AntiDieHP",30)
-def("AutoEscape",false); def("AutoBarricade",false)
-def("DeleteDoor",false); def("SkipCutscene",false)
-def("InstantPrompt",false); def("InstantGen",false); def("GenDelay",1.0)
-def("AutoParry",false); def("ParryRange",15); def("ParryRangePull",40)
-def("ShowParryViz",false); def("ParryDynamic",false); def("ParryRainbow",false)
-def("ParryColor",Color3.fromRGB(255,60,60)); def("ParryAlpha",0.5)
-def("CamLockRotten",false); def("CamLockM1",false); def("CamLockTaser",false)
-def("CamLockDoppelPull",false); def("CamLockDoppelStab",false)
-def("CamLockMimicGrab",false); def("CamLockMimicJump",false)
-def("CamFOV",120); def("ShowFOV",false)
-def("FovColor",Color3.fromRGB(255,80,80)); def("FovAlpha",0)
-def("AutoShakeWire",false); def("ShakeSpeed",0.5)
-def("AutoFarm",false); def("FarmMode","TP"); def("FarmSpeed",30); def("FarmUnderground",false)
-
--- SMILE
-def("AutoFastWeapon",false); def("DisableKillBricks",false)
-def("SmileSavedReach",0); def("AutoReachWeapon",false)
-def("AntiInventoryBlock",false); def("AntiInfection",false); def("AntiInfectedPlayers",false)
-def("SmileAutoGrab",false); def("SmileKillGrab",false)
-def("SmileInstantKillGrab",false); def("SmilePushGrab",false); def("SmileAntiStun",false)
-def("AutoCollectKeys",false); def("AutoCollectCoins",false)
-def("AntiBlackHole",false); def("KillNearestNPCs",false)
-def("DisableEchoSounds",false); def("DisableAntiSmilers",false)
-
--- 🆕 VIOLENCE DISTRICT
-def("VD_ESP",true); def("VD_ESPMode","Highlight")
-def("VD_KillerESP",true); def("VD_SurvivorESP",true)
-def("VD_GeneratorESP",true); def("VD_GateESP",true)
-def("VD_PalletESP",true); def("VD_WindowESP",true); def("VD_HookESP",true)
-def("VD_KillerColor",Color3.fromRGB(255,93,108)); def("VD_SurvivorColor",Color3.fromRGB(64,224,255))
-def("VD_GeneratorColor",Color3.fromRGB(210,87,255)); def("VD_GateColor",Color3.fromRGB(255,255,255))
-def("VD_PalletColor",Color3.fromRGB(74,255,181)); def("VD_WindowColor",Color3.fromRGB(74,255,181))
-def("VD_HookColor",Color3.fromRGB(132,255,169))
-def("VD_PerfectCheck",false); def("VD_WalkSpeed",16)
-
--- ============================================================
--- VIOLENCE DISTRICT: AUTO PERFECT CHECK
--- ============================================================
-if IS_VD then
-    local function lineInGoal()
-        local CheckGui = LP.PlayerGui:WaitForChild("SkillCheckPromptGui",5)
-        if not CheckGui then return false end
-        local Check = CheckGui:WaitForChild("Check",5)
-        local Line = Check and Check:WaitForChild("Line",5)
-        local Goal = Check and Check:WaitForChild("Goal",5)
-        if not Line or not Goal then return false end
-        local lr = Line.Rotation % 360
-        local gr = Goal.Rotation % 360
-        local gs = (gr + 104) % 360
-        local ge = (gr + 114) % 360
-        return (gs > ge) and (lr >= gs or lr <= ge) or (lr >= gs and lr <= ge)
-    end
-
-    local perfectCheckConn
-    local function SetPerfectCheck(on)
-        if perfectCheckConn then perfectCheckConn:Disconnect(); perfectCheckConn = nil end
-        if not on then return end
-        perfectCheckConn = RunService.Heartbeat:Connect(function()
-            if S.VD_PerfectCheck and LP.Team and LP.Team.Name == "Survivors" then
-                if lineInGoal() then
-                    VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                    task.wait(0.01)
-                    VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-                end
-            end
-        end)
-    end
-end
-
--- ============================================================
--- VIOLENCE DISTRICT: ESP SYSTEM (optimized)
--- ============================================================
-if IS_VD then
-    local espCache = {}
-    local function clearESP(model)
-        if espCache[model] then
-            pcall(function() espCache[model]:Destroy() end)
-            espCache[model] = nil
-        end
-    end
-    local function updateESP(model, color, hasName)
-        if not model or not model.Parent then clearESP(model); return end
-        local existing = espCache[model]
-        if existing and existing.Parent == Objects then return end
-        clearESP(model)
-        local mode = S.VD_ESPMode
-        local highlight = nil
-        if mode == "Highlight" or mode == "Chams" then
-            highlight = Instance.new("Highlight")
-            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            highlight.FillColor = color; highlight.OutlineColor = color
-            highlight.FillTransparency = mode == "Highlight" and 0.5 or 0.2
-            highlight.OutlineTransparency = 0.3
-            highlight.Adornee = model
-            highlight.Parent = model
-            espCache[model] = highlight
-        end
-        if mode == "Name" or hasName then
-            local billboard = Instance.new("BillboardGui")
-            billboard.AlwaysOnTop = true; billboard.Size = UDim2.new(0,200,0,20)
-            billboard.StudsOffset = Vector3.new(0,2,0); billboard.Parent = model
-            local label = Instance.new("TextLabel", billboard)
-            label.Size = UDim2.new(1,0,1,0); label.BackgroundTransparency = 1
-            label.TextColor3 = color; label.Font = Enum.Font.GothamBold; label.TextSize = 12
-            label.TextStrokeTransparency = 0.5
-            label.Text = hasName or (mode == "Name" and (model:IsA("Model") and model.Name or "Object") or "")
-            if not espCache[model] then espCache[model] = billboard end
-        elseif mode == "Dot" then
-            local dot = Instance.new("BillboardGui")
-            dot.AlwaysOnTop = true; dot.Size = UDim2.new(0,8,0,8)
-            dot.StudsOffset = Vector3.new(0,2,0); dot.Parent = model
-            local frame = Instance.new("Frame", dot)
-            frame.Size = UDim2.new(1,0,1,0); frame.BackgroundColor3 = color
-            frame.BorderSizePixel = 0
-            Instance.new("UICorner",frame).CornerRadius = UDim.new(1,0)
-            if not espCache[model] then espCache[model] = dot end
-        end
-    end
-
-    local function updateAllESP()
-        -- Killers & Survivors
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player == LP then continue end
-            local char = player.Character; if not char then clearESP(char); continue end
-            local hum = char:FindFirstChildOfClass("Humanoid"); if not hum then continue end
-            local color = (player.Team and player.Team.Name:lower() == "killer") and S.VD_KillerColor or S.VD_SurvivorColor
-            local on = (player.Team and player.Team.Name:lower() == "killer") and S.VD_KillerESP or S.VD_SurvivorESP
-            if not on then clearESP(char); continue end
-            updateESP(char, color, player.Name)
-        end
-        -- Objects (Map)
-        pcall(function()
-            local map = workspace:FindFirstChild("Map"); if not map then return end
-            for _, obj in ipairs(map:GetDescendants()) do
-                local cfg = nil
-                local name = nil
-                if obj.Name == "Generator" then cfg = {on=S.VD_GeneratorESP, col=S.VD_GeneratorColor, nm="Gen"}
-                elseif obj.Name == "Gate" then cfg = {on=S.VD_GateESP, col=S.VD_GateColor, nm="Gate"}
-                elseif obj.Name == "Palletwrong" then cfg = {on=S.VD_PalletESP, col=S.VD_PalletColor, nm="Pallet"}
-                elseif obj.Name == "Window" then cfg = {on=S.VD_WindowESP, col=S.VD_WindowColor, nm="Window"}
-                elseif obj.Name == "Hook" then
-                    if obj:FindFirstChild("Model") then
-                        for _, part in ipairs(obj.Model:GetDescendants()) do
-                            if part:IsA("BasePart") then updateESP(part, S.VD_HookColor, "Hook") end
-                        end
-                    end
-                    if obj:FindFirstChild("Cartoony Blood Puddle") then
-                        updateESP(obj["Cartoony Blood Puddle"], S.VD_HookColor, "Hook")
-                    end
-                    continue
-                end
-                if cfg and cfg.on then updateESP(obj, cfg.col, cfg.nm) end
-            end
-        end)
-    end
-
-    task.spawn(function()
-        while task.wait(0.1) do if S.VD_ESP then pcall(updateAllESP) end end
     end)
 end
 
 -- ============================================================
--- (كل دوال BBN و SMILE كما هي بدون تغيير، ثم باقي السكربت)
+-- ESP SYSTEM (OPTIMIZED)
 -- ============================================================
--- ... (نفس الكود السابق لـ BBN و SMILE، لعدم الاطالة سنكتفي بذكر الأجزاء الأساسية)
-
--- BUILD WINDOW
-function BuildWindow()
-    local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-    local Window = WindUI:CreateWindow({
-        Title = "Phantom Hub", Icon = "moon", Author = "7k.u | "..GAME_NAME,
-        Folder = CFG_FOLDER, Size = UDim2.fromOffset(700,490),
-        Transparent = true, Theme = "Midnight", Resizable = false,
-        Background = "rbxassetid://104829641696132", BackgroundImageTransparency = 0.45,
-        User = {Enabled=true, Anonymous=false},
-    })
-    Window:Tag({Title="v8.0", Color=Color3.fromRGB(120,60,240)})
-    local tagText = IS_BBN and "BBN" or IS_SMILE and "SMILE" or "VD"
-    Window:Tag({Title=tagText, Color=Color3.fromRGB(30,130,255), Icon="shield"})
-
-    -- INFO TAB (مشترك)
-    local TbInfo = Window:Tab({Title="Info", Icon="info"})
-    -- ... (كما في الرد السابق)
-
-    -- إذا كانت اللعبة Violence District
-    if IS_VD then
-        -- MAIN TAB
-        local TbMain = Window:Tab({Title="Main", Icon="house"})
-        TbMain:Toggle({Title="ESP Master", Value = S.VD_ESP, Callback=function(v) S.VD_ESP = v end})
-        TbMain:Dropdown({Title="ESP Mode", Values={"Highlight","Chams","Name","Dot"}, Value=S.VD_ESPMode, Multi=false, Callback=function(v) S.VD_ESPMode=v end})
-        TbMain:Divider()
-        -- Colors & Toggles per type
-        local types = {
-            {"Killer", "VD_KillerESP", S.VD_KillerColor, function(c) S.VD_KillerColor=c end},
-            {"Survivor", "VD_SurvivorESP", S.VD_SurvivorColor, function(c) S.VD_SurvivorColor=c end},
-            {"Generator", "VD_GeneratorESP", S.VD_GeneratorColor, function(c) S.VD_GeneratorColor=c end},
-            {"Gate", "VD_GateESP", S.VD_GateColor, function(c) S.VD_GateColor=c end},
-            {"Pallet", "VD_PalletESP", S.VD_PalletColor, function(c) S.VD_PalletColor=c end},
-            {"Window", "VD_WindowESP", S.VD_WindowColor, function(c) S.VD_WindowColor=c end},
-            {"Hook", "VD_HookESP", S.VD_HookColor, function(c) S.VD_HookColor=c end},
-        }
-        for _, t in ipairs(types) do
-            TbMain:Toggle({Title=t[1].." ESP", Value=S[t[2]], Callback=function(v) S[t[2]]=v end})
-            TbMain:Colorpicker({Title=t[1].." Color", Default=t[3], Callback=t[4]})
-        end
-        TbMain:Divider()
-        TbMain:Toggle({Title="Auto Perfect Check", Value=S.VD_PerfectCheck, Callback=function(v) S.VD_PerfectCheck=v; SetPerfectCheck(v) end})
-        TbMain:Divider()
-        TbMain:Slider({Title="Walk Speed", Step=1, Value={Min=10,Max=50,Default=16}, Callback=function(v) S.VD_WalkSpeed=v end})
-        local speedConn
-        task.spawn(function()
-            while task.wait(0.2) do
-                if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
-                    LP.Character.Humanoid.WalkSpeed = S.VD_WalkSpeed
-                end
-            end
-        end)
-        -- VISUAL TAB (مشترك)
-        local TbVisual = Window:Tab({Title="Visual", Icon="palette"})
-        TbVisual:Toggle({Title="Full Bright", Value=S.FullBright, Callback=function(v) S.FullBright=v; SetFullBright(v) end})
-        TbVisual:Toggle({Title="No Fog", Value=S.NoFog, Callback=function(v) S.NoFog=v end})
-        TbVisual:Toggle({Title="No Shadow", Value=S.NoShadow, Callback=function(v) S.NoShadow=v end})
-        TbVisual:Slider({Title="Field of View", Step=1, Value={Min=10,Max=100,Default=70}, Callback=function(v) SetFOV(v) end})
+local espCache = {}
+local function clearESP(model)
+    if espCache[model] then
+        pcall(function() espCache[model]:Destroy() end)
+        espCache[model] = nil
     end
-
-    -- إذا كانت BBN أو SMILE، فسيتم إضافة التبويبات المعتادة (نفس الكود السابق كاملاً)
-
-    -- CONFIG + SETTINGS (تبقى كما هي مع إضافة حالات VD)
-    -- ...
-
-    -- INIT
-    -- ...
 end
 
-ShowLoadingScreen(function() ShowLangGUI(function() BuildWindow() end) end)
+local function updateESP(model, color, label, on)
+    if not model or not model.Parent or not on then clearESP(model); return end
+    local mode = S.ESPMode
+    if mode == "Highlight" or mode == "Chams" then
+        local hl = espCache[model]
+        if hl and hl:IsA("Highlight") then
+            hl.FillColor = color; hl.OutlineColor = color
+        else
+            if hl then pcall(function() hl:Destroy() end) end
+            hl = Instance.new("Highlight")
+            hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            hl.FillTransparency = mode == "Highlight" and 0.55 or 0.2
+            hl.OutlineTransparency = 0.3
+            hl.FillColor = color; hl.OutlineColor = color
+            hl.Adornee = model; hl.Parent = model
+            espCache[model] = hl
+        end
+    elseif mode == "Name" then
+        local bb = espCache[model]
+        if bb and bb:IsA("BillboardGui") and bb:FindFirstChild("NameTag") then
+            bb.NameTag.Text = label or model.Name
+            bb.NameTag.TextColor3 = color
+        else
+            if bb then pcall(function() bb:Destroy() end) end
+            bb = Instance.new("BillboardGui")
+            bb.AlwaysOnTop = true; bb.Size = UDim2.new(0,200,0,20)
+            bb.StudsOffset = Vector3.new(0,2.5,0); bb.Parent = model
+            local txt = Instance.new("TextLabel", bb)
+            txt.Name = "NameTag"; txt.Size = UDim2.new(1,0,1,0)
+            txt.BackgroundTransparency = 1; txt.Font = Enum.Font.GothamBold
+            txt.TextSize = 12; txt.TextColor3 = color
+            txt.TextStrokeTransparency = 0.5
+            txt.Text = label or model.Name
+            espCache[model] = bb
+        end
+    elseif mode == "Dot" then
+        local dot = espCache[model]
+        if dot and dot:IsA("BillboardGui") and dot:FindFirstChild("Dot") then
+            dot.Dot.BackgroundColor3 = color
+        else
+            if dot then pcall(function() dot:Destroy() end) end
+            dot = Instance.new("BillboardGui")
+            dot.AlwaysOnTop = true; dot.Size = UDim2.new(0,10,0,10)
+            dot.StudsOffset = Vector3.new(0,2,0); dot.Parent = model
+            local frame = Instance.new("Frame", dot)
+            frame.Name = "Dot"; frame.Size = UDim2.new(1,0,1,0)
+            frame.BackgroundColor3 = color; frame.BorderSizePixel = 0
+            Instance.new("UICorner",frame).CornerRadius = UDim.new(1,0)
+            espCache[model] = dot
+        end
+    end
+end
+
+local function processAllESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LP then continue end
+        local char = player.Character
+        if not char then continue end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum then continue end
+        local isKiller = player.Team and player.Team.Name:lower() == "killer"
+        local on = isKiller and S.KillerESP or S.SurvivorESP
+        local color = isKiller and S.KillerColor or S.SurvivorColor
+        updateESP(char, color, player.Name, on)
+    end
+
+    pcall(function()
+        local map = workspace:FindFirstChild("Map")
+        if not map then return end
+        for _, obj in ipairs(map:GetDescendants()) do
+            local cfgOn, cfgCol, label = nil, nil, nil
+            if obj.Name == "Generator" then
+                cfgOn, cfgCol, label = S.GeneratorESP, S.GeneratorColor, "Gen"
+            elseif obj.Name == "Gate" then
+                cfgOn, cfgCol, label = S.GateESP, S.GateColor, "Gate"
+            elseif obj.Name == "Palletwrong" then
+                cfgOn, cfgCol, label = S.PalletESP, S.PalletColor, "Pallet"
+            elseif obj.Name == "Window" then
+                cfgOn, cfgCol, label = S.WindowESP, S.WindowColor, "Window"
+            elseif obj.Name == "Hook" then
+                if obj:FindFirstChild("Model") then
+                    for _, part in ipairs(obj.Model:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            updateESP(part, S.HookColor, "Hook", S.HookESP)
+                        end
+                    end
+                end
+                if obj:FindFirstChild("Cartoony Blood Puddle") then
+                    updateESP(obj["Cartoony Blood Puddle"], S.HookColor, "Hook", S.HookESP)
+                end
+                continue
+            end
+            if cfgOn then updateESP(obj, cfgCol, label, cfgOn) end
+        end
+    end)
+end
+
+-- ============================================================
+-- LIGHTING
+-- ============================================================
+local origAmb = Lighting.Ambient
+local origBr = Lighting.Brightness
+local origFogS = Lighting.FogStart
+local origFogE = Lighting.FogEnd
+
+local function SetFullBright(on)
+    Lighting.Ambient = on and Color3.new(1,1,1) or origAmb
+    Lighting.Brightness = on and 2 or origBr
+end
+
+task.spawn(function()
+    while task.wait(0.3) do
+        Lighting.FogEnd = S.NoFog and 1e9 or origFogE
+        Lighting.FogStart = S.NoFog and 1e9 or origFogS
+        Lighting.GlobalShadows = not S.NoShadow
+    end
+end)
+
+-- ============================================================
+-- FOV / WALKSPEED
+-- ============================================================
+local fovConn
+local function SetFOV(v)
+    S.FovValue = v
+    if fovConn then fovConn:Disconnect() end
+    fovConn = RunService.Heartbeat:Connect(function() Camera.FieldOfView = v end)
+end
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+            LP.Character.Humanoid.WalkSpeed = S.WalkSpeed
+        end
+    end
+end)
+
+-- ANTI AFK
+local afkConn
+local function SetAntiAFK(on)
+    if afkConn then afkConn:Disconnect(); afkConn = nil end
+    if not on then return end
+    afkConn = LP.Idled:Connect(function()
+        VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+        task.wait(0.1)
+        VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+    end)
+end
+
+-- FPS BOOSTER
+local fpsParts = {}
+local function SetFPSBooster(on)
+    if not on then
+        for _,v in ipairs(fpsParts) do pcall(function() v.Enabled = true end) end; fpsParts = {}
+        return
+    end
+    for _,v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") then pcall(function() v.Enabled = false; table.insert(fpsParts,v) end) end
+    end
+end
+
+-- ============================================================
+-- UI HELPERS
+-- ============================================================
+local function ApplyScale(v)
+    S.UIScale = v
+    for _,parent in ipairs({LP.PlayerGui, game:GetService("CoreGui")}) do
+        local gui = parent:FindFirstChild("PhantomHub")
+        if gui then gui:FindFirstChildOfClass("UIScale").Scale = v end
+    end
+end
+
+-- ============================================================
+-- LOAD WindUI
+-- ============================================================
+local WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+end)
+
+if not WindUI then
+    local msg = Instance.new("Message", LP:WaitForChild("PlayerGui"))
+    msg.Text = "❌ WindUI failed to load. Use Delta or Wave executor."
+    task.wait(5); msg:Destroy()
+    return
+end
+
+-- ============================================================
+-- BUILD UI
+-- ============================================================
+local Window = WindUI:CreateWindow({
+    Title = "Phantom Hub", Icon = "moon", Author = "7k.u | Violence District",
+    Folder = "PhantomHub", Size = UDim2.fromOffset(650,420),
+    Transparent = true, Theme = "Midnight", Resizable = false,
+    Background = "rbxassetid://104829641696132", BackgroundImageTransparency = 0.4,
+    User = {Enabled=true, Anonymous=false}
+})
+Window:Tag({Title="v8.0", Color=Color3.fromRGB(120,60,240)})
+
+local TbInfo = Window:Tab({Title="Info", Icon="info"})
+TbInfo:Paragraph({
+    Title = LP.DisplayName.." (@"..LP.Name..")",
+    Desc = "Violence District ESP & Tools",
+    Image = "rbxthumb://type=AvatarHeadShot&id="..LP.UserId.."&w=150&h=150",
+    ImageSize = 50
+})
+
+local TbMain = Window:Tab({Title="Main", Icon="house"})
+do
+    TbMain:Toggle({Title="ESP Master", Value = S.ESP, Callback = function(v) S.ESP = v end})
+    TbMain:Dropdown({Title="ESP Mode", Values={"Highlight","Chams","Name","Dot"}, Value=S.ESPMode, Multi=false, Callback=function(v) S.ESPMode=v end})
+    TbMain:Divider()
+
+    local types = {
+        {"Killer", "KillerESP", S.KillerColor, function(c) S.KillerColor=c end},
+        {"Survivor", "SurvivorESP", S.SurvivorColor, function(c) S.SurvivorColor=c end},
+        {"Generator", "GeneratorESP", S.GeneratorColor, function(c) S.GeneratorColor=c end},
+        {"Gate", "GateESP", S.GateColor, function(c) S.GateColor=c end},
+        {"Pallet", "PalletESP", S.PalletColor, function(c) S.PalletColor=c end},
+        {"Window", "WindowESP", S.WindowColor, function(c) S.WindowColor=c end},
+        {"Hook", "HookESP", S.HookColor, function(c) S.HookColor=c end},
+    }
+    for _,t in ipairs(types) do
+        TbMain:Toggle({Title=t[1].." ESP", Value=S[t[2]], Callback=function(v) S[t[2]]=v end})
+        TbMain:Colorpicker({Title=t[1].." Color", Default=t[3], Callback=t[4]})
+    end
+    TbMain:Divider()
+
+    TbMain:Toggle({Title="Auto Perfect Check", Value=S.PerfectCheck, Callback=function(v) S.PerfectCheck=v; SetPerfectCheck(v) end})
+    TbMain:Divider()
+    TbMain:Slider({Title="Walk Speed", Step=1, Value={Min=10,Max=50,Default=S.WalkSpeed}, Callback=function(v) S.WalkSpeed=v end})
+end
+
+local TbVisual = Window:Tab({Title="Visual", Icon="palette"})
+do
+    TbVisual:Toggle({Title="Full Bright", Value=S.FullBright, Callback=function(v) S.FullBright=v; SetFullBright(v) end})
+    TbVisual:Toggle({Title="No Fog", Value=S.NoFog, Callback=function(v) S.NoFog=v end})
+    TbVisual:Toggle({Title="No Shadow", Value=S.NoShadow, Callback=function(v) S.NoShadow=v end})
+    TbVisual:Slider({Title="Field of View", Step=1, Value={Min=10,Max=100,Default=S.FovValue}, Callback=function(v) SetFOV(v) end})
+    TbVisual:Divider()
+    TbVisual:Slider({Title="UI Scale", Step=0.05, Value={Min=0.7,Max=1.5,Default=S.UIScale}, Callback=function(v) ApplyScale(v) end})
+    TbVisual:Slider({Title="UI Transparency", Step=0.05, Value={Min=0,Max=0.9,Default=S.UIAlpha}, Callback=function(v) WindUI:SetTransparency(v) end})
+end
+
+local TbSet = Window:Tab({Title="Settings", Icon="sliders-horizontal"})
+do
+    TbSet:Toggle({Title="Anti-AFK", Value=S.AntiAFK, Callback=function(v) S.AntiAFK=v; SetAntiAFK(v) end})
+    TbSet:Toggle({Title="FPS Booster", Value=S.FPSBooster, Callback=function(v) S.FPSBooster=v; SetFPSBooster(v) end})
+end
+
+-- ============================================================
+-- LOOPS
+-- ============================================================
+task.spawn(function()
+    while task.wait(0.15) do
+        if S.ESP then pcall(processAllESP) end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.4) do
+        if not S.ESP then
+            for k,_ in pairs(espCache) do clearESP(k) end
+        end
+    end
+end)
+
+-- INIT
+SetFullBright(S.FullBright)
+SetFOV(S.FovValue)
+SetAntiAFK(S.AntiAFK)
+SetFPSBooster(S.FPSBooster)
+
+WindUI:Notify({Title="Phantom Hub", Content="Violence District ready!", Duration=4, Icon="moon"})
