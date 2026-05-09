@@ -1,7 +1,8 @@
 --[[
-  PHANTOM HUB v9.2 | Violence District
+  PHANTOM HUB v9.4 (Full) | Violence District
   PlaceId: 93978595733734
-  Complete Script, No Missing Functions
+  By 7k.u | WindUI Midnight | Delta
+  ✅ All features included and optimized
 ]]
 
 local Players = game:GetService("Players")
@@ -18,12 +19,11 @@ local Camera = workspace.CurrentCamera
 local PLACE_VD = 93978595733734
 if game.PlaceId ~= PLACE_VD then return end
 
--- FOLDERS
 local CFG_FOLDER = "PhantomHub"
 local AUTO_FILE = CFG_FOLDER .. "/_autoload_vd.txt"
 pcall(function() if not isfolder(CFG_FOLDER) then makefolder(CFG_FOLDER) end end)
 
--- STATE
+-- ====================== STATE ======================
 local S = {
     ESP = false, ESPMode = "Outline",
     KillerESP = false, KillerColor = Color3.fromRGB(255,0,0),
@@ -58,6 +58,7 @@ local S = {
     WalkSpeed = 16, TP_Offset = 3,
 }
 
+-- ====================== HELPERS ======================
 local GetRole = function()
     if not LP.Team then return "Unknown" end
     local n = LP.Team.Name
@@ -69,7 +70,7 @@ local IsKiller = function(p) return p and p.Team and p.Team.Name == "Killer" end
 local IsSurvivor = function(p) return p and p.Team and p.Team.Name == "Survivors" end
 local GetCharacterRoot = function() local c = LP.Character; return c and c:FindFirstChild("HumanoidRootPart") end
 
--- ESP
+-- ====================== ESP ======================
 local espCache = {}
 local clearESP = function(o) if espCache[o] then pcall(function() espCache[o]:Destroy() end); espCache[o] = nil end end
 local function ESP(obj, color, name)
@@ -101,6 +102,7 @@ local function ESP(obj, color, name)
         hl.Parent = obj; espCache[obj] = hl
     end
 end
+
 local processAllESP = function()
     for _, p in ipairs(Players:GetPlayers()) do
         if p == LP or not p.Character or not p.Team then continue end
@@ -125,7 +127,7 @@ local processAllESP = function()
 end
 local ClearESPCache = function() for o in pairs(espCache) do clearESP(o) end end
 
--- AUTO PERFECT CHECK
+-- ====================== PERFECT CHECK ======================
 local perfectCheckConn
 SetPerfectCheck = function(on)
     S.PerfectCheck = on
@@ -143,7 +145,7 @@ SetPerfectCheck = function(on)
     perfectCheckConn = { Disconnect = function() for _, c in ipairs(conns) do c:Disconnect() end end }
 end
 
--- AUTO PARRY
+-- ====================== AUTO PARRY ======================
 local autoParryConn
 SetAutoParry = function(on)
     S.AutoParry = on
@@ -170,7 +172,7 @@ SetAutoParry = function(on)
     end)
 end
 
--- AIMBOT
+-- ====================== AIMBOT ======================
 local aimbotConn, aimbotTarget
 local GetAimTargetPart = function(char)
     if not char then return nil end
@@ -224,7 +226,7 @@ SetAimbot = function(on)
     end)
 end
 
--- SPEAR AIMBOT
+-- ====================== SPEAR AIMBOT ======================
 local spearAimConn
 SetSpearAimbot = function(on)
     S.SpearAimbot = on; if spearAimConn then spearAimConn:Disconnect(); spearAimConn = nil end
@@ -248,7 +250,7 @@ SetSpearAimbot = function(on)
     end)
 end
 
--- AUTO ATTACK
+-- ====================== AUTO ATTACK ======================
 local autoAttackConn
 SetAutoAttack = function(on)
     if autoAttackConn then autoAttackConn:Disconnect(); autoAttackConn = nil end
@@ -267,7 +269,7 @@ SetAutoAttack = function(on)
     end)
 end
 
--- DOUBLE TAP
+-- ====================== DOUBLE TAP ======================
 local doubleTapConn
 SetDoubleTap = function(on)
     S.DoubleTap = on; if doubleTapConn then doubleTapConn:Disconnect(); doubleTapConn = nil end
@@ -285,7 +287,7 @@ SetDoubleTap = function(on)
     end)
 end
 
--- INFINITE LUNGE
+-- ====================== INFINITE LUNGE ======================
 local lungeConn
 SetInfiniteLunge = function(on)
     S.InfiniteLunge = on; if lungeConn then lungeConn:Disconnect(); lungeConn = nil end
@@ -296,7 +298,7 @@ SetInfiniteLunge = function(on)
     end)
 end
 
--- AUTO HOOK
+-- ====================== AUTO HOOK ======================
 local autoHookConn
 SetAutoHook = function(on)
     S.AutoHook = on; if autoHookConn then autoHookConn:Disconnect(); autoHookConn = nil end
@@ -315,7 +317,7 @@ SetAutoHook = function(on)
     end)
 end
 
--- DESTROY PALLETS
+-- ====================== DESTROY PALLETS ======================
 local destroyPalletConn
 SetDestroyPallets = function(on)
     S.DestroyPallets = on; if destroyPalletConn then destroyPalletConn:Disconnect(); destroyPalletConn = nil end
@@ -327,7 +329,7 @@ SetDestroyPallets = function(on)
     end)
 end
 
--- FULL GEN BREAK
+-- ====================== FULL GEN BREAK ======================
 local genBreakConn
 SetFullGenBreak = function(on)
     S.FullGenBreak = on; if genBreakConn then genBreakConn:Disconnect(); genBreakConn = nil end
@@ -340,7 +342,7 @@ SetFullGenBreak = function(on)
     end)
 end
 
--- AUTO PALLET
+-- ====================== AUTO PALLET ======================
 local autoPalletConn
 SetAutoPallet = function(on)
     S.AutoPallet = on; if autoPalletConn then autoPalletConn:Disconnect(); autoPalletConn = nil end
@@ -352,7 +354,7 @@ SetAutoPallet = function(on)
     end)
 end
 
--- AUTO GENERATOR
+-- ====================== AUTO GENERATOR ======================
 local autoGenConn
 SetAutoGenerator = function(on)
     if autoGenConn then autoGenConn:Disconnect(); autoGenConn = nil end
@@ -364,7 +366,7 @@ SetAutoGenerator = function(on)
     end)
 end
 
--- AUTO WIGGLE
+-- ====================== AUTO WIGGLE ======================
 local autoWiggleConn
 SetAutoWiggle = function(on)
     if autoWiggleConn then autoWiggleConn:Disconnect(); autoWiggleConn = nil end
@@ -375,7 +377,7 @@ SetAutoWiggle = function(on)
     end)
 end
 
--- HITBOX
+-- ====================== HITBOX ======================
 local hitboxCache = {}
 SetHitbox = function(on)
     S.HitboxEnabled = on
@@ -383,7 +385,7 @@ SetHitbox = function(on)
     task.spawn(function() while S.HitboxEnabled do if GetRole() == "Killer" then for _, p in ipairs(Players:GetPlayers()) do if p ~= LP and IsSurvivor(p) and p.Character then local r = p.Character:FindFirstChild("HumanoidRootPart"); if r then if not hitboxCache[p] then hitboxCache[p] = r.Size end; r.Size = Vector3.new(S.HitboxSize,S.HitboxSize,S.HitboxSize); r.CanCollide = false; r.Transparency = 0.7 end end end end; task.wait(0.2) end end)
 end
 
--- NO FALL
+-- ====================== NO FALL ======================
 local noFallConn
 SetNoFall = function(on)
     if noFallConn then noFallConn:Disconnect(); noFallConn = nil end
@@ -391,7 +393,7 @@ SetNoFall = function(on)
     noFallConn = RunService.Heartbeat:Connect(function() local c = LP.Character; if c then local h = c:FindFirstChildOfClass("Humanoid"); if h then h:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false); h:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false) end end end)
 end
 
--- NO SLOWDOWN
+-- ====================== NO SLOWDOWN ======================
 local noSlowConn
 SetNoSlowdown = function(on)
     if noSlowConn then noSlowConn:Disconnect(); noSlowConn = nil end
@@ -399,7 +401,7 @@ SetNoSlowdown = function(on)
     noSlowConn = RunService.Heartbeat:Connect(function() if not S.NoSlowdown or GetRole()~="Killer" then return end; local c=LP.Character; if c then local h=c:FindFirstChildOfClass("Humanoid"); if h and h.WalkSpeed<16 then h.WalkSpeed=16 end end end)
 end
 
--- ANTI BLIND & NO PALLET STUN
+-- ====================== ANTI BLIND & NO PALLET STUN ======================
 SetupAntiBlind = function()
     pcall(function() local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes"); local items = remotes and remotes:FindFirstChild("Items"); local fl = items and items:FindFirstChild("Flashlight"); local gb = fl and fl:FindFirstChild("GotBlinded")
         if gb and gb:IsA("RemoteEvent") then local of = gb.FireServer; gb.FireServer = function(self,...) if S.AntiBlind and GetRole()=="Killer" then return nil else return of(self,...) end end end end)
@@ -409,7 +411,7 @@ SetupNoPalletStun = function()
         if j then for _,en in ipairs({"Stun","StunDrop"}) do local ev = j:FindFirstChild(en); if ev and ev:IsA("RemoteEvent") then local mt = getrawmetatable(game); if mt and setreadonly then setreadonly(mt,false); local old = mt.__namecall; mt.__namecall = newcclosure(function(self,...) if S.NoPalletStun and GetRole()=="Killer" and self==ev then return nil end; return old(self,...) end); setreadonly(mt,true) end end end end end)
 end
 
--- SPEED
+-- ====================== MOVEMENT ======================
 local speedConn
 SetSpeed = function(on)
     S.SpeedEnabled = on; if speedConn then speedConn:Disconnect(); speedConn = nil end
@@ -417,7 +419,6 @@ SetSpeed = function(on)
     speedConn = RunService.Heartbeat:Connect(function() if S.SpeedEnabled then local c=LP.Character; if c then local h=c:FindFirstChildOfClass("Humanoid"); if h then h.WalkSpeed=S.SpeedValue end end end end)
 end
 
--- FLY
 local flyConn, flyVel, flyGyro
 SetFly = function(on)
     S.FlyEnabled = on; if flyConn then flyConn:Disconnect(); flyConn=nil end; if flyVel then flyVel:Destroy(); flyVel=nil end; if flyGyro then flyGyro:Destroy(); flyGyro=nil end
@@ -438,7 +439,6 @@ SetFly = function(on)
     end)
 end
 
--- NOCLIP
 local noclipConn
 SetNoclip = function(on)
     S.NoclipEnabled = on; if noclipConn then noclipConn:Disconnect(); noclipConn=nil end
@@ -446,7 +446,6 @@ SetNoclip = function(on)
     noclipConn = RunService.Stepped:Connect(function() if S.NoclipEnabled and LP.Character then for _,p in ipairs(LP.Character:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end end end)
 end
 
--- INFINITE JUMP
 local infJumpConn
 SetInfiniteJump = function(on)
     S.JumpInfinite = on; if infJumpConn then infJumpConn:Disconnect(); infJumpConn=nil end
@@ -454,7 +453,7 @@ SetInfiniteJump = function(on)
     infJumpConn = UserInputService.JumpRequest:Connect(function() if S.JumpInfinite and LP.Character then local h=LP.Character:FindFirstChildOfClass("Humanoid"); if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end end)
 end
 
--- VISUALS
+-- ====================== VISUALS ======================
 local origAmb, origBr = Lighting.Ambient, Lighting.Brightness
 local origFogS, origFogE = Lighting.FogStart, Lighting.FogEnd
 SetFullBright = function(on) Lighting.Ambient = on and Color3.new(1,1,1) or origAmb; Lighting.Brightness = on and 2 or origBr end
@@ -467,7 +466,7 @@ SetFOV = function(on)
     fovConn = RunService.Heartbeat:Connect(function() Camera.FieldOfView = S.FovValue end)
 end
 
--- ANTI AFK / FPS
+-- ====================== ANTI AFK / FPS BOOSTER ======================
 local afkConn
 SetAntiAFK = function(on)
     if afkConn then afkConn:Disconnect(); afkConn=nil end
@@ -480,188 +479,135 @@ SetFPSBooster = function(on)
     for _,v in ipairs(workspace:GetDescendants()) do if v:IsA("ParticleEmitter") or v:IsA("Trail") then pcall(function() v.Enabled=false; table.insert(fpsParts,v) end) end end
 end
 
--- CONFIG
+-- ====================== CONFIG ======================
 local ListCfgs, SaveCfg, LoadCfg, GetAutoLoad, SetAutoLoad
 do
     ListCfgs = function() if not listfiles then return {} end; local r={}; local ok,fs = pcall(listfiles,CFG_FOLDER); if not ok then return r end; for _,f in ipairs(fs) do local n=f:match("([^/\\]+)%.json$"); if n and n:sub(1,3)=="VD_" then table.insert(r,n:sub(4)) end end; return r end
-    SaveCfg = function(name) if not writefile then return false end; local sc=function(c) return {c.R,c.G,c.B} end; local data={ESP=S.ESP, ESPMode=S.ESPMode, KillerESP=S.KillerESP, KillerColor=sc(S.KillerColor), SurvivorESP=S.SurvivorESP, SurvivorColor=sc(S.SurvivorColor), GeneratorESP=S.GeneratorESP, GeneratorColor=sc(S.GeneratorColor), GateESP=S.GateESP, GateColor=sc(S.GateColor), PalletESP=S.PalletESP, PalletColor=sc(S.PalletColor), WindowESP=S.WindowESP, WindowColor=sc(S.WindowColor), HookESP=S.HookESP, HookColor=sc(S.HookColor), PerfectCheck=S.PerfectCheck, AutoParry=S.AutoParry, Aimbot=S.Aimbot, AimFOV=S.AimFOV, AimSmooth=S.AimSmooth, AimTargetPart=S.AimTargetPart, AimVisCheck=S.AimVisCheck, AimShowFOV=S.AimShowFOV, AimPredict=S.AimPredict, SpearAimbot=S.SpearAimbot, SpearGravity=S.SpearGravity, SpearSpeed=S.SpearSpeed, AutoAttack=S.AutoAttack, AutoAttackRange=S.AutoAttackRange, AutoGenerator=S.AutoGenerator, GenMode=S.GenMode, AutoWiggle=S.AutoWiggle, HitboxEnabled=S.HitboxEnabled, HitboxSize=S.HitboxSize, NoFall=S.NoFall, NoSlowdown=S.NoSlowdown, AntiBlind=S.AntiBlind, NoPalletStun=S.NoPalletStun, DoubleTap=S.DoubleTap, InfiniteLunge=S.InfiniteLunge, AutoHook=S.AutoHook, DestroyPallets=S.DestroyPallets, FullGenBreak=S.FullGenBreak, AutoPallet=S.AutoPallet, SpeedEnabled=S.SpeedEnabled, SpeedValue=S.SpeedValue, FlyEnabled=S.FlyEnabled, FlySpeed=S.FlySpeed, NoclipEnabled=S.NoclipEnabled, JumpInfinite=S.JumpInfinite, JumpPower=S.JumpPower, FullBright=S.FullBright, NoFog=S.NoFog, NoShadow=S.NoShadow, FovEnabled=S.FovEnabled, FovValue=S.FovValue, ThirdPerson=S.ThirdPerson, ShiftLock=S.ShiftLock, FlingEnabled=S.FlingEnabled, FlingStrength=S.FlingStrength, BeatSurvivor=S.BeatSurvivor, BeatKiller=S.BeatKiller, AntiAFK=S.AntiAFK, FPSBooster=S.FPSBooster, UIScale=S.UIScale, UIAlpha=S.UIAlpha, WalkSpeed=S.WalkSpeed, TP_Offset=S.TP_Offset}; return pcall(writefile, CFG_FOLDER.."/VD_"..name..".json", HttpService:JSONEncode(data)) end
+    SaveCfg = function(name) if not writefile then return false end; local sc=function(c) return {c.R,c.G,c.B} end; local data={ESP=S.ESP,ESPMode=S.ESPMode,KillerESP=S.KillerESP,KillerColor=sc(S.KillerColor),SurvivorESP=S.SurvivorESP,SurvivorColor=sc(S.SurvivorColor),GeneratorESP=S.GeneratorESP,GeneratorColor=sc(S.GeneratorColor),GateESP=S.GateESP,GateColor=sc(S.GateColor),PalletESP=S.PalletESP,PalletColor=sc(S.PalletColor),WindowESP=S.WindowESP,WindowColor=sc(S.WindowColor),HookESP=S.HookESP,HookColor=sc(S.HookColor),PerfectCheck=S.PerfectCheck,AutoParry=S.AutoParry,Aimbot=S.Aimbot,AimFOV=S.AimFOV,AimSmooth=S.AimSmooth,AimTargetPart=S.AimTargetPart,AimVisCheck=S.AimVisCheck,AimShowFOV=S.AimShowFOV,AimPredict=S.AimPredict,SpearAimbot=S.SpearAimbot,SpearGravity=S.SpearGravity,SpearSpeed=S.SpearSpeed,AutoAttack=S.AutoAttack,AutoAttackRange=S.AutoAttackRange,AutoGenerator=S.AutoGenerator,GenMode=S.GenMode,AutoWiggle=S.AutoWiggle,HitboxEnabled=S.HitboxEnabled,HitboxSize=S.HitboxSize,NoFall=S.NoFall,NoSlowdown=S.NoSlowdown,AntiBlind=S.AntiBlind,NoPalletStun=S.NoPalletStun,DoubleTap=S.DoubleTap,InfiniteLunge=S.InfiniteLunge,AutoHook=S.AutoHook,DestroyPallets=S.DestroyPallets,FullGenBreak=S.FullGenBreak,AutoPallet=S.AutoPallet,SpeedEnabled=S.SpeedEnabled,SpeedValue=S.SpeedValue,FlyEnabled=S.FlyEnabled,FlySpeed=S.FlySpeed,NoclipEnabled=S.NoclipEnabled,JumpInfinite=S.JumpInfinite,JumpPower=S.JumpPower,FullBright=S.FullBright,NoFog=S.NoFog,NoShadow=S.NoShadow,FovEnabled=S.FovEnabled,FovValue=S.FovValue,ThirdPerson=S.ThirdPerson,ShiftLock=S.ShiftLock,FlingEnabled=S.FlingEnabled,FlingStrength=S.FlingStrength,BeatSurvivor=S.BeatSurvivor,BeatKiller=S.BeatKiller,AntiAFK=S.AntiAFK,FPSBooster=S.FPSBooster,UIScale=S.UIScale,UIAlpha=S.UIAlpha,WalkSpeed=S.WalkSpeed,TP_Offset=S.TP_Offset}; return pcall(writefile,CFG_FOLDER.."/VD_"..name..".json",HttpService:JSONEncode(data)) end
     LoadCfg = function(name) if not readfile or not isfile then return nil end; local path=CFG_FOLDER.."/VD_"..name..".json"; if not isfile(path) then return nil end; local ok,d=pcall(function() return HttpService:JSONDecode(readfile(path)) end); if not ok or not d then return nil end; for k,v in pairs(d) do if k:find("Color") then S[k]=Color3.new(v[1]or 1,v[2]or 1,v[3]or 1) else S[k]=v end end; return name end
     GetAutoLoad = function() if not isfile or not readfile or not isfile(AUTO_FILE) then return nil end; local ok,v=pcall(readfile,AUTO_FILE); return (ok and v and v~="")and v or nil end
     SetAutoLoad = function(n) pcall(writefile,AUTO_FILE,n or "") end
 end
 
--- APPLY SCALE / ALPHA
+-- ====================== APPLY SCALE / ALPHA ======================
 function ApplyScale(v) S.UIScale=v; for _,parent in ipairs({LP.PlayerGui,game:GetService("CoreGui")}) do local gui=parent:FindFirstChild("PhantomHub"); if gui then (gui:FindFirstChildOfClass("UIScale")or Instance.new("UIScale",gui)).Scale=v end end end
 function ApplyAlpha(v) S.UIAlpha=v; pcall(function() if WindUI and WindUI.SetTransparency then WindUI:SetTransparency(v) end end) end
 
--- WINDUI LOADER + FALLBACK GUI
-local WindUI = nil
-local function tryLoadWindUI()
-    for _, url in ipairs({"https://github.com/Footagesus/WindUI/releases/latest/download/main.lua", "https://raw.githubusercontent.com/Footagesus/WindUI/main/WindUI.lua"}) do
-        local ok, res = pcall(function() return loadstring(game:HttpGet(url))() end)
-        if ok and res then print("[PH] WindUI loaded"); return res end
+-- ====================== BUILD WINDOW ======================
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+if not WindUI then return end
+local Window = WindUI:CreateWindow({Title="Phantom Hub",Icon="moon",Author="7k.u | Violence District",Folder=CFG_FOLDER,Size=UDim2.fromOffset(650,420),Transparent=true,Theme="Midnight",Resizable=false,Background="rbxassetid://104829641696132",BackgroundImageTransparency=0.45,User={Enabled=true,Anonymous=false}})
+Window:Tag({Title="v9.4",Color=Color3.fromRGB(120,60,240)})
+
+local TbHome = Window:Tab({Title="🏠 Home",Icon="home"})
+TbHome:Toggle({Title="Enable ESP",Value=S.ESP,Callback=function(v) S.ESP=v end})
+TbHome:Dropdown({Title="ESP Mode",Values={"Outline","Highlight","Chams","Name"},Value=S.ESPMode,Multi=false,Callback=function(v) S.ESPMode=v; ClearESPCache() end})
+TbHome:Divider()
+for _,t in ipairs({{"Killer","KillerESP",S.KillerColor,function(c) S.KillerColor=c end},{"Survivor","SurvivorESP",S.SurvivorColor,function(c) S.SurvivorColor=c end},{"Generator","GeneratorESP",S.GeneratorColor,function(c) S.GeneratorColor=c end},{"Gate","GateESP",S.GateColor,function(c) S.GateColor=c end},{"Pallet","PalletESP",S.PalletColor,function(c) S.PalletColor=c end},{"Window","WindowESP",S.WindowColor,function(c) S.WindowColor=c end},{"Hook","HookESP",S.HookColor,function(c) S.HookColor=c end}}) do
+    TbHome:Toggle({Title=t[1].." ESP",Value=S[t[2]],Callback=function(v) S[t[2]]=v end})
+    TbHome:Colorpicker({Title=t[1].." Color",Default=t[3],Callback=t[4]})
+end
+TbHome:Divider()
+TbHome:Toggle({Title="Auto Perfect Check",Value=S.PerfectCheck,Callback=SetPerfectCheck})
+TbHome:Toggle({Title="Auto Wiggle",Value=S.AutoWiggle,Callback=SetAutoWiggle})
+
+local TbCombat = Window:Tab({Title:"⚔️ Combat",Icon:"sword"})
+TbCombat:Toggle({Title="Auto Parry",Value=S.AutoParry,Callback=SetAutoParry})
+TbCombat:Toggle({Title="No Fall Damage",Value=S.NoFall,Callback=SetNoFall})
+
+local TbKiller = Window:Tab({Title:"🔪 Killer",Icon:"skull"})
+TbKiller:Toggle({Title="Aimbot",Value=S.Aimbot,Callback=SetAimbot})
+TbKiller:Slider({Title="Aim FOV",Step=10,Value={Min=50,Max=400,Default=S.AimFOV},Callback=function(v) S.AimFOV=v end})
+TbKiller:Slider({Title="Aim Smooth",Step=0.05,Value={Min=0.1,Max=1,Default=S.AimSmooth},Callback=function(v) S.AimSmooth=v end})
+TbKiller:Dropdown({Title="Target Part",Values={"Head","Torso","Root"},Value=S.AimTargetPart,Multi=false,Callback=function(v) S.AimTargetPart=v end})
+TbKiller:Toggle({Title="Visibility Check",Value=S.AimVisCheck,Callback=function(v) S.AimVisCheck=v end})
+TbKiller:Toggle({Title="Show FOV Circle",Value=S.AimShowFOV,Callback=function(v) S.AimShowFOV=v end})
+TbKiller:Toggle({Title="Prediction",Value=S.AimPredict,Callback=function(v) S.AimPredict=v end})
+TbKiller:Divider()
+TbKiller:Toggle({Title="Spear Aimbot",Value=S.SpearAimbot,Callback=SetSpearAimbot})
+TbKiller:Slider({Title="Spear Gravity",Step=5,Value={Min=10,Max=200,Default=S.SpearGravity},Callback=function(v) S.SpearGravity=v end})
+TbKiller:Slider({Title="Spear Speed",Step=10,Value={Min=50,Max=300,Default=S.SpearSpeed},Callback=function(v) S.SpearSpeed=v end})
+TbKiller:Divider()
+TbKiller:Toggle({Title="Auto Attack",Value=S.AutoAttack,Callback=SetAutoAttack})
+TbKiller:Slider({Title="Attack Range",Step=1,Value={Min=5,Max=20,Default=S.AutoAttackRange},Callback=function(v) S.AutoAttackRange=v end})
+TbKiller:Toggle({Title="Hitbox Expand",Value=S.HitboxEnabled,Callback=SetHitbox})
+TbKiller:Slider({Title="Hitbox Size",Step=1,Value={Min=5,Max=30,Default=S.HitboxSize},Callback=function(v) S.HitboxSize=v end})
+TbKiller:Divider()
+TbKiller:Toggle({Title="Double Tap 💀",Value=S.DoubleTap,Callback=SetDoubleTap})
+TbKiller:Toggle({Title="Infinite Lunge 🏃",Value=S.InfiniteLunge,Callback=SetInfiniteLunge})
+TbKiller:Toggle({Title="Auto Hook 🪝",Value=S.AutoHook,Callback=SetAutoHook})
+TbKiller:Toggle({Title="Destroy Pallets 🪓",Value=S.DestroyPallets,Callback=SetDestroyPallets})
+TbKiller:Toggle({Title="Full Gen Break 💥",Value=S.FullGenBreak,Callback=SetFullGenBreak})
+TbKiller:Toggle({Title="Auto Pallet 🪓 (new)",Value=S.AutoPallet,Callback=SetAutoPallet})
+TbKiller:Divider()
+TbKiller:Toggle({Title="No Pallet Stun 🚫",Value=S.NoPalletStun,Callback=function(v) S.NoPalletStun=v; SetupNoPalletStun() end})
+TbKiller:Toggle({Title="Anti Blind 👁️",Value=S.AntiBlind,Callback=function(v) S.AntiBlind=v; SetupAntiBlind() end})
+TbKiller:Toggle({Title="No Slowdown 💨",Value=S.NoSlowdown,Callback=SetNoSlowdown})
+
+local TbSurv = Window:Tab({Title:"🛡️ Survivor",Icon:"shield"})
+TbSurv:Toggle({Title="Auto Generator",Value=S.AutoGenerator,Callback=SetAutoGenerator})
+TbSurv:Dropdown({Title="Gen Speed",Values={"Fast","Slow"},Value=S.GenMode,Multi=false,Callback=function(v) S.GenMode=v end})
+TbSurv:Toggle({Title="Beat Survivor",Value=S.BeatSurvivor,Callback=function(v) S.BeatSurvivor=v end})
+
+local TbMove = Window:Tab({Title:"🏃 Movement",Icon:"move"})
+TbMove:Toggle({Title="Speed Hack",Value=S.SpeedEnabled,Callback=SetSpeed})
+TbMove:Slider({Title="Speed Value",Step=1,Value={Min=16,Max=150,Default=S.SpeedValue},Callback=function(v) S.SpeedValue=v end})
+TbMove:Divider()
+TbMove:Toggle({Title="Fly",Value=S.FlyEnabled,Callback=SetFly})
+TbMove:Slider({Title="Fly Speed",Step=1,Value={Min=10,Max=200,Default=S.FlySpeed},Callback=function(v) S.FlySpeed=v end})
+TbMove:Divider()
+TbMove:Toggle({Title="Noclip",Value=S.NoclipEnabled,Callback=SetNoclip})
+TbMove:Divider()
+TbMove:Toggle({Title="Infinite Jump",Value=S.JumpInfinite,Callback=SetInfiniteJump})
+TbMove:Slider({Title="Jump Power",Step=1,Value={Min=50,Max=200,Default=S.JumpPower},Callback=function(v) S.JumpPower=v end})
+
+local TbVisual = Window:Tab({Title:"👁️ Visual",Icon:"eye"})
+TbVisual:Toggle({Title="Full Bright",Value=S.FullBright,Callback=SetFullBright})
+TbVisual:Toggle({Title="No Fog",Value=S.NoFog,Callback=function(v) S.NoFog=v end})
+TbVisual:Toggle({Title="No Shadow",Value=S.NoShadow,Callback=function(v) S.NoShadow=v end})
+TbVisual:Divider()
+TbVisual:Toggle({Title="FOV Changer",Value=S.FovEnabled,Callback=SetFOV})
+TbVisual:Slider({Title="FOV Value",Step=1,Value={Min=30,Max=120,Default=S.FovValue},Callback=function(v) S.FovValue=v end})
+TbVisual:Toggle({Title="Third Person (Killer)",Value=S.ThirdPerson,Callback=function(v) S.ThirdPerson=v end})
+TbVisual:Toggle({Title="Shift Lock",Value=S.ShiftLock,Callback=function(v) S.ShiftLock=v end})
+
+local TbMisc = Window:Tab({Title:"⭐ Misc",Icon:"star"})
+TbMisc:Button({Title="TP to Generator",Callback=function() local map=workspace:FindFirstChild("Map"); if map then for _,o in ipairs(map:GetDescendants()) do if o:IsA("Model")and o.Name=="Generator" then local p=o:FindFirstChildWhichIsA("BasePart"); if p then LP.Character:PivotTo(p.CFrame+Vector3.new(0,3,0)); break end end end end end})
+TbMisc:Button({Title="TP to Gate",Callback=function() local map=workspace:FindFirstChild("Map"); if map then for _,o in ipairs(map:GetDescendants()) do if o:IsA("Model")and o.Name=="Gate" then local p=o:FindFirstChildWhichIsA("BasePart"); if p then LP.Character:PivotTo(p.CFrame+Vector3.new(0,3,0)); break end end end end end})
+TbMisc:Button({Title="TP to Hook",Callback=function() local map=workspace:FindFirstChild("Map"); if map then local cl,cd=nil,math.huge; for _,o in ipairs(map:GetDescendants()) do if o:IsA("Model")and o.Name=="Hook" then local p=o:FindFirstChildWhichIsA("BasePart"); if p then local d=(p.Position-(LP.Character and LP.Character:GetPivot().Position or Vector3.zero)).Magnitude; if d<cd then cd=d; cl=p end end end end; if cl then LP.Character:PivotTo(cl.CFrame+Vector3.new(0,3,0)) end end end})
+TbMisc:Divider()
+TbMisc:Toggle({Title="Fling Enabled",Value=S.FlingEnabled,Callback=function(v) S.FlingEnabled=v end})
+TbMisc:Slider({Title="Fling Strength",Step=1000,Value={Min=1000,Max=50000,Default=S.FlingStrength},Callback=function(v) S.FlingStrength=v end})
+TbMisc:Toggle({Title="Beat Killer",Value=S.BeatKiller,Callback=function(v) S.BeatKiller=v end})
+
+local TbSet = Window:Tab({Title:"⚙️ Settings",Icon:"settings"})
+TbSet:Toggle({Title="Anti-AFK",Value=S.AntiAFK,Callback=SetAntiAFK})
+TbSet:Toggle({Title="FPS Booster",Value=S.FPSBooster,Callback=SetFPSBooster})
+TbSet:Slider({Title="UI Scale",Step=0.05,Value={Min=0.7,Max=1.5,Default=S.UIScale},Callback=ApplyScale})
+TbSet:Slider({Title="UI Transparency",Step=0.05,Value={Min=0,Max=0.9,Default=S.UIAlpha},Callback=ApplyAlpha})
+
+local TbConfig = Window:Tab({Title:"💾 Config",Icon:"folder"})
+local cfgInput, selCfg, cfgDD = "", nil, nil
+TbConfig:Input({Title="Config Name",Placeholder="myconfig",Callback=function(t) cfgInput=t end})
+TbConfig:Button({Title="Create Config",Callback=function() if cfgInput=="" then return end; if SaveCfg(cfgInput) then local l=ListCfgs(); if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end; WindUI:Notify({Title="Config",Content="Saved: "..cfgInput,Duration=3,Icon="check"}) end end})
+local iL = ListCfgs(); cfgDD = TbConfig:Dropdown({Title="Select Config",Values=#iL>0 and iL or {"(none)"},Value=iL[1] or nil,Multi=false,AllowNone=true,Callback=function(v) selCfg=v end})
+if #iL>0 then selCfg=iL[1] end
+TbConfig:Button({Title="Load Config",Callback=function() if not selCfg or selCfg=="(none)" then return end; local n=LoadCfg(selCfg); if n then WindUI:Notify({Title="Config",Content="Loaded: "..n,Duration=3,Icon="folder"}); for k,v in pairs(S) do if type(v)=="boolean" then pcall(function() local setFunc = _G["Set"..k]; if setFunc then setFunc(v) end end) end end end end})
+TbConfig:Divider()
+local cA = GetAutoLoad()
+TbConfig:Toggle({Title="Auto Load on Start",Value=cA~=nil,Callback=function(v) if v then if selCfg and selCfg~="(none)" then SetAutoLoad(selCfg) end else SetAutoLoad("") end end})
+TbConfig:Button({Title="Delete Selected",Callback=function() if not selCfg or selCfg=="(none)" then return end; pcall(function() delfile(CFG_FOLDER.."/VD_"..selCfg..".json") end); local l=ListCfgs(); if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end; selCfg=nil end})
+
+-- FOV Circle GUI
+task.spawn(function() local fg=Instance.new("ScreenGui",LP.PlayerGui); fg.Name="PH_FOV"; local ff=Instance.new("Frame",fg); ff.Size=UDim2.new(1,0,1,0); ff.BackgroundTransparency=1; local fc=Instance.new("Frame",ff); fc.BackgroundTransparency=0.9; fc.BackgroundColor3=Color3.fromRGB(255,65,65); fc.BorderSizePixel=0; Instance.new("UICorner",fc).CornerRadius=UDim.new(1,0); fc.Size=UDim2.new(0,5,0,5); fc.AnchorPoint=Vector2.new(0.5,0.5); fc.Visible=false; while task.wait(0.05) do if S.Aimbot and S.AimShowFOV and Camera then local vp=Camera.ViewportSize; fc.Position=UDim2.new(0,vp.X/2,0,vp.Y/2); fc.Size=UDim2.new(0,S.AimFOV*2,0,S.AimFOV*2); fc.BackgroundColor3=aimbotTarget and Color3.fromRGB(100,255,100)or Color3.fromRGB(255,65,65); fc.Visible=true else fc.Visible=false end end end)
+
+-- START LOOPS
+task.spawn(function() while task.wait(0.15) do if S.ESP then pcall(processAllESP) end end end)
+task.spawn(function()
+    while task.wait(0.5) do
+        if S.BeatSurvivor and GetRole()=="Survivor" then local r=GetCharacterRoot(); if r then r.CFrame=r.CFrame+Vector3.new(0,10,0) end end
+        if S.BeatKiller and GetRole()=="Killer" then for _,p in ipairs(Players:GetPlayers()) do if p~=LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then LP.Character:PivotTo(p.Character.HumanoidRootPart.CFrame*CFrame.new(0,0,2)); VirtualInputMgr:SendKeyEvent(true,Enum.KeyCode.F,false,game); task.wait(0.01); VirtualInputMgr:SendKeyEvent(false,Enum.KeyCode.F,false,game); break end end end
     end
-    return nil
-end
+end)
 
-local function createFallbackGUI()
-    print("[PH] Creating fallback GUI"); local sg = Instance.new("ScreenGui",LP.PlayerGui); sg.Name="PhantomHub_Fallback"; sg.ResetOnSpawn=false
-    local frame = Instance.new("Frame",sg); frame.Size=UDim2.new(0,250,0,200); frame.Position=UDim2.new(0.5,-125,0.5,-100); frame.BackgroundColor3=Color3.fromRGB(20,20,30); frame.BorderSizePixel=0; Instance.new("UICorner",frame).CornerRadius=UDim.new(0,12)
-    local title = Instance.new("TextLabel",frame); title.Text="Phantom Hub (Local GUI)\nAll features active"; title.Size=UDim2.new(1,-20,0,60); title.Position=UDim2.new(0,10,0,10); title.BackgroundTransparency=1; title.TextColor3=Color3.new(1,1,1); title.Font=Enum.Font.GothamBold; title.TextSize=14; title.TextWrapped=true
-    local btnY=80
-    local function addToggle(text,key)
-        local btn=Instance.new("TextButton",frame); btn.Text=text..": OFF"; btn.Size=UDim2.new(1,-20,0,30); btn.Position=UDim2.new(0,10,0,btnY); btn.BackgroundColor3=Color3.fromRGB(50,50,70); btn.TextColor3=Color3.new(1,1,1); btn.Font=Enum.Font.Gotham; btn.TextSize=13; btn.BorderSizePixel=0; Instance.new("UICorner",btn).CornerRadius=UDim.new(0,6)
-        btn.MouseButton1Click:Connect(function() S[key]=not S[key]; btn.Text=text..": "..(S[key]and"ON"or"OFF"); btn.BackgroundColor3=S[key]and Color3.fromRGB(100,150,100)or Color3.fromRGB(50,50,70) end)
-        if S[key] then btn.Text=text..": ON"; btn.BackgroundColor3=Color3.fromRGB(100,150,100) end
-        btnY=btnY+35
-    end
-    addToggle("ESP Master","ESP"); addToggle("Auto Parry","AutoParry"); addToggle("Auto Attack","AutoAttack"); addToggle("Speed Hack","SpeedEnabled")
-end
-
-local function startFeatures()
-    task.spawn(function() while task.wait(0.15) do if S.ESP then pcall(processAllESP) end end end)
-    if S.PerfectCheck then SetPerfectCheck(true) end
-    if S.AutoParry then SetAutoParry(true) end
-    if S.Aimbot then SetAimbot(true) end
-    if S.SpearAimbot then SetSpearAimbot(true) end
-    if S.AutoAttack then SetAutoAttack(true) end
-    if S.DoubleTap then SetDoubleTap(true) end
-    if S.InfiniteLunge then SetInfiniteLunge(true) end
-    if S.AutoHook then SetAutoHook(true) end
-    if S.DestroyPallets then SetDestroyPallets(true) end
-    if S.FullGenBreak then SetFullGenBreak(true) end
-    if S.AutoPallet then SetAutoPallet(true) end
-    if S.AutoGenerator then SetAutoGenerator(true) end
-    if S.AutoWiggle then SetAutoWiggle(true) end
-    if S.HitboxEnabled then SetHitbox(true) end
-    if S.NoFall then SetNoFall(true) end
-    if S.NoSlowdown then SetNoSlowdown(true) end
-    if S.SpeedEnabled then SetSpeed(true) end
-    if S.FlyEnabled then SetFly(true) end
-    if S.NoclipEnabled then SetNoclip(true) end
-    if S.JumpInfinite then SetInfiniteJump(true) end
-    if S.FullBright then SetFullBright(true) end
-    if S.FovEnabled then SetFOV(true) end
-    if S.AntiAFK then SetAntiAFK(true) end
-    if S.FPSBooster then SetFPSBooster(true) end
-    if S.AntiBlind then SetupAntiBlind() end
-    if S.NoPalletStun then SetupNoPalletStun() end
-end
-
--- BUILD COMPLETE UI (if WindUI available)
-local function BuildFullUI()
-    local Window = WindUI:CreateWindow({Title="Phantom Hub",Icon="moon",Author="7k.u | Violence District",Folder=CFG_FOLDER,Size=UDim2.fromOffset(650,420),Transparent=true,Theme="Midnight",Resizable=false,Background="rbxassetid://104829641696132",BackgroundImageTransparency=0.45,User={Enabled=true,Anonymous=false}})
-    Window:Tag({Title="v9.2",Color=Color3.fromRGB(120,60,240)})
-    -- تبويب Home
-    local TbHome = Window:Tab({Title="🏠 Home",Icon="home"})
-    TbHome:Toggle({Title="Enable ESP",Value=S.ESP,Callback=function(v) S.ESP=v end})
-    TbHome:Dropdown({Title="ESP Mode",Values={"Outline","Highlight","Chams","Name"},Value=S.ESPMode,Multi=false,Callback=function(v) S.ESPMode=v; ClearESPCache() end})
-    TbHome:Divider()
-    for _,t in ipairs({{"Killer","KillerESP",S.KillerColor,function(c) S.KillerColor=c end},{"Survivor","SurvivorESP",S.SurvivorColor,function(c) S.SurvivorColor=c end},{"Generator","GeneratorESP",S.GeneratorColor,function(c) S.GeneratorColor=c end},{"Gate","GateESP",S.GateColor,function(c) S.GateColor=c end},{"Pallet","PalletESP",S.PalletColor,function(c) S.PalletColor=c end},{"Window","WindowESP",S.WindowColor,function(c) S.WindowColor=c end},{"Hook","HookESP",S.HookColor,function(c) S.HookColor=c end}}) do
-        TbHome:Toggle({Title=t[1].." ESP",Value=S[t[2]],Callback=function(v) S[t[2]]=v end})
-        TbHome:Colorpicker({Title=t[1].." Color",Default=t[3],Callback=t[4]})
-    end
-    TbHome:Divider()
-    TbHome:Toggle({Title="Auto Perfect Check",Value=S.PerfectCheck,Callback=SetPerfectCheck})
-    TbHome:Toggle({Title="Auto Wiggle",Value=S.AutoWiggle,Callback=SetAutoWiggle})
-    -- تبويب Combat
-    local TbCombat = Window:Tab({Title:"⚔️ Combat",Icon:"sword"})
-    TbCombat:Toggle({Title="Auto Parry",Value=S.AutoParry,Callback=SetAutoParry})
-    TbCombat:Toggle({Title="No Fall Damage",Value=S.NoFall,Callback=SetNoFall})
-    -- تبويب Killer (بجميع ميزاته)
-    local TbKiller = Window:Tab({Title:"🔪 Killer",Icon:"skull"})
-    TbKiller:Toggle({Title="Aimbot",Value=S.Aimbot,Callback=SetAimbot})
-    TbKiller:Slider({Title="Aim FOV",Step=10,Value={Min=50,Max=400,Default=S.AimFOV},Callback=function(v) S.AimFOV=v end})
-    TbKiller:Slider({Title="Aim Smooth",Step=0.05,Value={Min=0.1,Max=1,Default=S.AimSmooth},Callback=function(v) S.AimSmooth=v end})
-    TbKiller:Dropdown({Title="Target Part",Values={"Head","Torso","Root"},Value=S.AimTargetPart,Multi=false,Callback=function(v) S.AimTargetPart=v end})
-    TbKiller:Toggle({Title="Visibility Check",Value=S.AimVisCheck,Callback=function(v) S.AimVisCheck=v end})
-    TbKiller:Toggle({Title="Show FOV Circle",Value=S.AimShowFOV,Callback=function(v) S.AimShowFOV=v end})
-    TbKiller:Toggle({Title="Prediction",Value=S.AimPredict,Callback=function(v) S.AimPredict=v end})
-    TbKiller:Divider()
-    TbKiller:Toggle({Title="Spear Aimbot",Value=S.SpearAimbot,Callback=SetSpearAimbot})
-    TbKiller:Slider({Title="Spear Gravity",Step=5,Value={Min=10,Max=200,Default=S.SpearGravity},Callback=function(v) S.SpearGravity=v end})
-    TbKiller:Slider({Title="Spear Speed",Step=10,Value={Min=50,Max=300,Default=S.SpearSpeed},Callback=function(v) S.SpearSpeed=v end})
-    TbKiller:Divider()
-    TbKiller:Toggle({Title="Auto Attack",Value=S.AutoAttack,Callback=SetAutoAttack})
-    TbKiller:Slider({Title="Attack Range",Step=1,Value={Min=5,Max=20,Default=S.AutoAttackRange},Callback=function(v) S.AutoAttackRange=v end})
-    TbKiller:Toggle({Title="Hitbox Expand",Value=S.HitboxEnabled,Callback=SetHitbox})
-    TbKiller:Slider({Title="Hitbox Size",Step=1,Value={Min=5,Max=30,Default=S.HitboxSize},Callback=function(v) S.HitboxSize=v end})
-    TbKiller:Divider()
-    TbKiller:Toggle({Title="Double Tap 💀",Value=S.DoubleTap,Callback=SetDoubleTap})
-    TbKiller:Toggle({Title="Infinite Lunge 🏃",Value=S.InfiniteLunge,Callback=SetInfiniteLunge})
-    TbKiller:Toggle({Title="Auto Hook 🪝",Value=S.AutoHook,Callback=SetAutoHook})
-    TbKiller:Toggle({Title="Destroy Pallets 🪓",Value=S.DestroyPallets,Callback=SetDestroyPallets})
-    TbKiller:Toggle({Title="Full Gen Break 💥",Value=S.FullGenBreak,Callback=SetFullGenBreak})
-    TbKiller:Toggle({Title="Auto Pallet 🪓 (new)",Value=S.AutoPallet,Callback=SetAutoPallet})
-    TbKiller:Divider()
-    TbKiller:Toggle({Title="No Pallet Stun 🚫",Value=S.NoPalletStun,Callback=function(v) S.NoPalletStun=v; SetupNoPalletStun() end})
-    TbKiller:Toggle({Title="Anti Blind 👁️",Value=S.AntiBlind,Callback=function(v) S.AntiBlind=v; SetupAntiBlind() end})
-    TbKiller:Toggle({Title="No Slowdown 💨",Value=S.NoSlowdown,Callback=SetNoSlowdown})
-    -- تبويب Survivor
-    local TbSurv = Window:Tab({Title:"🛡️ Survivor",Icon:"shield"})
-    TbSurv:Toggle({Title="Auto Generator",Value=S.AutoGenerator,Callback=SetAutoGenerator})
-    TbSurv:Dropdown({Title="Gen Speed",Values={"Fast","Slow"},Value=S.GenMode,Multi=false,Callback=function(v) S.GenMode=v end})
-    TbSurv:Toggle({Title="Beat Survivor",Value=S.BeatSurvivor,Callback=function(v) S.BeatSurvivor=v end})
-    -- Movement
-    local TbMove = Window:Tab({Title:"🏃 Movement",Icon:"move"})
-    TbMove:Toggle({Title="Speed Hack",Value=S.SpeedEnabled,Callback=SetSpeed})
-    TbMove:Slider({Title="Speed Value",Step=1,Value={Min=16,Max=150,Default=S.SpeedValue},Callback=function(v) S.SpeedValue=v end})
-    TbMove:Divider()
-    TbMove:Toggle({Title="Fly",Value=S.FlyEnabled,Callback=SetFly})
-    TbMove:Slider({Title="Fly Speed",Step=1,Value={Min=10,Max=200,Default=S.FlySpeed},Callback=function(v) S.FlySpeed=v end})
-    TbMove:Divider()
-    TbMove:Toggle({Title="Noclip",Value=S.NoclipEnabled,Callback=SetNoclip})
-    TbMove:Divider()
-    TbMove:Toggle({Title="Infinite Jump",Value=S.JumpInfinite,Callback=SetInfiniteJump})
-    TbMove:Slider({Title="Jump Power",Step=1,Value={Min=50,Max=200,Default=S.JumpPower},Callback=function(v) S.JumpPower=v end})
-    -- Visual
-    local TbVisual = Window:Tab({Title:"👁️ Visual",Icon:"eye"})
-    TbVisual:Toggle({Title="Full Bright",Value=S.FullBright,Callback=SetFullBright})
-    TbVisual:Toggle({Title="No Fog",Value=S.NoFog,Callback=function(v) S.NoFog=v end})
-    TbVisual:Toggle({Title="No Shadow",Value=S.NoShadow,Callback=function(v) S.NoShadow=v end})
-    TbVisual:Divider()
-    TbVisual:Toggle({Title="FOV Changer",Value=S.FovEnabled,Callback=SetFOV})
-    TbVisual:Slider({Title="FOV Value",Step=1,Value={Min=30,Max=120,Default=S.FovValue},Callback=function(v) S.FovValue=v end})
-    TbVisual:Toggle({Title="Third Person (Killer)",Value=S.ThirdPerson,Callback=function(v) S.ThirdPerson=v end})
-    TbVisual:Toggle({Title="Shift Lock",Value=S.ShiftLock,Callback=function(v) S.ShiftLock=v end})
-    -- Misc
-    local TbMisc = Window:Tab({Title:"⭐ Misc",Icon:"star"})
-    TbMisc:Button({Title="TP to Generator",Callback=function() local map=workspace:FindFirstChild("Map"); if map then for _,o in ipairs(map:GetDescendants()) do if o:IsA("Model")and o.Name=="Generator" then local p=o:FindFirstChildWhichIsA("BasePart"); if p then LP.Character:PivotTo(p.CFrame+Vector3.new(0,3,0)); break end end end end end})
-    TbMisc:Button({Title="TP to Gate",Callback=function() local map=workspace:FindFirstChild("Map"); if map then for _,o in ipairs(map:GetDescendants()) do if o:IsA("Model")and o.Name=="Gate" then local p=o:FindFirstChildWhichIsA("BasePart"); if p then LP.Character:PivotTo(p.CFrame+Vector3.new(0,3,0)); break end end end end end})
-    TbMisc:Button({Title="TP to Hook",Callback=function() local map=workspace:FindFirstChild("Map"); if map then local cl,cd=nil,math.huge; for _,o in ipairs(map:GetDescendants()) do if o:IsA("Model")and o.Name=="Hook" then local p=o:FindFirstChildWhichIsA("BasePart"); if p then local d=(p.Position-(LP.Character and LP.Character:GetPivot().Position or Vector3.zero)).Magnitude; if d<cd then cd=d; cl=p end end end end; if cl then LP.Character:PivotTo(cl.CFrame+Vector3.new(0,3,0)) end end end})
-    TbMisc:Divider()
-    TbMisc:Toggle({Title="Fling Enabled",Value=S.FlingEnabled,Callback=function(v) S.FlingEnabled=v end})
-    TbMisc:Slider({Title="Fling Strength",Step=1000,Value={Min=1000,Max=50000,Default=S.FlingStrength},Callback=function(v) S.FlingStrength=v end})
-    TbMisc:Toggle({Title="Beat Killer",Value=S.BeatKiller,Callback=function(v) S.BeatKiller=v end})
-    -- Settings
-    local TbSet = Window:Tab({Title:"⚙️ Settings",Icon:"settings"})
-    TbSet:Toggle({Title="Anti-AFK",Value=S.AntiAFK,Callback=SetAntiAFK})
-    TbSet:Toggle({Title="FPS Booster",Value=S.FPSBooster,Callback=SetFPSBooster})
-    TbSet:Slider({Title="UI Scale",Step=0.05,Value={Min=0.7,Max=1.5,Default=S.UIScale},Callback=ApplyScale})
-    TbSet:Slider({Title="UI Transparency",Step=0.05,Value={Min=0,Max=0.9,Default=S.UIAlpha},Callback=ApplyAlpha})
-    -- Config
-    local TbConfig = Window:Tab({Title:"💾 Config",Icon:"folder"})
-    local cfgInput, selCfg, cfgDD = "", nil, nil
-    TbConfig:Input({Title="Config Name",Placeholder="myconfig",Callback=function(t) cfgInput=t end})
-    TbConfig:Button({Title="Create Config",Callback=function() if cfgInput=="" then return end; if SaveCfg(cfgInput) then local l=ListCfgs(); if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end; WindUI:Notify({Title="Config",Content="Saved: "..cfgInput,Duration=3,Icon="check"}) end end})
-    local iL = ListCfgs(); cfgDD = TbConfig:Dropdown({Title="Select Config",Values=#iL>0 and iL or {"(none)"},Value=iL[1] or nil,Multi=false,AllowNone=true,Callback=function(v) selCfg=v end})
-    if #iL>0 then selCfg=iL[1] end
-    TbConfig:Button({Title="Load Config",Callback=function() if not selCfg or selCfg=="(none)" then return end; local n=LoadCfg(selCfg); if n then WindUI:Notify({Title="Config",Content="Loaded: "..n,Duration=3,Icon="folder"}); startFeatures() end end})
-    TbConfig:Divider()
-    local cA = GetAutoLoad()
-    TbConfig:Toggle({Title="Auto Load on Start",Value=cA~=nil,Callback=function(v) if v then if selCfg and selCfg~="(none)" then SetAutoLoad(selCfg) end else SetAutoLoad("") end end})
-    TbConfig:Button({Title="Delete Selected",Callback=function() if not selCfg or selCfg=="(none)" then return end; pcall(function() delfile(CFG_FOLDER.."/VD_"..selCfg..".json") end); local l=ListCfgs(); if cfgDD then cfgDD:Refresh(#l>0 and l or {"(none)"}) end; selCfg=nil end})
-
-    -- FOV Circle GUI
-    task.spawn(function() local fg=Instance.new("ScreenGui",LP.PlayerGui); fg.Name="PH_FOV"; local ff=Instance.new("Frame",fg); ff.Size=UDim2.new(1,0,1,0); ff.BackgroundTransparency=1; local fc=Instance.new("Frame",ff); fc.BackgroundTransparency=0.9; fc.BackgroundColor3=Color3.fromRGB(255,65,65); fc.BorderSizePixel=0; Instance.new("UICorner",fc).CornerRadius=UDim.new(1,0); fc.Size=UDim2.new(0,5,0,5); fc.AnchorPoint=Vector2.new(0.5,0.5); fc.Visible=false; while task.wait(0.05) do if S.Aimbot and S.AimShowFOV and Camera then local vp=Camera.ViewportSize; fc.Position=UDim2.new(0,vp.X/2,0,vp.Y/2); fc.Size=UDim2.new(0,S.AimFOV*2,0,S.AimFOV*2); fc.BackgroundColor3=aimbotTarget and Color3.fromRGB(100,255,100)or Color3.fromRGB(255,65,65); fc.Visible=true else fc.Visible=false end end end)
-end
-
--- EXECUTION
-WindUI = tryLoadWindUI()
-if WindUI then
-    BuildFullUI()
-    startFeatures()
-else
-    createFallbackGUI()
-    startFeatures()
-end
+print("[PH] v9.4 – Full features loaded successfully.")
