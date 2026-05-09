@@ -1,16 +1,10 @@
 --[[
-  PHANTOM HUB v9.0 | Violence District
+  PHANTOM HUB v9.1 | Violence District
   PlaceId: 93978595733734
   By 7k.u | WindUI Midnight | Delta
-  ✅ Aimbot + Spear Aimbot
-  ✅ Auto Parry (Mobile Compatible - ContextActionService)
-  ✅ Double Tap + Infinite Lunge + Auto Hook + Destroy Pallets + Full Gen Break
-  ✅ ESP (Outline/Highlight/Chams/Name)
-  ✅ Auto Perfect Check + Auto Wiggle
-  ✅ Speed / Fly / Noclip / Infinite Jump
-  ✅ Full Bright / No Fog / No Shadow / FOV
-  ✅ Config (Save/Load)
-  ✅ Optimized & Mobile Compatible
+  ✅ Fixed: "attempt to call nil" (FOV circle now GUI-based)
+  ✅ Added: Auto Pallet (from Fanta Menu)
+  ✅ All features: ESP, Aimbot, Spear Aimbot, Auto Parry, Auto Attack, Auto Generator, Auto Wiggle, Hitbox, No Fall, Speed, Fly, Noclip, Jump, Visuals, Beat Game, Fling, Teleports, Anti-AFK, FPS Booster, Config
 ]]
 
 -- ============================================================
@@ -39,7 +33,7 @@ if game.PlaceId ~= PLACE_VD then
         lbl.Size = UDim2.new(0.75,0,0.4,0); lbl.Position = UDim2.new(0.125,0,0.3,0)
         lbl.BackgroundTransparency = 1; lbl.ZIndex = 101; lbl.TextScaled = true
         lbl.Font = Enum.Font.GothamBold; lbl.TextColor3 = Color3.fromRGB(200,100,255)
-        lbl.Text = "Phantom Hub v9.0\n\nViolence District only!\nBy 7k.u"
+        lbl.Text = "Phantom Hub v9.1\n\nViolence District only!\nBy 7k.u"
         task.wait(5); sg:Destroy()
     end)
     return
@@ -53,12 +47,12 @@ local AUTO_FILE = CFG_FOLDER .. "/_autoload_vd.txt"
 pcall(function() if not isfolder(CFG_FOLDER) then makefolder(CFG_FOLDER) end end)
 
 -- ============================================================
--- STATE (جميع الإعدادات)
+-- STATE (جميع الإعدادات - تمت إضافة AutoPallet)
 -- ============================================================
 local S = {
     -- ESP
     ESP = false,
-    ESPMode = "Outline",   -- Outline / Highlight / Chams / Name
+    ESPMode = "Outline",
     KillerESP = false,     KillerColor = Color3.fromRGB(255,0,0),
     SurvivorESP = false,   SurvivorColor = Color3.fromRGB(0,255,0),
     GeneratorESP = false,  GeneratorColor = Color3.fromRGB(187,0,255),
@@ -86,6 +80,7 @@ local S = {
     AutoHook = false,
     DestroyPallets = false,
     FullGenBreak = false,
+    AutoPallet = false,    -- جديد
     -- Movement
     SpeedEnabled = false,  SpeedValue = 32,
     FlyEnabled = false,    FlySpeed = 50,
@@ -134,7 +129,7 @@ local function GetCharacterRoot()
 end
 
 -- ============================================================
--- ESP SYSTEM (Outline/Highlight/Chams/Name)
+-- ESP SYSTEM
 -- ============================================================
 local espCache = {}
 local function clearESP(obj)
@@ -168,7 +163,6 @@ local function ESP(obj, color, name)
         return
     end
 
-    -- Highlight / Chams / Outline
     local hl = espCache[obj]
     if hl and hl:IsA("Highlight") then
         hl.FillColor = color; hl.OutlineColor = color
@@ -229,7 +223,7 @@ local function ClearESPCache()
 end
 
 -- ============================================================
--- AUTO PERFECT CHECK – حذف SkillCheck Events
+-- AUTO PERFECT CHECK
 -- ============================================================
 local perfectCheckConn
 local function SetPerfectCheck(on)
@@ -273,7 +267,7 @@ local function SetPerfectCheck(on)
 end
 
 -- ============================================================
--- AUTO PARRY (Mobile Compatible via ContextActionService)
+-- AUTO PARRY (Mobile Compatible)
 -- ============================================================
 local autoParryAction = "PhantomHubAutoParry"
 local autoParryConn
@@ -282,17 +276,12 @@ local function SetAutoParry(on)
     pcall(function() ContextActionService:UnbindAction(autoParryAction) end)
     if not on then return end
     
-    -- Bind action that works on both PC (F key) and Mobile (touch button)
     ContextActionService:BindAction(
         autoParryAction,
         function(actionName, inputState, inputObject)
-            if inputState == Enum.UserInputState.Begin then
-                -- This is triggered when F is pressed on PC or button is tapped on mobile
-                -- The actual parry will be handled in the heartbeat below
-            end
         end,
-        true, -- create touch button for mobile
-        Enum.KeyCode.F -- PC key
+        true,
+        Enum.KeyCode.F
     )
     
     autoParryConn = RunService.Heartbeat:Connect(function()
@@ -303,9 +292,7 @@ local function SetAutoParry(on)
             if player ~= LP and IsKiller(player) and player.Character then
                 local killerRoot = player.Character:FindFirstChild("HumanoidRootPart")
                 if killerRoot and (killerRoot.Position - root.Position).Magnitude <= 15 then
-                    -- Simulate parry via ContextActionService (works on both PC and mobile)
                     pcall(function()
-                        -- Try Remote method first (from open source)
                         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
                         if remotes then
                             local items = remotes:FindFirstChild("Items")
@@ -320,7 +307,6 @@ local function SetAutoParry(on)
                                 end
                             end
                         end
-                        -- Fallback: press F via VirtualInputManager (PC only)
                         VirtualInputMgr:SendKeyEvent(true, Enum.KeyCode.F, false, game)
                         task.wait(0.01)
                         VirtualInputMgr:SendKeyEvent(false, Enum.KeyCode.F, false, game)
@@ -474,7 +460,7 @@ local function SetSpearAimbot(on)
 end
 
 -- ============================================================
--- AUTO ATTACK (Killer)
+-- AUTO ATTACK
 -- ============================================================
 local autoAttackConn
 local function SetAutoAttack(on)
@@ -501,7 +487,7 @@ local function SetAutoAttack(on)
 end
 
 -- ============================================================
--- DOUBLE TAP (Killer)
+-- DOUBLE TAP
 -- ============================================================
 local doubleTapConn
 local function SetDoubleTap(on)
@@ -533,7 +519,7 @@ local function SetDoubleTap(on)
 end
 
 -- ============================================================
--- INFINITE LUNGE (Killer)
+-- INFINITE LUNGE
 -- ============================================================
 local lungeConn
 local function SetInfiniteLunge(on)
@@ -550,7 +536,7 @@ local function SetInfiniteLunge(on)
 end
 
 -- ============================================================
--- AUTO HOOK (Killer)
+-- AUTO HOOK
 -- ============================================================
 local autoHookConn
 local function SetAutoHook(on)
@@ -560,13 +546,11 @@ local function SetAutoHook(on)
     autoHookConn = RunService.Heartbeat:Connect(function()
         if not S.AutoHook or GetRole() ~= "Killer" then return end
         local root = GetCharacterRoot(); if not root then return end
-        -- Find downed survivors
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LP and IsSurvivor(player) and player.Character then
                 local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
                 local targetHum = player.Character:FindFirstChildOfClass("Humanoid")
                 if targetRoot and targetHum and targetHum.Health > 0 and targetHum.Health / targetHum.MaxHealth <= 0.25 then
-                    -- Teleport near and press space
                     local dist = (targetRoot.Position - root.Position).Magnitude
                     if dist > 3 then
                         LP.Character:PivotTo(CFrame.new(targetRoot.Position + Vector3.new(0, 3, 0)))
@@ -584,7 +568,7 @@ local function SetAutoHook(on)
 end
 
 -- ============================================================
--- DESTROY PALLETS (Killer)
+-- DESTROY PALLETS (القديمة من Fanta)
 -- ============================================================
 local destroyPalletConn
 local function SetDestroyPallets(on)
@@ -597,15 +581,13 @@ local function SetDestroyPallets(on)
             local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
             local pallet = remotes and remotes:FindFirstChild("Pallet")
             local jason = pallet and pallet:FindFirstChild("Jason")
-            if jason then
-                local destroy = jason:FindFirstChild("Destroy") or jason:FindFirstChild("Destroy-Global")
-                if destroy then
-                    local map = workspace:FindFirstChild("Map")
-                    if map then
-                        for _, obj in ipairs(map:GetDescendants()) do
-                            if obj.Name:lower():find("pallet") and obj:IsA("Model") then
-                                destroy:FireServer(obj)
-                            end
+            local destroy = jason and (jason:FindFirstChild("Destroy") or jason:FindFirstChild("Destroy-Global"))
+            if destroy then
+                local map = workspace:FindFirstChild("Map")
+                if map then
+                    for _, obj in ipairs(map:GetDescendants()) do
+                        if obj.Name:lower():find("pallet") and obj:IsA("Model") then
+                            destroy:FireServer(obj)
                         end
                     end
                 end
@@ -615,7 +597,7 @@ local function SetDestroyPallets(on)
 end
 
 -- ============================================================
--- FULL GEN BREAK (Killer)
+-- FULL GEN BREAK
 -- ============================================================
 local genBreakConn
 local function SetFullGenBreak(on)
@@ -638,6 +620,38 @@ local function SetFullGenBreak(on)
                             if genPart and (genPart.Position - root.Position).Magnitude <= 15 then
                                 breakEvent:FireServer(obj)
                             end
+                        end
+                    end
+                end
+            end
+        end)
+    end)
+end
+
+-- ============================================================
+-- AUTO PALLET (الجديدة من Fanta Menu)
+-- ============================================================
+local autoPalletConn
+local function SetAutoPallet(on)
+    S.AutoPallet = on
+    if autoPalletConn then autoPalletConn:Disconnect(); autoPalletConn = nil end
+    if not on then return end
+    autoPalletConn = RunService.Heartbeat:Connect(function()
+        if not S.AutoPallet or GetRole() ~= "Killer" then return end
+        pcall(function()
+            local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+            local pallet = remotes and remotes:FindFirstChild("Pallet")
+            local jason = pallet and pallet:FindFirstChild("Jason")
+            local destroy = jason and (jason:FindFirstChild("Destroy") or jason:FindFirstChild("Destroy-Global"))
+            if not destroy then return end
+            local root = GetCharacterRoot()
+            local map = workspace:FindFirstChild("Map")
+            if map then
+                for _, obj in ipairs(map:GetDescendants()) do
+                    if obj.Name:lower():find("pallet") and obj:IsA("Model") then
+                        local part = obj:FindFirstChildWhichIsA("BasePart")
+                        if part and (not root or (part.Position - root.Position).Magnitude <= 20) then
+                            destroy:FireServer(obj)
                         end
                     end
                 end
@@ -696,7 +710,7 @@ local function SetAutoWiggle(on)
 end
 
 -- ============================================================
--- HITBOX EXPANSION (Killer)
+-- HITBOX EXPANSION
 -- ============================================================
 local hitboxCache = {}
 local function SetHitbox(on)
@@ -753,7 +767,7 @@ local function SetNoFall(on)
 end
 
 -- ============================================================
--- NO SLOWDOWN (Killer)
+-- NO SLOWDOWN
 -- ============================================================
 local noSlowConn
 local function SetNoSlowdown(on)
@@ -987,6 +1001,7 @@ local function SaveCfg(name)
         AntiBlind=S.AntiBlind, NoPalletStun=S.NoPalletStun,
         DoubleTap=S.DoubleTap, InfiniteLunge=S.InfiniteLunge,
         AutoHook=S.AutoHook, DestroyPallets=S.DestroyPallets, FullGenBreak=S.FullGenBreak,
+        AutoPallet=S.AutoPallet,
         SpeedEnabled=S.SpeedEnabled, SpeedValue=S.SpeedValue,
         FlyEnabled=S.FlyEnabled, FlySpeed=S.FlySpeed,
         NoclipEnabled=S.NoclipEnabled,
@@ -1103,7 +1118,7 @@ local function ShowLangGUI(callback)
     local titleL = Instance.new("TextLabel",panel); titleL.Size=UDim2.new(1,-30,0,28)
     titleL.Position=UDim2.new(0,15,0,56); titleL.BackgroundTransparency=1
     titleL.Font=Enum.Font.GothamBold; titleL.TextSize=17
-    titleL.TextColor3=Color3.fromRGB(230,215,255); titleL.Text="Phantom Hub  v9.0"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(230,215,255); titleL.Text="Phantom Hub  v9.1"; titleL.ZIndex=3
     local subL = Instance.new("TextLabel",panel); subL.Size=UDim2.new(1,-30,0,22)
     subL.Position=UDim2.new(0,15,0,84); subL.BackgroundTransparency=1
     subL.Font=Enum.Font.Gotham; subL.TextSize=13
@@ -1168,7 +1183,7 @@ local function ShowLoadingScreen(callback)
     local titleL = Instance.new("TextLabel",card); titleL.Size=UDim2.new(1,0,0,30)
     titleL.Position=UDim2.new(0,0,0,76); titleL.BackgroundTransparency=1
     titleL.Font=Enum.Font.GothamBold; titleL.TextSize=20
-    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v9.0"; titleL.ZIndex=3
+    titleL.TextColor3=Color3.fromRGB(220,200,255); titleL.Text="Phantom Hub  v9.1"; titleL.ZIndex=3
     local gameL2 = Instance.new("TextLabel",card); gameL2.Size=UDim2.new(1,0,0,18)
     gameL2.Position=UDim2.new(0,0,0,106); gameL2.BackgroundTransparency=1
     gameL2.Font=Enum.Font.Gotham; gameL2.TextSize=13
@@ -1219,7 +1234,7 @@ local function ShowLoadingScreen(callback)
 end
 
 -- ============================================================
--- BUILD UI - REIMAGINED WITH BETTER ORGANIZATION
+-- BUILD UI
 -- ============================================================
 function BuildWindow()
     local ok, err = pcall(function()
@@ -1242,10 +1257,10 @@ function BuildWindow()
         Background = "rbxassetid://104829641696132", BackgroundImageTransparency = 0.45,
         User = {Enabled=true, Anonymous=false}
     })
-    Window:Tag({Title="v9.0", Color=Color3.fromRGB(120,60,240)})
+    Window:Tag({Title="v9.1", Color=Color3.fromRGB(120,60,240)})
 
     -- ==================== HOME TAB ====================
-    local TbHome = Window:Tab({Title="🏠 Home", Icon="home"})
+    local TbHome = Window:Tab({Title:"🏠 Home", Icon:"home"})
     TbHome:Toggle({Title="Enable ESP", Value = S.ESP, Callback = function(v) S.ESP = v end})
     TbHome:Dropdown({Title="ESP Mode", Values={"Outline","Highlight","Chams","Name"}, Value=S.ESPMode, Multi=false, Callback=function(v) S.ESPMode = v; ClearESPCache() end})
     TbHome:Divider()
@@ -1267,12 +1282,12 @@ function BuildWindow()
     TbHome:Toggle({Title="Auto Wiggle", Value=S.AutoWiggle, Callback=function(v) S.AutoWiggle=v; SetAutoWiggle(v) end})
 
     -- ==================== COMBAT TAB ====================
-    local TbCombat = Window:Tab({Title:"⚔️ Combat", Icon="sword"})
+    local TbCombat = Window:Tab({Title:"⚔️ Combat", Icon:"sword"})
     TbCombat:Toggle({Title="Auto Parry", Value=S.AutoParry, Callback=function(v) S.AutoParry=v; SetAutoParry(v) end})
     TbCombat:Toggle({Title="No Fall Damage", Value=S.NoFall, Callback=function(v) S.NoFall=v; SetNoFall(v) end})
 
     -- ==================== KILLER TAB ====================
-    local TbKiller = Window:Tab({Title:"🔪 Killer", Icon="skull"})
+    local TbKiller = Window:Tab({Title:"🔪 Killer", Icon:"skull"})
     -- Aimbot Section
     TbKiller:Toggle({Title="Aimbot", Value=S.Aimbot, Callback=function(v) SetAimbot(v) end})
     TbKiller:Slider({Title="Aim FOV", Step=10, Value={Min=50,Max=400,Default=S.AimFOV}, Callback=function(v) S.AimFOV=v end})
@@ -1298,6 +1313,7 @@ function BuildWindow()
     TbKiller:Toggle({Title="Auto Hook 🪝", Value=S.AutoHook, Callback=function(v) SetAutoHook(v) end})
     TbKiller:Toggle({Title="Destroy Pallets 🪓", Value=S.DestroyPallets, Callback=function(v) SetDestroyPallets(v) end})
     TbKiller:Toggle({Title="Full Gen Break 💥", Value=S.FullGenBreak, Callback=function(v) SetFullGenBreak(v) end})
+    TbKiller:Toggle({Title="Auto Pallet 🪓 (new)", Value=S.AutoPallet, Callback=function(v) SetAutoPallet(v) end})
     TbKiller:Divider()
     -- Protection
     TbKiller:Toggle({Title="No Pallet Stun 🚫", Value=S.NoPalletStun, Callback=function(v) S.NoPalletStun=v; SetupNoPalletStun() end})
@@ -1406,22 +1422,28 @@ function BuildWindow()
         end
     end)
 
-    -- FOV Circle rendering (Aimbot feature)
+    -- FOV Circle GUI-based (fallback if Drawing is not available)
     task.spawn(function()
-        local fovCircle = Drawing.new("Circle")
-        fovCircle.Thickness = 1
-        fovCircle.Color = Color3.fromRGB(255, 65, 65)
-        fovCircle.Filled = false
-        fovCircle.NumSides = 60
-        fovCircle.Transparency = 0.8
+        local fovGui = Instance.new("ScreenGui", LP.PlayerGui)
+        fovGui.Name = "PH_FOV"
+        local fovFrame = Instance.new("Frame", fovGui)
+        fovFrame.Size = UDim2.new(1, 0, 1, 0)
+        fovFrame.BackgroundTransparency = 1
+        local fovCircle = Instance.new("Frame", fovFrame)
+        fovCircle.BackgroundTransparency = 0.9
+        fovCircle.BackgroundColor3 = Color3.fromRGB(255, 65, 65)
+        fovCircle.BorderSizePixel = 0
+        Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(1, 0)
+        fovCircle.Size = UDim2.new(0, 5, 0, 5)
+        fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
         fovCircle.Visible = false
         
         while task.wait(0.05) do
             if S.Aimbot and S.AimShowFOV and Camera then
-                local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-                fovCircle.Position = screenCenter
-                fovCircle.Radius = S.AimFOV
-                fovCircle.Color = aimbotTarget and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 65, 65)
+                local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+                fovCircle.Position = UDim2.new(0, center.X, 0, center.Y)
+                fovCircle.Size = UDim2.new(0, S.AimFOV * 2, 0, S.AimFOV * 2)
+                fovCircle.BackgroundColor3 = aimbotTarget and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 65, 65)
                 fovCircle.Visible = true
             else
                 fovCircle.Visible = false
@@ -1454,7 +1476,7 @@ function BuildWindow()
     SetAntiAFK(S.AntiAFK)
     SetFPSBooster(S.FPSBooster)
 
-    N("Phantom Hub v9.0", "Violence District ready! All features loaded.", 4, "moon")
+    N("Phantom Hub v9.1", "Violence District ready! All features loaded.", 4, "moon")
 end
 
 ShowLoadingScreen(function()
